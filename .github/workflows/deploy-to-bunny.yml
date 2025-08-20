@@ -2,7 +2,7 @@ name: Deploy to Bunny CDN
 
 on:
   push:
-    branches:
+    tags:
       - 'v*'  # Matches branches starting with 'v', like v0.1, v1.0, etc.
 
 jobs:

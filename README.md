@@ -66,3 +66,14 @@ To create optimized static assets for deployment:
 ```bash
 npm run build
 ```
+
+## Deployment CI/CD
+
+```bash
+# Tag the release with v prefix
+
+git tag v2.0
+
+git push oirign --tags
+```
+
