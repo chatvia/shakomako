@@ -1,0 +1,52 @@
+{
+  "name": "chat-widget",
+  "version": "1.0.0",
+  "description": "A customizable, embeddable chat widget with Markdown support",
+  "main": "dist/chat-widget.bundle.min.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run clean && rollup -c rollup.config.js",
+    "clean": "rimraf dist && mkdir dist",
+    "lint": "eslint \"src/**/*.js\"",
+    "lint:fix": "eslint \"src/**/*.js\" --fix",
+    "format": "prettier --write \"src/**/*.js\"",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "chat",
+    "widget",
+    "markdown",
+    "sse"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-strip": "^3.0.4",
+    "@rollup/plugin-terser": "^0.4.4",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.2",
+    "fs-extra": "^11.1.1",
+    "husky": "^9.1.7",
+    "postcss": "^8.5.3",
+    "prettier": "^3.5.3",
+    "rimraf": "^5.0.1",
+    "rollup": "^4.9.6",
+    "rollup-plugin-gzip": "^3.1.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "vite": "^6.2.5",
+    "vite-plugin-html": "^3.2.2",
+    "vite-plugin-subresource-integrity": "^0.0.12"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.5",
+    "dotenv": "^16.5.0",
+    "eslint-plugin-prettier": "^5.4.0",
+    "marked": "^15.0.11",
+    "rollup-plugin-dotenv": "^0.5.1"
+  }
+}
