@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Chat Widget</title>
+        <script type="module">
+          import { ChatWidget } from './src/widget.js';
+          window.onload = function() {
+            // window.chatwidget = new ChatWidget("123", "chatbot-container");
+            window.chatwidget = new ChatWidget("123");
+            window.chatwidget.init();
+          };
+        </script>
+    </head>
+    <body>
+      <div id="chatbot-container" style="margin: 0 auto; padding-left: 200px;">
+
+      </div>
+    </body>
+</html>

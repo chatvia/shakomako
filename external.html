@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Widget Development</title>
+</head>
+<body>
+
+<h1>Chat Widget Embed Test</h1>
+<p>This page demonstrates loading the chat widget using the embed script.</p>
+
+<script>
+  const today = new Date();
+  const dateString = today.toISOString().split('T')[0];
+  const script = document.createElement('script');
+  script.id = 'chatbot-embed-script';
+  script.src = `dist/embed.js?c=${dateString}`;
+  script.async = true;
+  script.setAttribute('agent-id', '123');
+  document.body.appendChild(script);
+</script>
+</body>
+</html>
