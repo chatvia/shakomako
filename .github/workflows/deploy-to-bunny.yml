@@ -3,7 +3,7 @@ name: Deploy to Bunny CDN
 on:
   push:
     tags:
-      - 'v*'  # Matches branches starting with 'v', like v0.1, v1.0, etc.
+      - 'v*'  # Matches tags starting with 'v', like v0.1, v1.0, etc.
 
 jobs:
   build-and-deploy:
@@ -13,12 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Extract version from branch name
+      - name: Extract version from tag name
         id: extract_version
         run: |
-          # Extract version from branch name (e.g. v0.1 -> 0.1)
-          BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          VERSION=${BRANCH_NAME#v}
+          # Extract version from tag name (e.g. v1.0 -> 1.0)
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Extracted version: $VERSION"
 
@@ -36,22 +36,20 @@ jobs:
           echo "VITE_APP_VERSION=$VERSION" > .env
           echo "NODE_ENV=production" >> .env
           echo "VITE_API_URL=${{ vars.API_URL }}" >> .env
-          echo "VITE_SCRIPT_URL=${{ vars.BUNNY_CDN_BASE_URL }}/$VERSION" >> .env
+          echo "VITE_SCRIPT_URL=${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION" >> .env
           echo "VITE_SSE_URL=${{ vars.SSE_URL }}" >> .env
           cat .env
           npm run build
 
       - name: Deploy to Bunny CDN via HTTP API
         run: |
-          # Ensure the BunnyCDN CLI is installed (you might need to adjust this)
-          # npm install -g bunnycdn
           # For each file in the dist directory, upload it to BunnyCDN
           find ./dist -type f -print0 | while IFS= read -r -d $'\0' file
           do
             # Extract the relative path within the dist directory
             relative_path="${file#./dist/}"
-            # Construct the BunnyCDN API URL
-            bunny_api_url="https://storage.bunnycdn.com/${{ vars.BUNNY_STORAGE_ZONE_NAME }}/embed/${relative_path}"
+            # Construct the BunnyCDN API URL with widget folder structure
+            bunny_api_url="https://storage.bunnycdn.com/${{ vars.BUNNY_STORAGE_ZONE_NAME }}/widget/${relative_path}"
             # Upload the file using curl
             echo "Uploading $file to $bunny_api_url"
             response=$(curl --request PUT \
@@ -74,10 +72,10 @@ jobs:
         run: |
           # List of files to purge from CDN cache
           files_to_purge=(
-            "${{ vars.BUNNY_CDN_BASE_URL }}/embed/embed.js"
-            "${{ vars.BUNNY_CDN_BASE_URL }}/embed/$VERSION/widget.min.js"
-            "${{ vars.BUNNY_CDN_BASE_URL }}/embed/$VERSION/widget.min.js.br"
-            "${{ vars.BUNNY_CDN_BASE_URL }}/embed/$VERSION/widget.min.js.gz"
+            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/embed.js"
+            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION/widget.min.js"
+            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION/widget.min.js.br"
+            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION/widget.min.js.gz"
           )
 
           # Loop through each file and purge it from the CDN cache
