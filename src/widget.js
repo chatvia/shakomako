@@ -944,10 +944,9 @@ export class ChatWidget {
   }
 
   async _loadExternalLibrariesIfNeeded() {
-    if (this.settings.markdown) {
-      await loadLibraries();
-      await this.refreshStreamingMessages();
-    }
+    // Always load markdown libraries
+    await loadLibraries();
+    await this.refreshStreamingMessages();
   }
 
   async applyConfiguration() {
@@ -1085,7 +1084,7 @@ export class ChatWidget {
   }
 
   async _setMessageBubbleContent(bubble, type, text) {
-    if (type === CSS_CLASSES.MESSAGE_AGENT && this.settings.markdown) {
+    if (type === CSS_CLASSES.MESSAGE_AGENT) {
       bubble.innerHTML = await this.parseMarkdown(text);
     } else {
       bubble.textContent = text;
@@ -1245,11 +1244,50 @@ export class ChatWidget {
     if (streamingMsgElement) {
       const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
       if (messageBubble) {
-        await this._setMessageBubbleContent(
-          messageBubble,
-          CSS_CLASSES.MESSAGE_AGENT,
-          this.currentStreamedMessage
-        );
+        // Always process markdown during streaming for immediate display
+        try {
+          // Ensure libraries are loaded
+          if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
+            await loadLibraries();
+          }
+          
+          if (ChatWidgetLibs.marked && ChatWidgetLibs.DOMPurify) {
+            ChatWidgetLibs.marked.setOptions({
+              gfm: true,
+              breaks: true,
+              headerIds: false,
+              mangle: false,
+              smartLists: true,
+              smartypants: true,
+              xhtml: false,
+              tables: true
+            });
+
+            let html = ChatWidgetLibs.marked.parse(this.currentStreamedMessage);
+            html = ChatWidgetLibs.DOMPurify.sanitize(html, {
+              ALLOWED_TAGS: [
+                'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3',
+                'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre',
+                'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
+                'ul', 'span', 'math', 'mi', 'mo', 'mn', 'mtext'
+              ],
+              ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
+              USE_PROFILES: { html: true },
+              KEEP_CONTENT: true,
+              ADD_ATTR: [
+                ['target', '_blank'],
+                ['rel', 'noopener noreferrer']
+              ]
+            });
+            messageBubble.innerHTML = html;
+          } else {
+            // Fallback if markdown libraries not available
+            messageBubble.textContent = this.currentStreamedMessage;
+          }
+        } catch (error) {
+          console.error('Error processing markdown during streaming:', error);
+          messageBubble.textContent = this.currentStreamedMessage;
+        }
       }
       this.scrollToBottom();
     }
@@ -1751,7 +1789,7 @@ export class ChatWidget {
   }
 
   async refreshStreamingMessages() {
-    if (this.isStreaming && this.settings.markdown) {
+    if (this.isStreaming) {
       await this.updateStreamingMessage();
     }
   }
@@ -1759,84 +1797,78 @@ export class ChatWidget {
   async parseMarkdown(text) {
     if (!text) return '';
 
-    // If markdown is enabled, ensure libraries are loaded
-    if (this.settings.markdown) {
-      try {
-        // Wait for libraries to load if they haven't already
-        if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
-          await loadLibraries();
-        }
+    try {
+      // Wait for libraries to load if they haven't already
+      if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
+        await loadLibraries();
+      }
 
-        // Double check libraries are available after loading attempt
-        if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
-          console.warn('Markdown libraries failed to load, falling back to plain text');
-          return this._escapeHtml(text);
-        }
-
-        ChatWidgetLibs.marked.setOptions({
-          gfm: true,
-          breaks: true,
-          headerIds: false,
-          mangle: false,
-          smartLists: true,
-          smartypants: true,
-          xhtml: false,
-          tables: true
-        });
-
-        let html = ChatWidgetLibs.marked.parse(text);
-        html = ChatWidgetLibs.DOMPurify.sanitize(html, {
-          ALLOWED_TAGS: [
-            'a',
-            'b',
-            'br',
-            'code',
-            'div',
-            'em',
-            'h1',
-            'h2',
-            'h3',
-            'h4',
-            'h5',
-            'h6',
-            'hr',
-            'i',
-            'li',
-            'ol',
-            'p',
-            'pre',
-            'strong',
-            'table',
-            'tbody',
-            'td',
-            'th',
-            'thead',
-            'tr',
-            'ul',
-            'span',
-            'math',
-            'mi',
-            'mo',
-            'mn',
-            'mtext'
-          ],
-          ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
-          USE_PROFILES: { html: true },
-          KEEP_CONTENT: true,
-          ADD_ATTR: [
-            ['target', '_blank'],
-            ['rel', 'noopener noreferrer']
-          ]
-        });
-        return html;
-      } catch (error) {
-        console.error('Error parsing markdown:', error);
+      // Double check libraries are available after loading attempt
+      if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
+        console.warn('Markdown libraries failed to load, falling back to plain text');
         return this._escapeHtml(text);
       }
-    }
 
-    // If markdown is disabled, return escaped HTML
-    return this._escapeHtml(text);
+      ChatWidgetLibs.marked.setOptions({
+        gfm: true,
+        breaks: true,
+        headerIds: false,
+        mangle: false,
+        smartLists: true,
+        smartypants: true,
+        xhtml: false,
+        tables: true
+      });
+
+      let html = ChatWidgetLibs.marked.parse(text);
+      html = ChatWidgetLibs.DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: [
+          'a',
+          'b',
+          'br',
+          'code',
+          'div',
+          'em',
+          'h1',
+          'h2',
+          'h3',
+          'h4',
+          'h5',
+          'h6',
+          'hr',
+          'i',
+          'li',
+          'ol',
+          'p',
+          'pre',
+          'strong',
+          'table',
+          'tbody',
+          'td',
+          'th',
+          'thead',
+          'tr',
+          'ul',
+          'span',
+          'math',
+          'mi',
+          'mo',
+          'mn',
+          'mtext'
+        ],
+        ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
+        USE_PROFILES: { html: true },
+        KEEP_CONTENT: true,
+        ADD_ATTR: [
+          ['target', '_blank'],
+          ['rel', 'noopener noreferrer']
+        ]
+      });
+      return html;
+    } catch (error) {
+      console.error('Error parsing markdown:', error);
+      return this._escapeHtml(text);
+    }
   }
 
   _escapeHtml(text) {
