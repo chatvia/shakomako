@@ -1038,6 +1038,9 @@ export class ChatWidget {
 
   async addMessage(type, text, addToHistory = true, options = {}) {
     if (!this.messagesContainer) return null;
+    
+
+    
     const message = createElement('div', { className: `${CSS_CLASSES.MESSAGE} ${type}` });
 
     if (type === CSS_CLASSES.MESSAGE_AGENT) {
@@ -1045,6 +1048,16 @@ export class ChatWidget {
     }
 
     const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
+    
+    // Temporary fix: Apply inline styles to test
+    if (type === CSS_CLASSES.MESSAGE_USER) {
+      bubble.style.backgroundColor = 'var(--chat-primary, #00AEEF)';
+      bubble.style.color = '#ffffff';
+    } else if (type === CSS_CLASSES.MESSAGE_AGENT) {
+      bubble.style.backgroundColor = '#f5f5f5';
+      bubble.style.color = '#333333';
+    }
+    
     await this._setMessageBubbleContent(bubble, type, text);
     message.appendChild(bubble);
 
