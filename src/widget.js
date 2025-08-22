@@ -1667,8 +1667,7 @@ export class ChatWidget {
       container.appendChild(noThreadsMsg);
     } else {
       const sortedThreads = [...threads].sort(
-        (a, b) =>
-          new Date(b.updatedAt || b.created_at || 0) - new Date(a.updatedAt || a.created_at || 0)
+        (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
       );
       sortedThreads.forEach(thread => {
         const threadItem = this._createThreadItem(thread);
@@ -1684,12 +1683,31 @@ export class ChatWidget {
       item.classList.add(CSS_CLASSES.THREAD_ITEM_ACTIVE);
     }
 
+    // Create content container for title, subtitle, and date
+    const contentContainer = createElement('div', { className: 'thread-content' });
+    
     const titleEl = createElement('div', { className: CSS_CLASSES.THREAD_TITLE });
     titleEl.textContent =
-      thread.title || `Chat from ${new Date(thread.created_at).toLocaleDateString()}`;
-    item.appendChild(titleEl);
+      thread.title || this._getFirstUserMessage(thread) || "New conversation";
+    contentContainer.appendChild(titleEl);
 
-    // Arrow icon to the right
+    // Add subtitle (agent name or source)
+    const subtitleEl = createElement('div', { className: 'thread-subtitle' });
+    subtitleEl.textContent = this.settings.title || 'Chatbase AI';
+    contentContainer.appendChild(subtitleEl);
+
+    // Add timestamp with bullet separator
+    if (thread.timestamp) {
+      const timestampEl = createElement('span', { 
+        className: CSS_CLASSES.THREAD_DATE,
+        textContent: ` • ${this._formatTimestamp(thread.timestamp)}`
+      });
+      subtitleEl.appendChild(timestampEl);
+    }
+
+    item.appendChild(contentContainer);
+
+    // Create arrow icon only
     const arrowIcon = createElement('div', { className: 'thread-arrow-icon' });
     arrowIcon.appendChild(createIcon('arrow-right'));
     item.appendChild(arrowIcon);
@@ -1706,6 +1724,17 @@ export class ChatWidget {
       await this.loadActiveThread();
     });
     return item;
+  }
+
+  _getFirstUserMessage(thread) {
+    if (!thread.messages || !Array.isArray(thread.messages)) return null;
+    
+    const firstUserMessage = thread.messages.find(msg => {
+      const messageType = msg.role ? this._mapRoleToMessageType(msg.role) : msg.type;
+      return messageType === CSS_CLASSES.MESSAGE_USER;
+    });
+    
+    return firstUserMessage ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '') : null;
   }
 
   async refreshStreamingMessages() {
@@ -1838,5 +1867,34 @@ export class ChatWidget {
     setState(this.historyOption, onlyEmptyThread);
     setState(this.clearCurrentOption, onlyEmptyThread);
     setState(this.clearAllOption, onlyEmptyThread);
+  }
+
+  _formatTimestamp(timestamp) {
+    if (!timestamp) return 'Unknown date';
+    
+    // Convert Unix timestamp to Date object
+    const date = new Date(timestamp * 1000);
+    
+    // Check if it's today
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    // Check if it's yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+    
+    if (isToday) {
+      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (isYesterday) {
+      return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      // For older dates, show the date
+      return date.toLocaleDateString([], { 
+        month: 'short', 
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      });
+    }
   }
 }
