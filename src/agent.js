@@ -5,7 +5,7 @@ export class AgentManager {
   constructor(agentId) {
     this.agentId = agentId;
     this.persistenceId = 'chat-widget-agent-id';
-    this.persistenceManager = new PersistenceManager();
+    this.persistenceManager = new PersistenceManager(agentId);
   }
 
   async verifyClient() {

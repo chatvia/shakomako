@@ -6,7 +6,7 @@ export default class StorageManager {
     this.agentId = agentId;
     this.sessionId = sessionId;
 
-    this.persistenceManager = new PersistenceManager();
+    this.persistenceManager = new PersistenceManager(agentId);
     this.activeThreadPersistedId = 'chat-widget-active-thread-id';
   }
 

@@ -6,7 +6,7 @@ export class SessionManager {
     this.agentId = agentId;
     this.persistedSessionId = 'chat-widget-session-id';
 
-    this.persistenceManager = new PersistenceManager();
+    this.persistenceManager = new PersistenceManager(agentId);
   }
 
   async startSession() {
