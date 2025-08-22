@@ -18,7 +18,7 @@ export class AgentManager {
       }
 
       const response = await api({
-        endpoint: 'widget/agents/verify',
+        endpoint: 'agents/verify',
         method: 'GET',
         headers: {
           'X-AGENT-ID': this.agentId

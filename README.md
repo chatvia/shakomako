@@ -34,11 +34,17 @@ The project uses environment variables for configuration, managed via `.env` fil
     ```bash
     cp .env.example .env
     ```
-2.  **Edit `.env`:** Update the variables as needed. For local development, you'll likely need to configure the SSE server URL. If you run the included simulation server (`server.js`), the default URL might be `http://localhost:8080/events`.
+2.  **Edit `.env`:** Update the variables as needed. The project uses `VITE_API_URL` as the base API URL.
     ```dotenv
     # Example .env content
-    SSE_URL=http://localhost:8080/events
-    # Add other configuration variables here if needed
+    VITE_API_URL=https://chatvia.test/api/widget
+    VITE_APP_VERSION=1.0.0
+    
+    # API endpoints will be appended to VITE_API_URL:
+    # - Sessions: https://chatvia.test/api/widget/sessions
+    # - Threads: https://chatvia.test/api/widget/threads
+    # - Agent verification: https://chatvia.test/api/widget/agents/verify
+    # - SSE Stream: https://chatvia.test/api/widget/stream
     ```
 
 ## Running Locally

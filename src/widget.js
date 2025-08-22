@@ -184,19 +184,22 @@ export class ChatWidget {
       this.threads = threads || [];
       this.activeThreadId = activeThreadId || null;
 
-      if (!(this.activeThreadId && this.threads.some(t => t.id === this.activeThreadId))) {
-        if (this.threads.length > 0) {
-          this.activeThreadId = this.threads[0].id; // Assume newest is first
-          this.storageManager.setActiveThreadId(this.activeThreadId);
-          console.log(
-            `No valid active thread ID found, setting most recent as active: ${this.activeThreadId}`
-          );
-        } else {
-          console.log('No threads found, creating a new one...');
-          await this.createNewThread();
+      // Check if the stored active thread ID actually exists in the threads list
+      if (this.activeThreadId && this.threads.length > 0) {
+        const activeThreadExists = this.threads.find(t => t.id === this.activeThreadId);
+        if (!activeThreadExists) {
+          console.log('Stored active thread no longer exists, selecting first available thread');
+          const firstThread = this.threads[0];
+          this.storageManager.setActiveThreadId(firstThread.id);
+          this.activeThreadId = firstThread.id;
         }
       }
-      console.log(`Final active thread ID after init: ${this.activeThreadId}`);
+
+      if (this.threads.length === 0) {
+        console.log('No threads found, creating a new one...');
+        await this.createNewThread();
+      }
+      console.log(`Active thread ID (most recent): ${this.activeThreadId}`);
     } catch (error) {
       console.error('Error initializing threads:', error);
       await this.disabledChat('Could not load chat threads.');
@@ -213,6 +216,9 @@ export class ChatWidget {
         this.activeThreadId = newThread.id; // Set by storageManager
         this.messageHistory = [];
         console.log('New thread created successfully:', newThread);
+
+        // Re-setup SSE with the new thread ID
+        this.setupSSE();
 
         await this.displayHistoryMessages();
         this.scrollToBottom();
@@ -231,7 +237,14 @@ export class ChatWidget {
   }
 
   getActiveThread() {
-    return this.threads.find(t => t.id === this.activeThreadId);
+    // Always use the localStorage stored active thread ID
+    const storedActiveThreadId = this.storageManager ? this.storageManager.getActiveThreadId() : this.activeThreadId;
+    return this.threads.find(t => t.id === storedActiveThreadId);
+  }
+
+  getCurrentActiveThreadId() {
+    // Helper method to get the current active thread ID from localStorage
+    return this.storageManager ? this.storageManager.getActiveThreadId() : this.activeThreadId;
   }
 
   async loadActiveThread() {
@@ -278,7 +291,10 @@ export class ChatWidget {
 
       // Check if there are any user messages in the thread or if thread has previous interaction
       const hasUserMessages = this.messageHistory.some(
-        message => message.type === CSS_CLASSES.MESSAGE_USER
+        message => {
+          const messageType = message.role ? this._mapRoleToMessageType(message.role) : message.type;
+          return messageType === CSS_CLASSES.MESSAGE_USER;
+        }
       );
 
       if (hasUserMessages || activeThread.hasUserInteraction) {
@@ -287,7 +303,9 @@ export class ChatWidget {
       } else if (
         !this.messageHistory.length ||
         (this.messageHistory.length === 1 &&
-          this.messageHistory[0].type === CSS_CLASSES.MESSAGE_AGENT)
+          (this.messageHistory[0].role ? 
+            this._mapRoleToMessageType(this.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT :
+            this.messageHistory[0].type === CSS_CLASSES.MESSAGE_AGENT))
       ) {
         // Show starters only for empty threads or threads with just a welcome message
         this.showStarters();
@@ -313,7 +331,10 @@ export class ChatWidget {
 
     if (this.messageHistory && this.messageHistory.length > 0) {
       for (const message of this.messageHistory) {
-        await this.addMessage(message.type, message.content, false);
+        // Handle new message structure with 'role' instead of 'type'
+        // Prioritize 'role' field for message styling, fall back to 'type' if no role
+        const messageType = message.role ? this._mapRoleToMessageType(message.role) : message.type;
+        await this.addMessage(messageType, message.content, false);
       }
     } else if (this.settings.welcome_message) {
       const activeThread = this.getActiveThread();
@@ -329,12 +350,33 @@ export class ChatWidget {
     }
   }
 
+  _mapRoleToMessageType(role) {
+    // Map the new 'role' field to the appropriate message type
+    let messageType;
+    switch (role) {
+      case 'user':
+        messageType = CSS_CLASSES.MESSAGE_USER;
+        break;
+      case 'assistant':
+        messageType = CSS_CLASSES.MESSAGE_AGENT;
+        break;
+      case 'system':
+        messageType = CSS_CLASSES.MESSAGE_SYSTEM;
+        break;
+      default:
+        messageType = CSS_CLASSES.MESSAGE_AGENT; // Default fallback
+    }
+    return messageType;
+  }
+
   setupSSE() {
     if (this.sseClient) {
       this.sseClient.close();
     }
 
-    this.sseClient = createSSEClient(this.agentId, {
+    // Always use the current active thread ID from localStorage
+    const currentActiveThreadId = this.getCurrentActiveThreadId();
+    this.sseClient = createSSEClient(this.agentId, this.sessionId, currentActiveThreadId, {
       onOpen: () => this.removeConnectionErrorMessages(),
       onClose: () => this.hideLoading(),
       onError: error => this._handleSSEError(error),
@@ -393,7 +435,7 @@ export class ChatWidget {
 
     const messagePayload = {
       session_id: this.sessionId,
-      thread_id: this.activeThreadId,
+      thread_id: this.getCurrentActiveThreadId(),
       type: 'message',
       content: text,
       url: window.location.href
@@ -1102,26 +1144,32 @@ export class ChatWidget {
   }
 
   async _handleStreamChunk(content) {
+    console.log('Stream chunk received:', content);
     if (!this.isStreaming) {
       this.isStreaming = true;
       this.currentStreamedMessage = '';
       this.startStreamingMessage();
+      console.log('Started new streaming message');
     }
 
     this.currentStreamedMessage += content;
+    console.log('Updated accumulated message:', this.currentStreamedMessage);
     await this.updateStreamingMessage();
     this._resetFinalizeTimeout();
   }
 
   async _handleReceivedMessage(message) {
     const messageContent = message.content || '';
+    console.log('Received message with content:', messageContent);
 
     if (messageContent) {
       if (this.isStreaming) {
+        console.log('Adding to existing stream:', messageContent);
         this.currentStreamedMessage += messageContent;
         await this.updateStreamingMessage();
         this._resetFinalizeTimeout();
       } else {
+        console.log('Starting new stream with:', messageContent);
         await this._handleStreamChunk(messageContent);
       }
     }
@@ -1482,6 +1530,10 @@ export class ChatWidget {
       console.log('Setting next active thread to:', nextActiveThreadId);
       this.storageManager.setActiveThreadId(nextActiveThreadId);
       this.activeThreadId = nextActiveThreadId;
+      
+      // Re-setup SSE with the new active thread
+      this.setupSSE();
+      
       await this.loadActiveThread();
     } else {
       console.log('No threads left after deletion. Creating a new one.');
@@ -1643,9 +1695,14 @@ export class ChatWidget {
     item.appendChild(arrowIcon);
 
     item.addEventListener('click', async () => {
-      console.log(`Switching to thread: ${thread.id}`);
+      // Save the active thread ID to localStorage
       this.storageManager.setActiveThreadId(thread.id);
       this.activeThreadId = thread.id;
+      
+      // Re-setup SSE with the new thread ID
+      this.setupSSE();
+      
+      // Load the thread messages
       await this.loadActiveThread();
     });
     return item;
@@ -1754,7 +1811,10 @@ export class ChatWidget {
     const activeThread = this.getActiveThread();
     let hasUserMessages = false;
     if (activeThread && Array.isArray(activeThread.messages)) {
-      hasUserMessages = activeThread.messages.some(m => m.type === CSS_CLASSES.MESSAGE_USER);
+      hasUserMessages = activeThread.messages.some(m => {
+        const messageType = m.role ? this._mapRoleToMessageType(m.role) : m.type;
+        return messageType === CSS_CLASSES.MESSAGE_USER;
+      });
     }
 
     // Menu button enabled as long as there is at least one thread

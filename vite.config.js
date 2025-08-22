@@ -4,6 +4,10 @@ import strip from '@rollup/plugin-strip';
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
+  
+  // Use VITE_API_URL directly
+  const apiUrl = env.VITE_API_URL;
+  const scriptUrl = env.VITE_SCRIPT_URL;
   const isProduction = mode === 'production';
 
   return {
@@ -55,15 +59,8 @@ export default defineConfig(({ command, mode }) => {
     plugins: [createHtmlPlugin()],
     define: {
       __APP_VERSION__: JSON.stringify(env.VITE_APP_VERSION),
-      __API_URL__: JSON.stringify(
-        env.VITE_API_URL?.endsWith('/') ? env.VITE_API_URL.slice(0, -1) : env.VITE_API_URL || ''
-      ),
-      __SCRIPT_URL__: JSON.stringify(env.VITE_SCRIPT_URL),
-            __SSE_URL__: JSON.stringify(env.VITE_SSE_URL || 'http://localhost:8080/events'),
-      __SSE_MAX_RECONNECT_ATTEMPTS__: JSON.stringify(
-        env.VITE_SSE_MAX_RECONNECT_ATTEMPTS || 5
-      ),
-      __SSE_RECONNECT_DELAY__: JSON.stringify(env.VITE_SSE_RECONNECT_DELAY || 1000)
+      __API_URL__: JSON.stringify(apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl),
+      __SCRIPT_URL__: JSON.stringify(scriptUrl)
     }
   };
 });

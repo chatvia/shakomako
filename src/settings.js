@@ -2,7 +2,7 @@ import api from './api.js';
 
 export async function getSettings(agent_id) {
   const response = await api({
-    endpoint: 'widget/agents/settings',
+    endpoint: 'agents/settings',
     method: 'GET',
     headers: {
       'X-AGENT-ID': agent_id

@@ -19,7 +19,7 @@ export class SessionManager {
       }
 
       const response = await api({
-        endpoint: 'widget/sessions',
+        endpoint: 'sessions',
         method: 'POST',
         headers: {
           'X-AGENT-ID': this.agentId

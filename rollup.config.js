@@ -14,16 +14,15 @@ dotenv.config();
 const isProduction = process.env.NODE_ENV === 'production';
 const appVersion = process.env.VITE_APP_VERSION || '1.0.0';
 
+// Use VITE_API_URL directly
+const apiUrl = process.env.VITE_API_URL;
+const scriptUrl = process.env.VITE_SCRIPT_URL;
+
 const sharedEnv = {
   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   __APP_VERSION__: JSON.stringify(appVersion),
-  __API_URL__: JSON.stringify(process.env.VITE_API_URL),
-  __SCRIPT_URL__: JSON.stringify(process.env.VITE_SCRIPT_URL || 'https://chatvia.test/agents/1/widget'),
-  __SSE_URL__: JSON.stringify(process.env.VITE_SSE_URL || 'http://localhost:8080/events'),
-  __SSE_RECONNECT_DELAY__: JSON.stringify(process.env.VITE_SSE_RECONNECT_DELAY || 1000),
-  __SSE_MAX_RECONNECT_ATTEMPTS__: JSON.stringify(
-    process.env.VITE_SSE_MAX_RECONNECT_ATTEMPTS || 5
-  ),
+  __API_URL__: JSON.stringify(apiUrl),
+  __SCRIPT_URL__: JSON.stringify(scriptUrl),
   __DEV__: JSON.stringify(!isProduction)
 };
 

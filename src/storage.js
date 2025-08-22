@@ -21,7 +21,7 @@ export default class StorageManager {
   async loadThreads() {
     try {
       const response = await api({
-        endpoint: 'widget/threads',
+        endpoint: 'threads',
         method: 'GET',
         headers: {
           'X-AGENT-ID': this.agentId,
@@ -35,13 +35,25 @@ export default class StorageManager {
 
       const data = await response.json();
 
-      if (data.active_thread_id) {
-        this.setActiveThreadId(data.active_thread_id);
+      // Prioritize locally stored active thread ID over server's
+      const localActiveThreadId = this.getActiveThreadId();
+      let activeThreadId = localActiveThreadId;
+
+      // Only use server's active thread ID if we don't have one locally
+      if (!activeThreadId && data.active_thread_id) {
+        activeThreadId = data.active_thread_id;
+        this.setActiveThreadId(activeThreadId);
+      }
+
+      // If still no active thread ID, use the first thread
+      if (!activeThreadId && data.threads && data.threads.length > 0) {
+        activeThreadId = data.threads[0].id;
+        this.setActiveThreadId(activeThreadId);
       }
 
       return {
         threads: data.threads || [],
-        activeThreadId: data.active_thread_id
+        activeThreadId: activeThreadId
       };
     } catch (error) {
       console.error('Error loading threads from API:', error);
@@ -52,7 +64,7 @@ export default class StorageManager {
   async createNewThread() {
     try {
       const response = await api({
-        endpoint: 'widget/threads',
+        endpoint: 'threads',
         method: 'POST',
         headers: {
           'X-AGENT-ID': this.agentId,
@@ -81,7 +93,7 @@ export default class StorageManager {
 
   async deleteThread(threadId) {
     const response = await api({
-      endpoint: 'widget/threads',
+      endpoint: 'threads',
       method: 'DELETE',
       headers: {
         'X-AGENT-ID': this.agentId,
@@ -97,7 +109,11 @@ export default class StorageManager {
 
     console.log('Thread deleted successfully:', threadId);
 
-    await this.createNewThread();
+    // Clear the active thread ID if it was the deleted thread
+    const currentActiveThreadId = this.getActiveThreadId();
+    if (currentActiveThreadId === threadId) {
+      this.persistenceManager.remove(this.activeThreadPersistedId);
+    }
 
     return true;
   }
@@ -105,7 +121,7 @@ export default class StorageManager {
   async deleteAllThreads() {
     try {
       await api({
-        endpoint: 'threads/all',
+        endpoint: 'threads',
         method: 'DELETE',
         headers: {
           'X-AGENT-ID': this.agentId,
@@ -123,7 +139,7 @@ export default class StorageManager {
   async getMessages(threadId) {
     try {
       const response = await api({
-        endpoint: 'widget/threads/messages',
+        endpoint: 'threads/messages',
         method: 'GET',
         headers: {
           'X-AGENT-ID': this.agentId,
