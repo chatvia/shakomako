@@ -16,6 +16,10 @@ export default defineConfig(({ command, mode }) => {
       port: 3000,
       host: true,
       allowedHosts: true,
+      cors: {
+        origin: true,
+        credentials: true
+      },
       watch: {
         usePolling: true,
         ignored: ['node_modules/**', 'dist/**']

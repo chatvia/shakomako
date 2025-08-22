@@ -36,7 +36,7 @@ jobs:
           echo "VITE_APP_VERSION=$VERSION" > .env
           echo "NODE_ENV=production" >> .env
           echo "VITE_API_URL=${{ vars.API_URL }}" >> .env
-          echo "VITE_SCRIPT_URL=${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION" >> .env
+          echo "VITE_SCRIPT_URL=${{ vars.BUNNY_CDN_BASE_URL }}/widget" >> .env
           echo "VITE_SSE_URL=${{ vars.SSE_URL }}" >> .env
           cat .env
           npm run build
@@ -73,9 +73,7 @@ jobs:
           # List of files to purge from CDN cache
           files_to_purge=(
             "${{ vars.BUNNY_CDN_BASE_URL }}/widget/embed.js"
-            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION/widget.min.js"
-            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION/widget.min.js.br"
-            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/$VERSION/widget.min.js.gz"
+            "${{ vars.BUNNY_CDN_BASE_URL }}/widget/version.json"
           )
 
           # Loop through each file and purge it from the CDN cache

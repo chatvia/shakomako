@@ -26,6 +26,24 @@ const sharedEnv = {
   __DEV__: JSON.stringify(!isProduction)
 };
 
+// Custom plugin to generate version.json
+function generateVersionFile() {
+  return {
+    name: 'generate-version-file',
+    generateBundle() {
+      // Create version.json content
+      const versionContent = JSON.stringify({ version: appVersion });
+      
+      // Emit the version.json file
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: versionContent
+      });
+    }
+  };
+}
+
 const commonPlugins = [
   nodeResolve({ browser: true, preferBuiltins: false }),
   commonjs(),
@@ -75,6 +93,7 @@ const mainBundleConfig = {
       modules: false
     }),
     ...commonPlugins,
+    generateVersionFile(), // Generate version.json
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
       gzipPlugin({
@@ -102,6 +121,7 @@ const embedScriptConfig = {
   },
   plugins: [
     ...commonPlugins,
+    generateVersionFile(), // Generate version.json for embed script too
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
       gzipPlugin({
@@ -109,7 +129,7 @@ const embedScriptConfig = {
         customCompression: content => brotliCompressSync(Buffer.from(content)),
         additionalFiles: []
       })
-  ]
+  ].filter(Boolean)
 };
 
 export default [mainBundleConfig, embedScriptConfig];

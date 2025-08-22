@@ -15,11 +15,7 @@ window.chatbot =
 
   window[namespace].initialized = true;
 
-  /* global __APP_VERSION__ */
-  const v = __APP_VERSION__ || '1.0.0';
-
-  const scriptId = 'chatbot-embed-script-' + v.replace(/\./g, '-');
-  const embedScriptTag = document.currentScript || document.getElementById(scriptId);
+  const embedScriptTag = document.currentScript;
 
   if (!embedScriptTag) {
     console.error('chatbot: Could not find embed script tag.');
@@ -35,7 +31,7 @@ window.chatbot =
 
   /* global __SCRIPT_URL__ */
   const scriptHost = __SCRIPT_URL__;
-  const fullScriptUrl = `${scriptHost}/${v}/widget.min.js`;
+  console.log('chatbot: __SCRIPT_URL__ value is:', scriptHost);
 
   if (!agentId) {
     console.error('chatbot: Missing agent-id attribute on embed script tag.');
@@ -49,31 +45,59 @@ window.chatbot =
   window[namespace].q = window[namespace].q || [];
   window[namespace].q.push(['init']);
 
-  function loadBundle() {
-    if (document.getElementById(scriptId)) {
-      console.log('chatbot: Bundle script tag already exists.');
-      return;
-    }
+  async function loadBundle() {
+    try {
+      const versionUrl = `${scriptHost}/version.json?t=${Date.now()}`;
+      console.log('chatbot: Fetching version from:', versionUrl);
+      
+      // Fetch current version from version.json with cache busting
+      const versionResponse = await fetch(versionUrl);
+      console.log('chatbot: Version response status:', versionResponse.status, versionResponse.statusText);
+      
+      if (!versionResponse.ok) {
+        throw new Error(`Failed to fetch version.json: ${versionResponse.status} ${versionResponse.statusText}`);
+      }
+      
+      const versionData = await versionResponse.json();
+      console.log('chatbot: Version data received:', versionData);
+      
+      const version = versionData.version || '1.0.0';
+      console.log('chatbot: Using version:', version);
+      
+      const scriptId = 'chatbot-embed-script-' + version.replace(/\./g, '-');
+      const fullScriptUrl = `${scriptHost}/${version}/widget.min.js`;
+      console.log('chatbot: Loading widget from:', fullScriptUrl);
 
-    const script = document.createElement('script');
+      if (document.getElementById(scriptId)) {
+        console.log('chatbot: Bundle script tag already exists for version:', version);
+        return;
+      }
 
-    script.id = scriptId;
-    script.type = 'text/javascript';
-    script.defer = true;
-    script.src = fullScriptUrl;
-    script.onerror = () => {
-      console.error(`chatbot: Failed to load chatbot bundle from ${fullScriptUrl}`);
-      window[namespace].error = `Failed to load bundle from ${fullScriptUrl}`;
-    };
-    script.onload = () =>
-      console.log(`chatbot: chatbot bundle loaded successfully from ${fullScriptUrl}`);
+      const script = document.createElement('script');
 
-    const firstScript = document.getElementsByTagName('script')[0];
+      script.id = scriptId;
+      script.type = 'text/javascript';
+      script.defer = true;
+      script.src = fullScriptUrl;
+      script.onerror = () => {
+        console.error(`chatbot: Failed to load chatbot bundle from ${fullScriptUrl}`);
+        window[namespace].error = `Failed to load bundle from ${fullScriptUrl}`;
+      };
+      script.onload = () =>
+        console.log(`chatbot: chatbot bundle loaded successfully from ${fullScriptUrl}`);
 
-    if (firstScript && firstScript.parentNode) {
-      firstScript.parentNode.insertBefore(script, firstScript);
-    } else {
-      (document.head || document.body).appendChild(script);
+      console.log('chatbot: Inserting script tag with ID:', scriptId);
+      const firstScript = document.getElementsByTagName('script')[0];
+
+      if (firstScript && firstScript.parentNode) {
+        firstScript.parentNode.insertBefore(script, firstScript);
+      } else {
+        (document.head || document.body).appendChild(script);
+      }
+    } catch (error) {
+      console.error('chatbot: Error loading version or bundle:', error);
+      console.error('chatbot: Script host was:', scriptHost);
+      window[namespace].error = `Error loading bundle: ${error.message}`;
     }
   }
   if (document.readyState === 'loading') {
