@@ -1012,7 +1012,7 @@ export class ChatWidget {
   _applyColors() {
     const primaryColor = this.settings.primary_color || DEFAULT_PRIMARY_COLOR;
     document.documentElement.style.setProperty('--chat-primary', primaryColor);
-    document.documentElement.style.setProperty('--chat-header-text', '#ffffff'); // TODO: Calculate contrast
+    // Header text color is now defined in CSS - no need to set it here
     document.documentElement.style.setProperty('--chat-primary-rgb', primaryColor);
   }
 
@@ -1076,15 +1076,6 @@ export class ChatWidget {
     }
 
     const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
-    
-    // Temporary fix: Apply inline styles to test
-    if (type === CSS_CLASSES.MESSAGE_USER) {
-      bubble.style.backgroundColor = 'var(--chat-primary, #00AEEF)';
-      bubble.style.color = '#ffffff';
-    } else if (type === CSS_CLASSES.MESSAGE_AGENT) {
-      bubble.style.backgroundColor = '#f5f5f5';
-      bubble.style.color = '#333333';
-    }
     
     await this._setMessageBubbleContent(bubble, type, text);
     message.appendChild(bubble);
