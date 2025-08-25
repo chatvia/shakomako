@@ -1101,9 +1101,10 @@ export class ChatWidget {
 
   _createAvatar() {
     const avatar = createElement('div', { className: CSS_CLASSES.MESSAGE_AVATAR });
-    if (this.settings.logo_url) {
+    const brandLogoUrl = this.settings.branding.logo_url;
+    if (brandLogoUrl) {
       const avatarImg = createElement('img', {
-        src: this.settings.logo_url,
+        src: brandLogoUrl,
         alt: 'Assistant'
       });
       avatar.appendChild(avatarImg);
