@@ -1530,6 +1530,7 @@ export class ChatWidget {
       this.showToast('No active chat to delete.');
       return;
     }
+    this.toggleMenuDropdown(); // Close menu first
     this._showConfirmationDialog(
       'Delete Chat',
       `Are you sure you want to delete "${threadToDelete.title || 'Untitled Chat'}"? This action cannot be undone.`,
