@@ -306,6 +306,23 @@
   object-fit: cover;
 }
 
+/* Dark theme adjustments for logos */
+.chat-widget .chat-window.dark-theme .chat-header-logo {
+  filter: brightness(0) invert(1);
+}
+
+.chat-widget .chat-window.dark-theme .chat-message-avatar img {
+  filter: brightness(0) invert(1);
+}
+
+.chat-widget.dark-theme .chat-bubble img {
+  filter: brightness(0) invert(1);
+}
+
+.chat-widget .chat-window.dark-theme .chat-brand-footer .brand-logo {
+  filter: brightness(0) invert(1);
+}
+
 .chat-header-title {
   flex-grow: 1;
   font-weight: 600;
@@ -1202,8 +1219,16 @@
   backdrop-filter: blur(4px);
 }
 
+.chat-widget .chat-brand-footer .brand-logo {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+  object-fit: contain;
+}
+
 .chat-widget .chat-brand-footer a {
-  color: var(--chat-primary);
+  color: #888;
   text-decoration: none;
   transition: color 0.2s ease, opacity 0.2s ease;
   font-weight: 500;
@@ -1213,23 +1238,24 @@
 .chat-widget .chat-brand-footer a:hover {
   text-decoration: none;
   opacity: 1;
-  color: var(--chat-primary);
+  color: #666;
 }
 
 /* Dark theme adjustments for brand footer */
 .chat-widget .chat-window.dark-theme .chat-brand-footer {
   background-color: rgba(28, 32, 48, 0.95); /* Using the dark background with transparency */
   border-top: 1px solid var(--chat-border);
-  color: var(--chat-text-light);
+  color: white;
 }
 
 .chat-widget .chat-window.dark-theme .chat-brand-footer a {
-  color: var(--chat-primary);
+  color: white;
   opacity: 0.9;
 }
 
 .chat-widget .chat-window.dark-theme .chat-brand-footer a:hover {
   opacity: 1;
+  color: white;
 }
 
 .chat-widget .new-chat-button {

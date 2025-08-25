@@ -1035,10 +1035,20 @@ export class ChatWidget {
     if (showBranding) {
       const brandName = this.settings.branding.name;
       const brandUrl = this.settings.branding.url;
+      const brandLogoUrl = this.settings.branding.logo_url;
+      
       if (brandUrl) {
-        this.brandFooter.innerHTML = `<a href="${brandUrl}" target="_blank" rel="noopener noreferrer">${brandName}</a>`;
+        if (brandLogoUrl) {
+          this.brandFooter.innerHTML = `<a href="${brandUrl}" target="_blank" rel="noopener noreferrer"><img src="${brandLogoUrl}" alt="Logo" class="brand-logo" />${brandName}</a>`;
+        } else {
+          this.brandFooter.innerHTML = `<a href="${brandUrl}" target="_blank" rel="noopener noreferrer">${brandName}</a>`;
+        }
       } else {
-        this.brandFooter.innerHTML = `<span>${brandName}</span>`;
+        if (brandLogoUrl) {
+          this.brandFooter.innerHTML = `<span><img src="${brandLogoUrl}" alt="Logo" class="brand-logo" />${brandName}</span>`;
+        } else {
+          this.brandFooter.innerHTML = `<span>${brandName}</span>`;
+        }
       }
       this.brandFooter.style.display = 'block';
     } else {
