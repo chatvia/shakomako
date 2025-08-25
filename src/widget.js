@@ -222,6 +222,8 @@ export class ChatWidget {
 
         await this.displayHistoryMessages();
         this._updateThreadActionButtons();
+        // Close menu dropdown if it's open
+        this.closeMenuDropdown();
         this.scrollToBottom();
 
         return newThread;
@@ -613,6 +615,29 @@ export class ChatWidget {
       this.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
       this.menuDropdown.style.opacity = '1';
       this.menuDropdown.style.zIndex = '10001';
+    }
+  }
+
+  menuDropdownIsOpened() {
+    return this.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN) || false;
+  }
+
+  closeMenuDropdown() {
+    if (this.menuDropdownIsOpened()) {
+      this.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+      const onTransitionEnd = e => {
+        if (e.propertyName === 'opacity') {
+          this.menuDropdown.style.display = 'none';
+          this.menuDropdown.removeEventListener('transitionend', onTransitionEnd);
+        }
+      };
+      this.menuDropdown.addEventListener('transitionend', onTransitionEnd);
+      // Fallback hide in case transition event doesn't fire
+      setTimeout(() => {
+        if (this.menuDropdown && !this.menuDropdownIsOpened()) {
+          this.menuDropdown.style.display = 'none';
+        }
+      }, 300);
     }
   }
 
