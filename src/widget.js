@@ -221,6 +221,7 @@ export class ChatWidget {
         this.setupSSE();
 
         await this.displayHistoryMessages();
+        this._updateThreadActionButtons();
         this.scrollToBottom();
 
         return newThread;
