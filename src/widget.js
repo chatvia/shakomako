@@ -378,7 +378,10 @@ export class ChatWidget {
     const currentActiveThreadId = this.getCurrentActiveThreadId();
     this.sseClient = createSSEClient(this.agentId, this.sessionId, currentActiveThreadId, {
       onOpen: () => this.removeConnectionErrorMessages(),
-      onClose: () => this.hideLoading(),
+      onClose: () => {
+        this.hideLoading();
+        this.finalizeStreamingMessage(); // Immediately finalize streaming when done
+      },
       onError: error => this._handleSSEError(error),
       onMessage: data => this._handleSSEMessage(data)
     });
