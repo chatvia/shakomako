@@ -18,18 +18,7 @@
   --chat-assistant-bubble: #f5f5f5;
   --chat-assistant-text: #333333;
 
-  /* Dark theme */
-  --chat-dark-bg: #1e1e1e;
-  --chat-dark-bg-rgb: 30, 30, 30;
-  --chat-dark-text: #ffffff;
-  --chat-dark-text-light: #bbbbbb;
-  --chat-dark-border: #444444;
-  --chat-dark-shadow: 0 5px 40px rgba(0, 0, 0, 0.32);
-  --chat-dark-system-bubble: #2d2d2d;
-  --chat-dark-user-bubble: var(--chat-primary);
-  --chat-dark-user-text: #ffffff;
-  --chat-dark-assistant-bubble: #2d2d2d;
-  --chat-dark-assistant-text: #ffffff;
+  /* Dark theme fallback variables (will be overridden by dark-theme class) */
 
   /* Size variables - Small */
   --chat-small-width: 24vw;
@@ -66,7 +55,10 @@
 .dark-theme {
   --chat-text: #f0f0f0;
   --chat-text-rgb: 240, 240, 240;
+  --chat-text-light: #bbbbbb;
   --chat-bg: #1c2030;
+  --chat-border: rgba(255, 255, 255, 0.08);
+  --chat-shadow: 0 5px 40px rgba(0, 0, 0, 0.32);
   --chat-user-bubble: #2B3245;
   --chat-user-text: #f0f0f0;
   --chat-assistant-bubble: var(--chat-primary);
@@ -75,7 +67,6 @@
   --chat-system-text: #A0A6BA;
   --chat-header: var(--chat-primary);
   --chat-header-text: #fff;
-  --chat-border: rgba(255, 255, 255, 0.08);
   --chat-primary-dark: #4C5AC0; /* Lighter hover color for dark mode */
 }
 
@@ -291,9 +282,7 @@
   scroll-behavior: smooth;
 }
 
-.chat-widget.dark-theme .chat-messages {
-  background-color: #1a1a1a;
-}
+
 
 /* Better header styling - Intercom style */
 .chat-header {
@@ -607,7 +596,7 @@
 /* Adjust the dark theme loading background */
 .chat-widget.dark-theme .chat-loading-dots,
 .chat-widget .chat-window.dark-theme .chat-loading-dots {
-  background-color: var(--chat-dark-assistant-bubble, #2d2d2d);
+  background-color: var(--chat-assistant-bubble);
 }
 
 @keyframes bounce {
@@ -694,12 +683,12 @@
 }
 
 .chat-widget.dark-theme .chat-input-container {
-  border-top: 1px solid var(--chat-dark-border);
+  border-top: 1px solid var(--chat-border);
 }
 
 .chat-widget.dark-theme .chat-input {
-  background-color: rgba(60, 60, 65, 0.8); /* Darker but still translucent background */
-  color: var(--chat-dark-text);
+  background-color: rgba(60, 60, 65, 0.8);
+  color: var(--chat-text);
   border: none;
 }
 
@@ -801,16 +790,7 @@
   fill: white;
 }
 
-/* Dark theme input styles */
-.chat-widget.dark-theme .chat-input-container {
-  border-top: 1px solid var(--chat-dark-border);
-}
 
-.chat-widget.dark-theme .chat-input {
-  background-color: #2c2c2e;
-  color: var(--chat-text);
-  border-color: #444;
-}
 
 /* Message spacing and appearance - Intercom style */
 .chat-widget .message + .message {
@@ -938,13 +918,13 @@
 
 /* Dark theme menu styling */
 .chat-widget .chat-window.dark-theme .chat-menu-dropdown {
-  background-color: var(--chat-dark-bg);
-  border: 1px solid var(--chat-dark-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background-color: var(--chat-bg);
+  border: 1px solid var(--chat-border);
+  box-shadow: var(--chat-shadow);
 }
 
 .chat-widget .chat-window.dark-theme .menu-option {
-  color: var(--chat-dark-text);
+  color: var(--chat-text);
 }
 
 .chat-widget .chat-window.dark-theme .menu-option:hover {
@@ -952,7 +932,7 @@
 }
 
 .chat-widget .chat-window.dark-theme .menu-option svg {
-  color: var(--chat-dark-text);
+  color: var(--chat-text);
 }
 
 /* Thread list styling - Intercom style */
@@ -1238,9 +1218,9 @@
 
 /* Dark theme adjustments for brand footer */
 .chat-widget .chat-window.dark-theme .chat-brand-footer {
-  background-color: rgba(var(--chat-dark-bg-rgb), 0.95);
-  border-top: 1px solid var(--chat-dark-border);
-  color: var(--chat-dark-text-light);
+  background-color: rgba(28, 32, 48, 0.95); /* Using the dark background with transparency */
+  border-top: 1px solid var(--chat-border);
+  color: var(--chat-text-light);
 }
 
 .chat-widget .chat-window.dark-theme .chat-brand-footer a {
@@ -1596,7 +1576,7 @@
 /* Dark theme starters */
 .chat-widget.dark-theme .chat-starters-container,
 .chat-widget .chat-window.dark-theme .chat-starters-container {
-  background-color: var(--chat-dark-bg);
+  background-color: var(--chat-bg);
   border-bottom: 1px solid transparent;
 }
 
