@@ -572,18 +572,10 @@ export class ChatWidget {
     });
     document.dispatchEvent(event);
 
-    this._updateThemeMenuOption();
+    // Theme menu option update removed - dark mode disabled
   }
 
-  _updateThemeMenuOption() {
-    if (!this.themeOption) return;
-    const iconName = this.settings.theme === 'dark' ? 'sun' : 'moon';
-    const label = this.settings.theme === 'dark' ? 'Light theme' : 'Dark theme';
-    // Clear existing icon/text
-    this.themeOption.innerHTML = '';
-    this.themeOption.appendChild(createIcon(iconName));
-    this.themeOption.appendChild(createElement('span', { textContent: label }));
-  }
+  // Theme menu option update method removed - dark mode disabled
 
   toggleMenuDropdown() {
     if (this.isStreaming) {
@@ -755,12 +747,7 @@ export class ChatWidget {
       'Expand chat',
       CSS_CLASSES.EXPAND_BUTTON
     );
-    this.themeToggleButton = this._createHeaderButton(
-      this.settings.theme === 'dark' ? 'sun' : 'moon',
-      this.settings.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
-      CSS_CLASSES.THEME_TOGGLE
-    );
-    this.themeToggleButton.style.display = 'none';
+    // Theme toggle removed - dark mode disabled
     this.closeButton = this._createHeaderButton('close', 'Close chat', CSS_CLASSES.CLOSE_BUTTON);
     this.menuDropdown = this._createMenuDropdown();
 
@@ -800,11 +787,7 @@ export class ChatWidget {
     this.historyOption = this._createMenuOption('Chat history', 'history', () =>
       this.loadChatHistory()
     );
-    this.themeOption = this._createMenuOption(
-      this.settings.theme === 'dark' ? 'Light theme' : 'Dark theme',
-      this.settings.theme === 'dark' ? 'sun' : 'moon',
-      () => this.toggleTheme()
-    );
+    // Theme option removed - dark mode disabled
     this.clearCurrentOption = this._createMenuOption('Clear current chat', 'delete', () =>
       this.confirmDeleteThread()
     );
@@ -814,7 +797,6 @@ export class ChatWidget {
 
     dropdown.appendChild(this.newChatOption);
     dropdown.appendChild(this.historyOption);
-    dropdown.appendChild(this.themeOption);
     dropdown.appendChild(
       createElement('hr', {
         style: 'border:none;border-top:1px solid var(--chat-border);margin:4px 0;'
@@ -989,17 +971,11 @@ export class ChatWidget {
       if (this.chatBubble) this.chatBubble.style.display = 'none';
     }
 
-    if (this.settings.theme === 'dark') {
-      this.chatWindow?.classList.add(CSS_CLASSES.WINDOW_DARK);
-    } else {
-      this.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_DARK);
-    }
+    // Dark theme initialization removed - dark mode disabled
 
     this.applyWindowSize();
 
-    if (this.themeToggleButton) {
-      this.themeToggleButton.style.display = this.settings.show_theme_switcher ? 'flex' : 'none';
-    }
+    // Theme toggle button removed - dark mode disabled
 
     this._applyColors();
     this._applyLogos();
@@ -1389,13 +1365,7 @@ export class ChatWidget {
 
   _setupHeaderButtonListeners() {
     if (this.settings.show_theme_switcher) {
-      this.themeToggleButton?.addEventListener('click', () => this.toggleTheme());
-      this.themeToggleButton?.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          this.toggleTheme();
-        }
-      });
+      // Theme toggle event listeners removed - dark mode disabled
     }
     this.expandButton?.addEventListener('click', () => this.toggleExpand());
     this.expandButton?.addEventListener('keydown', e => {

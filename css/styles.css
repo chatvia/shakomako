@@ -18,8 +18,6 @@
   --chat-assistant-bubble: #f5f5f5;
   --chat-assistant-text: #333333;
 
-  /* Dark theme fallback variables (will be overridden by dark-theme class) */
-
   /* Size variables - Small */
   --chat-small-width: 24vw;
   --chat-small-height: 65vh;
@@ -45,31 +43,9 @@
   --chat-large-max-height: 90vh;
 
 
-  --chat-primary-dark: #2C3985; /* Darker version of primary for hover effects */
   --chat-system-text: #656565;
   --chat-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-
-/* Dark theme styles applied when the 'dark-theme' class is added */
-.chat-widget.dark-theme,
-.dark-theme {
-  --chat-text: #f0f0f0;
-  --chat-text-rgb: 240, 240, 240;
-  --chat-text-light: #bbbbbb;
-  --chat-bg: #1c2030;
-  --chat-border: rgba(255, 255, 255, 0.08);
-  --chat-shadow: 0 5px 40px rgba(0, 0, 0, 0.32);
-  --chat-user-bubble: #2B3245;
-  --chat-user-text: #f0f0f0;
-  --chat-assistant-bubble: var(--chat-primary);
-  --chat-assistant-text: #FFFFFF;
-  --chat-system-bubble: #2B3245;
-  --chat-system-text: #A0A6BA;
-  --chat-header: var(--chat-primary);
-  --chat-header-text: #fff;
-  --chat-primary-dark: #4C5AC0; /* Lighter hover color for dark mode */
-}
-
 
 /* Chat Widget container */
 .chat-widget {
@@ -306,23 +282,6 @@
   object-fit: cover;
 }
 
-/* Dark theme adjustments for logos */
-.chat-widget .chat-window.dark-theme .chat-header-logo {
-  filter: brightness(0) invert(1);
-}
-
-.chat-widget .chat-window.dark-theme .chat-message-avatar img {
-  filter: brightness(0) invert(1);
-}
-
-.chat-widget.dark-theme .chat-bubble img {
-  filter: brightness(0) invert(1);
-}
-
-.chat-widget .chat-window.dark-theme .chat-brand-footer .brand-logo {
-  filter: brightness(0) invert(1);
-}
-
 .chat-header-title {
   flex-grow: 1;
   font-weight: 600;
@@ -486,11 +445,6 @@
   height: auto;
 }
 
-/* Dark theme fixes */
-.chat-widget.dark-theme .message.assistant .message-bubble {
-  background-color: var(--chat-assistant-bubble);
-  color: #f1f1f1;
-}
 
 /* System message styling - Connection status banner */
 .chat-widget .message.system {
@@ -532,15 +486,6 @@
   background-position: center;
 }
 
-/* Dark theme warning message */
-.chat-widget.dark-theme .message.system .message-bubble {
-  background-color: #2C2A19; /* Darker yellow for dark theme */
-  color: #FFE082; /* Light yellow text for dark theme */
-}
-
-.chat-widget.dark-theme .message.system .message-bubble:before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFE082' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.55a11 11 0 0 1 14.08 0'%3E%3C/path%3E%3Cpath d='M1.42 9a16 16 0 0 1 21.16 0'%3E%3C/path%3E%3Cpath d='M8.53 16.11a6 6 0 0 1 6.95 0'%3E%3C/path%3E%3Cline x1='12' y1='20' x2='12' y2='20'%3E%3C/line%3E%3C/svg%3E");
-}
 
 /* Error system message (red) */
 .chat-widget .message.system.error .message-bubble {
@@ -550,16 +495,6 @@
 
 .chat-widget .message.system.error .message-bubble:before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23DC3545' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'/%3E%3C/svg%3E");
-}
-
-/* Dark theme error system message */
-.chat-widget.dark-theme .message.system.error .message-bubble {
-  background-color: #2D1F1F; /* Darker red background */
-  color: #FF8B96; /* Light red text */
-}
-
-.chat-widget.dark-theme .message.system.error .message-bubble:before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF8B96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'/%3E%3C/svg%3E");
 }
 
 /* Loading indicator - Intercom style */
@@ -602,18 +537,6 @@
 
 .chat-widget .chat-loading-dots .dot:nth-child(3) {
   animation-delay: 0s;
-}
-
-/* Dark theme loading dots */
-.chat-widget.dark-theme .chat-loading-dots .dot,
-.chat-widget .chat-window.dark-theme .chat-loading-dots .dot {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-/* Adjust the dark theme loading background */
-.chat-widget.dark-theme .chat-loading-dots,
-.chat-widget .chat-window.dark-theme .chat-loading-dots {
-  background-color: var(--chat-assistant-bubble);
 }
 
 @keyframes bounce {
@@ -683,31 +606,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Dark theme - only include what isn't already covered by variables */
-.chat-widget .chat-window.dark-theme {
-  background-color: var(--chat-bg);
-  color: var(--chat-text);
-}
-
-.chat-widget.dark-theme .chat-messages {
-  background-color: var(--chat-bg);
-}
-
-.chat-widget.dark-theme .chat-input-container {
-  border-top: 1px solid var(--chat-border);
-}
-
-.chat-widget.dark-theme .chat-input {
-  background-color: rgba(60, 60, 65, 0.8);
-  color: var(--chat-text);
-  border: none;
-}
-
-.chat-widget.dark-theme .chat-input:focus {
-  border-color: var(--chat-primary);
-  background-color: rgba(var(--chat-primary-rgb), 0.15);
 }
 
 /* Media queries for responsive behavior */
@@ -790,7 +688,7 @@
 
 .chat-widget .chat-send:hover {
   transform: translateY(50%) scale(1.05);
-  background-color: var(--chat-primary-dark);
+  background-color: var(--chat-primary);
 }
 
 .chat-widget .chat-send:active {
@@ -929,25 +827,6 @@
   opacity: 0.7;
 }
 
-/* Dark theme menu styling */
-.chat-widget .chat-window.dark-theme .chat-menu-dropdown {
-  background-color: var(--chat-bg);
-  border: 1px solid var(--chat-border);
-  box-shadow: var(--chat-shadow);
-}
-
-.chat-widget .chat-window.dark-theme .menu-option {
-  color: var(--chat-text);
-}
-
-.chat-widget .chat-window.dark-theme .menu-option:hover {
-  background-color: rgba(var(--chat-primary-rgb), 0.15);
-}
-
-.chat-widget .chat-window.dark-theme .menu-option svg {
-  color: var(--chat-text);
-}
-
 /* Thread list styling - Intercom style */
 .chat-widget .threads-container {
   display: flex;
@@ -1037,39 +916,6 @@
 }
 
 .chat-widget .thread-item:hover .thread-arrow-icon {
-  color: #a0aec0;
-}
-
-/* Dark theme adjustments */
-.chat-widget.dark-theme .thread-item {
-  border-bottom: 1px solid #374151;
-}
-
-.chat-widget.dark-theme .thread-item:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.chat-widget.dark-theme .thread-item.active {
-  background-color: rgba(var(--chat-primary-rgb), 0.15);
-}
-
-.chat-widget.dark-theme .thread-title {
-  color: #f7fafc;
-}
-
-.chat-widget.dark-theme .thread-subtitle {
-  color: #a0aec0;
-}
-
-.chat-widget.dark-theme .thread-date {
-  color: #a0aec0;
-}
-
-.chat-widget.dark-theme .thread-arrow-icon {
-  color: #718096;
-}
-
-.chat-widget.dark-theme .thread-item:hover .thread-arrow-icon {
   color: #a0aec0;
 }
 
@@ -1237,23 +1083,6 @@
   color: #666;
 }
 
-/* Dark theme adjustments for brand footer */
-.chat-widget .chat-window.dark-theme .chat-brand-footer {
-  background-color: rgba(28, 32, 48, 0.95); /* Using the dark background with transparency */
-  border-top: 1px solid var(--chat-border);
-  color: white;
-}
-
-.chat-widget .chat-window.dark-theme .chat-brand-footer a {
-  color: white;
-  opacity: 0.9;
-}
-
-.chat-widget .chat-window.dark-theme .chat-brand-footer a:hover {
-  opacity: 1;
-  color: white;
-}
-
 .chat-widget .new-chat-button {
   background-color: var(--chat-primary);
   color: white;
@@ -1309,15 +1138,6 @@
   100% {
     transform: rotate(360deg) scale(1);
   }
-}
-
-/* Dark theme styles for the theme toggle */
-.chat-widget .chat-window.dark-theme .chat-theme-toggle {
-  background-color: transparent;
-}
-
-.chat-widget .chat-window.dark-theme .chat-theme-toggle:hover {
-  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Unauthorized message styles */
@@ -1595,33 +1415,6 @@
   box-shadow: none;
 }
 
-/* Dark theme starters */
-.chat-widget.dark-theme .chat-starters-container,
-.chat-widget .chat-window.dark-theme .chat-starters-container {
-  background-color: var(--chat-bg);
-  border-bottom: 1px solid transparent;
-}
-
-.chat-widget.dark-theme .chat-starter-button,
-.chat-widget .chat-window.dark-theme .chat-starter-button {
-  background-color: #333333;
-  color: #e0e0e0;
-  border: 1px solid #444444;
-  border-radius: 12px;
-  box-shadow: none;
-}
-
-.chat-widget.dark-theme .chat-starter-button:hover,
-.chat-widget .chat-window.dark-theme .chat-starter-button:hover {
-  background-color: #363636;
-  box-shadow: none;
-}
-
-.chat-widget.dark-theme .chat-starter-button:active,
-.chat-widget .chat-window.dark-theme .chat-starter-button:active {
-  background-color: #404040;
-}
-
 /* Mobile responsiveness for starters */
 @media (max-width: 768px) {
   .chat-widget .chat-starters-container {
@@ -1695,15 +1488,6 @@
 .chat-widget .delete-all-button:active,
 .chat-widget .new-chat-button:active {
   transform: translateY(0);
-}
-
-/* Dark theme adjustments */
-.chat-widget.dark-theme .delete-all-button {
-  background-color: #C9354A;
-}
-
-.chat-widget.dark-theme .delete-all-button:hover {
-  background-color: #B32C40;
 }
 
 /* Centered actions container */
