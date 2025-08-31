@@ -495,6 +495,47 @@
   right: auto !important;
 }
 
+/* Floating Message Bubbles */
+.chatvia-widget .message-bubbles {
+  position: absolute;
+  bottom: 75px; /* Much closer to the chat bubble */
+  right: 0;
+  width: 320px;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.chatvia-widget.bottom-left .message-bubbles {
+  right: auto;
+  left: 0;
+}
+
+.chatvia-widget .floating-bubble {
+  background: var(--chat-primary);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+  max-width: 100%;
+  word-wrap: break-word;
+  position: relative;
+  cursor: pointer;
+}
+
+.chatvia-widget .floating-bubble.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+
+
 /* Chat bubble (collapsed state) - Intercom style */
 .chatvia-widget .chat-bubble {
   width: 60px;

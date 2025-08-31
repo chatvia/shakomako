@@ -53,7 +53,15 @@ export const CSS_CLASSES = {
   THREAD_TITLE: 'thread-title',
   THREAD_DATE: 'thread-date',
   STREAMING_MESSAGE: 'streaming-message',
-  STREAMING_MESSAGE_CLASS: 'message assistant streaming'
+  STREAMING_MESSAGE_CLASS: 'message assistant streaming',
+  MESSAGE_BUBBLES_CONTAINER: 'message-bubbles',
+  FLOATING_BUBBLE: 'floating-bubble',
+  FLOATING_BUBBLE_SHOW: 'show',
+  FULLSCREEN: 'fullscreen',
+  WINDOW_SMALL: 'small',
+  WINDOW_MEDIUM: 'medium',
+  WINDOW_LARGE: 'large',
+  STREAMING: 'streaming'
 };
 export const STREAMING_DONE_MARKER = '[DONE]';
 export const STREAMING_FINALIZE_TIMEOUT = 5000; // ms

@@ -120,6 +120,9 @@ export class ChatWidget {
         }, this.settings.show_on_load_delay);
       }
       console.log('Widget initialization complete.');
+      
+      // Initialize message bubbles
+      this._initializeMessageBubbles();
 
       setTimeout(() => {
         this.autoResizeInput();
@@ -483,6 +486,9 @@ export class ChatWidget {
     if (this.isOpen) {
       this.chatWindow?.classList.add(CSS_CLASSES.WINDOW_OPEN);
       this.chatBubble?.classList.add(CSS_CLASSES.BUBBLE_ACTIVE);
+      
+      // Stop message bubbles when chat opens
+      this._stopMessageBubbles();
 
       if (this.settings.is_fullscreen) {
         this.container.classList.add('fullscreen');
@@ -644,6 +650,10 @@ export class ChatWidget {
         // Standard widget with bubble
         this.chatBubble = this._createChatBubble();
         this.container.appendChild(this.chatBubble);
+        
+        // Create message bubbles container
+        this.messageBubblesContainer = this._createMessageBubblesContainer();
+        this.container.appendChild(this.messageBubblesContainer);
       }
 
       this.chatWindow = this._createChatWindow();
@@ -694,6 +704,80 @@ export class ChatWidget {
     });
     bubble.appendChild(this.bubbleLogo);
     return bubble;
+  }
+
+  _createMessageBubblesContainer() {
+    return createElement('div', {
+      className: CSS_CLASSES.MESSAGE_BUBBLES_CONTAINER
+    });
+  }
+
+  _initializeMessageBubbles() {
+    // Only show bubbles if not in flat mode and bubbles exist
+    if (this.isFlat || !this.settings.bubbles || !Array.isArray(this.settings.bubbles) || this.settings.bubbles.length === 0) {
+      return;
+    }
+
+    this.currentBubbleIndex = 0;
+    
+    // Start showing bubbles after a delay
+    setTimeout(() => {
+      this._showNextBubble();
+    }, 1000); // Show first bubble after 1 second
+  }
+
+  _showNextBubble() {
+    if (!this.settings.bubbles || this.settings.bubbles.length === 0 || !this.messageBubblesContainer) {
+      return;
+    }
+
+    // Check if we've shown all bubbles
+    if (this.currentBubbleIndex >= this.settings.bubbles.length) {
+      return; // All bubbles have been shown
+    }
+
+    // Get current bubble text
+    const bubbleText = this.settings.bubbles[this.currentBubbleIndex];
+    
+    // Create bubble element
+    const bubble = createElement('div', {
+      className: CSS_CLASSES.FLOATING_BUBBLE,
+      textContent: bubbleText
+    });
+
+    // Add click listener to hide the bubble
+    bubble.addEventListener('click', () => {
+      bubble.classList.remove(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
+      setTimeout(() => {
+        if (bubble.parentNode) {
+          bubble.parentNode.removeChild(bubble);
+        }
+      }, 300); // Wait for hide animation
+    });
+
+    // Add to container (they stack up)
+    this.messageBubblesContainer.appendChild(bubble);
+
+    // Animate in
+    setTimeout(() => {
+      bubble.classList.add(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
+    }, 100);
+
+    // Move to next bubble
+    this.currentBubbleIndex++;
+    
+    // Show next bubble after a delay (if there are more)
+    if (this.currentBubbleIndex < this.settings.bubbles.length) {
+      setTimeout(() => {
+        this._showNextBubble();
+      }, 2000); // 2 second delay between bubbles
+    }
+  }
+
+  _stopMessageBubbles() {
+    if (this.messageBubblesContainer) {
+      this.messageBubblesContainer.innerHTML = '';
+    }
   }
 
   _createChatWindow() {
