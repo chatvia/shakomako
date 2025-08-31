@@ -39,7 +39,7 @@ jobs:
           echo "VITE_SCRIPT_URL=${{ vars.BUNNY_CDN_BASE_URL }}/widget" >> .env
           echo "VITE_SSE_URL=${{ vars.SSE_URL }}" >> .env
           cat .env
-          npm run build
+          npm run build:prod
 
       - name: Deploy to Bunny CDN via HTTP API
         run: |

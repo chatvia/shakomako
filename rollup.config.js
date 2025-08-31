@@ -61,17 +61,29 @@ const commonPlugins = [
       ],
       debugger: true
     }),
-  terser({
+  isProduction ? terser({
     format: {
       comments: false
     },
     compress: {
-      drop_console: false,
+      drop_console: true, // Drop console logs in production
       pure_getters: true,
       unsafe: true,
       unsafe_comps: true,
       passes: 2
     }
+  }) : terser({
+    format: {
+      comments: false
+    },
+    compress: {
+      drop_console: false, // Keep console logs in development
+      pure_getters: false,
+      unsafe: false,
+      unsafe_comps: false,
+      passes: 1
+    },
+    mangle: false // Don't mangle names in development for easier debugging
   })
 ];
 
