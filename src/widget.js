@@ -342,16 +342,25 @@ export class ChatWidget {
         await this.addMessage(messageType, message.content, false);
       }
     } else if (this.settings.welcome_message) {
+      console.log('Welcome message exists:', this.settings.welcome_message);
       const activeThread = this.getActiveThread();
+      console.log('Active thread:', activeThread);
 
       if (activeThread && !activeThread.welcomeShown) {
+        console.log('Showing welcome message');
         // Set the flag immediately to prevent duplicate calls
         activeThread.welcomeShown = true;
         
         setTimeout(async () => {
-          await this.addMessage(CSS_CLASSES.MESSAGE_AGENT, this.settings.welcome_message, false);
+          console.log('Welcome message timeout fired, calling addMessage');
+          const result = await this.addMessage(CSS_CLASSES.MESSAGE_AGENT, this.settings.welcome_message, false);
+          console.log('addMessage result:', result);
         }, 500);
+      } else {
+        console.log('Welcome message already shown or no active thread');
       }
+    } else {
+      console.log('No welcome message in settings');
     }
   }
 
@@ -491,7 +500,7 @@ export class ChatWidget {
       this._stopMessageBubbles();
 
       if (this.settings.is_fullscreen) {
-        this.container.classList.add('fullscreen');
+        this.container.classList.add(CSS_CLASSES.FULLSCREEN);
         // Hide chat bubble when window is open in fullscreen
         if (this.chatBubble) {
           this.chatBubble.style.display = 'none';
@@ -504,7 +513,7 @@ export class ChatWidget {
       this.chatBubble?.classList.remove(CSS_CLASSES.BUBBLE_ACTIVE);
       // Remove fullscreen when closing
       if (this.settings.is_fullscreen) {
-        this.container.classList.remove('fullscreen');
+        this.container.classList.remove(CSS_CLASSES.FULLSCREEN);
         // Show chat bubble when window is closed in fullscreen
         if (this.chatBubble) {
           this.chatBubble.style.display = 'flex';
@@ -519,7 +528,7 @@ export class ChatWidget {
   }
 
   toggleExpand() {
-    if (this.settings.window_size === 'large' && !this._previousWindowSize) {
+    if (this.settings.window_size === CSS_CLASSES.WINDOW_LARGE && !this._previousWindowSize) {
       console.log('Already in large mode, cannot expand further unless collapsed first.');
       return;
     }
@@ -528,14 +537,14 @@ export class ChatWidget {
 
     if (!this.isWidthExpanded) {
       this._previousWindowSize = this.settings.window_size;
-      this.settings.window_size = 'large';
+      this.settings.window_size = CSS_CLASSES.WINDOW_LARGE;
       this.isWidthExpanded = true;
       this.expandButton.title = 'Collapse chat';
       this.expandButton.innerHTML = ''; // Clear previous icon
       this.expandButton.appendChild(createIcon('collapse'));
       console.log('Expanded chat window to large from ' + this._previousWindowSize);
     } else {
-      this.settings.window_size = this._previousWindowSize || 'medium';
+      this.settings.window_size = this._previousWindowSize || CSS_CLASSES.WINDOW_MEDIUM;
       this._previousWindowSize = null;
       this.isWidthExpanded = false;
       this.expandButton.title = 'Expand chat';
@@ -1126,13 +1135,13 @@ export class ChatWidget {
   applyWindowSize() {
     if (!this.chatWindow) return;
 
-    this.chatWindow.classList.remove('small', 'medium', 'large');
+    this.chatWindow.classList.remove(CSS_CLASSES.WINDOW_SMALL, CSS_CLASSES.WINDOW_MEDIUM, CSS_CLASSES.WINDOW_LARGE);
 
-    if (['small', 'medium', 'large'].includes(this.settings.window_size)) {
+    if ([CSS_CLASSES.WINDOW_SMALL, CSS_CLASSES.WINDOW_MEDIUM, CSS_CLASSES.WINDOW_LARGE].includes(this.settings.window_size)) {
       this.chatWindow.classList.add(this.settings.window_size);
 
       if (this.expandButton) {
-        if (this.settings.window_size === 'large') {
+        if (this.settings.window_size === CSS_CLASSES.WINDOW_LARGE) {
           this.expandButton.style.display = this._previousWindowSize ? 'flex' : 'none';
         } else {
           this.expandButton.style.display = 'flex';
@@ -1142,7 +1151,11 @@ export class ChatWidget {
   }
 
   async addMessage(type, text, addToHistory = true, options = {}) {
-    if (!this.messagesContainer) return null;
+    console.log('addMessage called:', { type, text, addToHistory, messagesContainer: !!this.messagesContainer });
+    if (!this.messagesContainer) {
+      console.log('No messagesContainer found, returning null');
+      return null;
+    }
     
 
     
@@ -1314,7 +1327,7 @@ export class ChatWidget {
     const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
     if (streamingMsgElement && this.currentStreamedMessage.trim() !== '') {
       // Just remove the streaming class but keep the assistant class
-      streamingMsgElement.classList.remove('streaming');
+      streamingMsgElement.classList.remove(CSS_CLASSES.STREAMING);
       streamingMsgElement.removeAttribute('id');
 
       // Save final message to history
