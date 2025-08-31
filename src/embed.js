@@ -24,7 +24,7 @@ window.chatbot =
   }
 
   const agentId = embedScriptTag.getAttribute('agent-id');
-  const mountId = embedScriptTag.getAttribute('data-mount-id');
+  const mountId = embedScriptTag.getAttribute('mount-id');
 
   window[namespace].agentId = agentId;
   if (mountId) window[namespace].mountId = mountId;
