@@ -9,7 +9,6 @@ import {
   CSS_CLASSES,
   DEFAULT_AVATAR_SVG,
   DEFAULT_LOGO_SVG,
-  DEFAULT_PRIMARY_COLOR,
   STREAMING_DONE_MARKER,
   STREAMING_FINALIZE_TIMEOUT
 } from './utils.js';
@@ -986,11 +985,19 @@ export class ChatWidget {
   }
 
   _applyColors() {
-    const primaryColor = this.settings.primary_color || DEFAULT_PRIMARY_COLOR;
-    document.documentElement.style.setProperty('--chat-primary', primaryColor);
-    // Header text color is now defined in CSS - no need to set it here
-    document.documentElement.style.setProperty('--chat-primary-rgb', primaryColor);
+    const colorTheme = this.settings.color_theme;
+    const colorShade = this.settings.color_shade;
+    
+    // Only apply colors if both theme and shade are set
+    if (!colorTheme || colorShade == null) {
+      return; // No color set, leave CSS defaults
+    }
+    
+    // Use the CSS variable for the theme and shade
+    document.documentElement.style.setProperty('--chat-primary', `var(--${colorTheme}-${colorShade})`);
   }
+
+
 
   _applyLogos() {
     const logoUrl = this.settings.logo_url || DEFAULT_LOGO_SVG;
