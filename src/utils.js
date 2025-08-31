@@ -1,5 +1,5 @@
 export const CSS_CLASSES = {
-  WIDGET: 'chat-widget',
+  WIDGET: 'chatvia-widget',
   BUBBLE: 'chat-bubble',
   BUBBLE_PULSE: 'pulse',
   BUBBLE_ACTIVE: 'active',
@@ -41,8 +41,8 @@ export const CSS_CLASSES = {
   CONFIRM_BUTTONS: 'chat-confirm-buttons',
   CONFIRM_CANCEL: 'chat-confirm-cancel',
   CONFIRM_DELETE: 'chat-confirm-delete',
-  TOAST_CONTAINER: 'chat-widget-toast-container',
-  TOAST: 'chat-widget-toast',
+  TOAST_CONTAINER: 'chatvia-widget-toast-container',
+  TOAST: 'chatvia-widget-toast',
   TOAST_SHOW: 'show',
   THREADS_CONTAINER: 'threads-container',
   THREADS_HEADER: 'threads-header',
