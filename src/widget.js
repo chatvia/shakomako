@@ -1056,7 +1056,7 @@ export class ChatWidget {
     if (!this.container) return; // Ensure elements are created
 
     // Set the base widget class and position (flat overrides)
-    this.container.className = `${CSS_CLASSES.WIDGET} ${this.isFlat ? 'flat' : this.settings.position || 'bottom-right'}`;
+    this.container.className = `${CSS_CLASSES.WIDGET} ${this.isFlat ? 'flat-mode' : this.settings.position || 'bottom-right'}`;
 
     if (this.isFlat) {
       // Hide bubble if it exists
@@ -1134,6 +1134,9 @@ export class ChatWidget {
 
   applyWindowSize() {
     if (!this.chatWindow) return;
+    
+    // Skip applying window sizes in flat mode - let the container control the size
+    if (this.isFlat) return;
 
     this.chatWindow.classList.remove(CSS_CLASSES.WINDOW_SMALL, CSS_CLASSES.WINDOW_MEDIUM, CSS_CLASSES.WINDOW_LARGE);
 

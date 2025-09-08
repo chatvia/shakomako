@@ -661,6 +661,37 @@
   transform: translateY(20px) scale(0.95);
 }
 
+/* Flat mode - widget adapts to container size */
+.chatvia-widget.flat-mode {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  top: unset !important;
+  left: unset !important;
+  right: unset !important;
+  bottom: unset !important;
+}
+
+.chatvia-widget.flat-mode .chat-window {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: unset !important;
+  max-width: unset !important;
+  min-height: unset !important;
+  max-height: unset !important;
+  border-radius: 0 !important;
+  box-shadow: none;
+  transform: none !important;
+  opacity: 1 !important;
+  display: flex !important;
+}
+
+.chatvia-widget.flat-mode .chat-header {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
 /* Window size variations */
 .chatvia-widget .chat-window.small {
   width: var(--chat-small-width);
