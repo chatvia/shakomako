@@ -1,3 +1,5 @@
+import { CSS_CLASSES } from './utils.js';
+
 // Define a shared icon map once at module load time to avoid
 // repeatedly creating the object on every createIcon call.
 const ICON_SVG_MAP = {
@@ -81,4 +83,246 @@ export function createElementFromHTML(htmlString) {
   const div = document.createElement('div');
   div.innerHTML = htmlString.trim();
   return div.firstChild;
+}
+
+export async function createLeadForm(onSubmit, agentId) {
+  const formContainer = createElement('div', {
+    className: CSS_CLASSES.LEAD_FORM_CONTAINER
+  });
+
+  // Will be updated with dynamic title from API
+  const formTitle = createElement('h3', {
+    className: CSS_CLASSES.LEAD_FORM_TITLE,
+    textContent: 'Get in touch' // Default fallback
+  });
+
+  // Show loading while fetching form fields
+  const loadingMessage = createElement('div', {
+    className: CSS_CLASSES.LEAD_FORM_LOADING,
+    textContent: 'Loading form...'
+  });
+
+  formContainer.appendChild(formTitle);
+  formContainer.appendChild(loadingMessage);
+
+  try {
+    // Fetch dynamic form fields
+    /* global __API_URL__ */
+    const response = await fetch(`${__API_URL__}/leads/form`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-AGENT-ID': agentId
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch form fields: ${response.status}`);
+    }
+
+    // Check if response has content before parsing JSON
+    let formConfig = {
+      title: 'Get in touch',
+      fields: { name: 'Name', email: 'Email' }
+    }; // Default fallback
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      if (text) {
+        try {
+          const responseData = JSON.parse(text);
+          
+          // Handle new object format with title and fields
+          if (responseData && typeof responseData === 'object') {
+            // New nested format: { title: '', fields: { fields: { name: { title: 'Name', required: true }, ... } } }
+            if (responseData.title !== undefined && responseData.fields && responseData.fields.fields && typeof responseData.fields.fields === 'object') {
+              formConfig.title = responseData.title || 'Get in touch';
+              formConfig.fields = responseData.fields.fields;
+            }
+            // Legacy format: { title: '', fields: { name: 'Name', email: 'Email', ... } }
+            else if (responseData.title !== undefined && responseData.fields && typeof responseData.fields === 'object') {
+              formConfig.title = responseData.title || 'Get in touch';
+              formConfig.fields = responseData.fields;
+            }
+            // Legacy array format: ['name', 'email', 'phone', ...]
+            else if (Array.isArray(responseData)) {
+              const fields = {};
+              responseData.forEach(fieldName => {
+                fields[fieldName] = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+              });
+              formConfig.fields = fields;
+            }
+            // Legacy object format: { fields: ['name', 'email', ...] }
+            else if (responseData.fields && Array.isArray(responseData.fields)) {
+              const fields = {};
+              responseData.fields.forEach(fieldName => {
+                fields[fieldName] = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+              });
+              formConfig.fields = fields;
+            } else {
+              console.warn('Unexpected form config format, using default fields:', responseData);
+            }
+          } else {
+            console.warn('Invalid form config response, using default fields:', responseData);
+          }
+        } catch (e) {
+          console.warn('Form config response is not valid JSON, using default fields:', text);
+        }
+      }
+    } else {
+      console.warn('Form config response is not JSON, using default fields');
+    }
+    
+    console.log('📋 Received form configuration:', formConfig);
+    
+    // Update form title
+    if (formConfig.title) {
+      formTitle.textContent = formConfig.title;
+    }
+
+    // Remove loading message
+    loadingMessage.remove();
+
+    // Create the form
+    const form = createElement('form', {
+      className: CSS_CLASSES.LEAD_FORM
+    });
+
+    // Field configuration mapping
+    const fieldTypes = {
+      name: { type: 'text', label: 'Name', placeholder: 'Enter your name' },
+      email: { type: 'email', label: 'Email', placeholder: 'Enter your email' },
+      phone: { type: 'tel', label: 'Phone', placeholder: 'Enter your phone number' },
+      job_title: { type: 'text', label: 'Job Title', placeholder: 'Enter your job title' },
+      company: { type: 'text', label: 'Company', placeholder: 'Enter your company name' },
+      location: { type: 'text', label: 'Location', placeholder: 'Enter your location' },
+      message: { type: 'textarea', label: 'Message', placeholder: 'Enter your message' }
+    };
+
+    // Create fields based on configuration
+    const fieldNames = Object.keys(formConfig.fields);
+    const enabledFields = []; // Track which fields are actually enabled and rendered
+    
+    fieldNames.forEach(fieldName => {
+      // Get field type configuration
+      const fieldTypeConfig = fieldTypes[fieldName] || { type: 'text' };
+      
+      // Handle both new format (with title/required/enabled) and legacy format (simple string)
+      const fieldData = formConfig.fields[fieldName];
+      let fieldLabel, isRequired, isEnabled;
+      
+      if (fieldData && typeof fieldData === 'object' && fieldData.title !== undefined) {
+        // New format: { title: 'Name', required: true, enabled: true }
+        fieldLabel = fieldData.title;
+        isRequired = fieldData.required === true;
+        isEnabled = fieldData.enabled !== false; // Default to true if not specified
+      } else {
+        // Legacy format: simple string value
+        fieldLabel = fieldData || fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        isRequired = fieldName === 'name' || fieldName === 'email'; // Fallback for legacy
+        isEnabled = true; // Legacy fields are always enabled
+      }
+      
+      // Skip field if not enabled
+      if (!isEnabled) {
+        return;
+      }
+      
+      // Track enabled fields for form submission
+      enabledFields.push(fieldName);
+      
+      const fieldConfig = {
+        type: fieldTypeConfig.type,
+        label: fieldLabel,
+        placeholder: fieldTypeConfig.placeholder || `Enter your ${fieldLabel.toLowerCase()}`,
+        required: isRequired
+      };
+      
+      const fieldDiv = createElement('div', {
+        className: CSS_CLASSES.LEAD_FORM_FIELD
+      });
+      
+      const label = createElement('label', {
+        className: CSS_CLASSES.LEAD_FORM_LABEL,
+        textContent: fieldConfig.label + (fieldConfig.required ? ' *' : ''),
+        for: `lead-${fieldName}`
+      });
+      
+      let input;
+      if (fieldConfig.type === 'textarea') {
+        input = createElement('textarea', {
+          className: CSS_CLASSES.LEAD_FORM_INPUT,
+          id: `lead-${fieldName}`,
+          name: fieldName,
+          required: fieldConfig.required,
+          placeholder: fieldConfig.placeholder,
+          rows: 3
+        });
+      } else {
+        input = createElement('input', {
+          className: CSS_CLASSES.LEAD_FORM_INPUT,
+          type: fieldConfig.type,
+          id: `lead-${fieldName}`,
+          name: fieldName,
+          required: fieldConfig.required,
+          placeholder: fieldConfig.placeholder
+        });
+      }
+
+      fieldDiv.appendChild(label);
+      fieldDiv.appendChild(input);
+      form.appendChild(fieldDiv);
+    });
+
+    // Submit button
+    const submitButton = createElement('button', {
+      className: CSS_CLASSES.LEAD_FORM_SUBMIT,
+      type: 'submit',
+      textContent: 'Submit'
+    });
+
+    // Form submission handling
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Disable submit button and show loading
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
+      
+      const formData = new FormData(form);
+      const leadData = {};
+      
+      // Collect form data only from enabled fields
+      enabledFields.forEach(fieldName => {
+        const value = formData.get(fieldName);
+        if (value) {
+          leadData[fieldName] = value;
+        }
+      });
+      
+      if (onSubmit) {
+        await onSubmit(leadData);
+      }
+    });
+
+    form.appendChild(submitButton);
+    formContainer.appendChild(form);
+
+  } catch (error) {
+    console.error('❌ Error fetching form configuration:', error);
+    
+    // Remove loading message
+    loadingMessage.remove();
+    
+    // Show error message
+    const errorMessage = createElement('div', {
+      className: CSS_CLASSES.LEAD_FORM_ERROR,
+      textContent: 'Unable to load form. Please try again later.'
+    });
+    
+    formContainer.appendChild(errorMessage);
+  }
+
+  return formContainer;
 }

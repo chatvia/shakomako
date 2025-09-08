@@ -12,7 +12,7 @@ import {
   STREAMING_DONE_MARKER,
   STREAMING_FINALIZE_TIMEOUT
 } from './utils.js';
-import { createElement, createIcon } from './ui.js';
+import { createElement, createIcon, createLeadForm } from './ui.js';
 
 // Create a namespace for our libraries
 const ChatWidgetLibs = {
@@ -1320,27 +1320,50 @@ export class ChatWidget {
     }
   }
 
-  finalizeStreamingMessage() {
+  async finalizeStreamingMessage() {
     if (!this.isStreaming) return;
     console.log('Finalizing streaming message');
 
     this._clearSSETimeouts();
     this.hideLoading();
 
+    // Check for lead form trigger in the complete accumulated message
+    let finalMessage = this.currentStreamedMessage;
+    let shouldShowLeadForm = false;
+
+    if (finalMessage.includes('<ShowLeadForm/>')) {
+      console.log('🎯 ShowLeadForm detected in final message! Triggering lead form');
+      finalMessage = finalMessage.replace('<ShowLeadForm/>', '').trim();
+      shouldShowLeadForm = true;
+      console.log('📝 Final message after stripping:', finalMessage);
+    }
+
     const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-    if (streamingMsgElement && this.currentStreamedMessage.trim() !== '') {
+    if (streamingMsgElement && finalMessage !== '') {
+      // Update the message content with the stripped content
+      const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
+      if (messageBubble) {
+        await this._updateMessageBubbleContent(messageBubble, finalMessage);
+      }
+
       // Just remove the streaming class but keep the assistant class
       streamingMsgElement.classList.remove(CSS_CLASSES.STREAMING);
       streamingMsgElement.removeAttribute('id');
 
-      // Save final message to history
-      this._addMessageToHistory(CSS_CLASSES.MESSAGE_AGENT, this.currentStreamedMessage);
+      // Save final message to history (without the trigger)
+      this._addMessageToHistory(CSS_CLASSES.MESSAGE_AGENT, finalMessage);
     } else if (streamingMsgElement) {
       streamingMsgElement.remove();
     }
 
     this.isStreaming = false;
     this.currentStreamedMessage = '';
+
+    // Show lead form after finalizing the message
+    if (shouldShowLeadForm) {
+      console.log('📋 Showing lead form after message finalization');
+      this._showLeadForm();
+    }
 
     // Re-enable input and button
     if (this.chatInput) {
@@ -1353,55 +1376,60 @@ export class ChatWidget {
     this.autoResizeInput(); // Adjust layout after potential input enable
   }
 
+  async _updateMessageBubbleContent(messageBubble, content) {
+    // Process markdown and update message bubble content
+    try {
+      // Ensure libraries are loaded
+      if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
+        await loadLibraries();
+      }
+      
+      if (ChatWidgetLibs.marked && ChatWidgetLibs.DOMPurify) {
+        ChatWidgetLibs.marked.setOptions({
+          gfm: true,
+          breaks: true,
+          headerIds: false,
+          mangle: false,
+          smartLists: true,
+          smartypants: true,
+          xhtml: false,
+          tables: true
+        });
+
+        let html = ChatWidgetLibs.marked.parse(content);
+        html = ChatWidgetLibs.DOMPurify.sanitize(html, {
+          ALLOWED_TAGS: [
+            'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3',
+            'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre',
+            'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
+            'ul', 'span', 'math', 'mi', 'mo', 'mn', 'mtext'
+          ],
+          ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
+          USE_PROFILES: { html: true },
+          KEEP_CONTENT: true,
+          ADD_ATTR: [
+            ['target', '_blank'],
+            ['rel', 'noopener noreferrer']
+          ]
+        });
+        messageBubble.innerHTML = html;
+      } else {
+        // Fallback if markdown libraries not available
+        messageBubble.textContent = content;
+      }
+    } catch (error) {
+      console.error('Error processing markdown:', error);
+      messageBubble.textContent = content;
+    }
+  }
+
   async updateStreamingMessage() {
     const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
     if (streamingMsgElement) {
       const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
       if (messageBubble) {
-        // Always process markdown during streaming for immediate display
-        try {
-          // Ensure libraries are loaded
-          if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
-            await loadLibraries();
-          }
-          
-          if (ChatWidgetLibs.marked && ChatWidgetLibs.DOMPurify) {
-            ChatWidgetLibs.marked.setOptions({
-              gfm: true,
-              breaks: true,
-              headerIds: false,
-              mangle: false,
-              smartLists: true,
-              smartypants: true,
-              xhtml: false,
-              tables: true
-            });
-
-            let html = ChatWidgetLibs.marked.parse(this.currentStreamedMessage);
-            html = ChatWidgetLibs.DOMPurify.sanitize(html, {
-              ALLOWED_TAGS: [
-                'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3',
-                'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre',
-                'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
-                'ul', 'span', 'math', 'mi', 'mo', 'mn', 'mtext'
-              ],
-              ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
-              USE_PROFILES: { html: true },
-              KEEP_CONTENT: true,
-              ADD_ATTR: [
-                ['target', '_blank'],
-                ['rel', 'noopener noreferrer']
-              ]
-            });
-            messageBubble.innerHTML = html;
-          } else {
-            // Fallback if markdown libraries not available
-            messageBubble.textContent = this.currentStreamedMessage;
-          }
-        } catch (error) {
-          console.error('Error processing markdown during streaming:', error);
-          messageBubble.textContent = this.currentStreamedMessage;
-        }
+        // Use the helper method to update content
+        await this._updateMessageBubbleContent(messageBubble, this.currentStreamedMessage);
       }
       this.scrollToBottom();
     }
@@ -2050,5 +2078,145 @@ export class ChatWidget {
         year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
       });
     }
+  }
+
+  async _showLeadForm() {
+    console.log('🎯 _showLeadForm called - creating and displaying lead form');
+    
+    // Create the lead form with dynamic fields
+    const leadForm = await createLeadForm((leadData) => {
+      this._handleLeadFormSubmission(leadData);
+    }, this.agentId);
+
+    // Insert the lead form into the messages container
+    const messagesContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.MESSAGES_CONTAINER}`);
+    if (messagesContainer) {
+      console.log('📋 Adding lead form to messages container');
+      messagesContainer.appendChild(leadForm);
+      this.scrollToBottom();
+    } else {
+      console.log('❌ Messages container not found!');
+    }
+  }
+
+  async _handleLeadFormSubmission(leadData) {
+    console.log('📋 Submitting lead form data:', leadData);
+    
+    try {
+      // Submit to API
+      /* global __API_URL__ */
+      const response = await fetch(`${__API_URL__}/leads/form`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-AGENT-ID': this.agentId,
+          'X-SESSION-ID': this.sessionId,
+          'X-THREAD-ID': this.getCurrentActiveThreadId()
+        },
+        body: JSON.stringify({
+          ...leadData,
+          page_url: window.location.href,
+          user_agent: navigator.userAgent,
+          referrer_url: document.referrer || '',
+          locale: navigator.language || navigator.userLanguage || 'en-US',
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit lead form: ${response.status}`);
+      }
+
+      // Check if response has content before parsing JSON
+      let result = null;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const text = await response.text();
+        if (text) {
+          try {
+            result = JSON.parse(text);
+          } catch (e) {
+            console.warn('Response is not valid JSON, treating as success:', text);
+            result = { success: true, message: text };
+          }
+        } else {
+          result = { success: true, message: 'Form submitted successfully' };
+        }
+      } else {
+        // Non-JSON response, treat as success
+        result = { success: true, message: 'Form submitted successfully' };
+      }
+      
+      console.log('✅ Lead form submitted successfully:', result);
+
+      // Replace form with success message
+      const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
+      if (leadFormContainer) {
+        // Clear the form container
+        leadFormContainer.innerHTML = '';
+        
+        // Extract success data from API response
+        let successTitle = '✅ Thank you!'; // Default fallback
+        let successMessage = 'Your information has been received and someone will get back to you soon.'; // Default fallback
+        
+        if (result && result.success) {
+          if (result.success.title) {
+            successTitle = result.success.title;
+          }
+          if (result.success.message) {
+            successMessage = result.success.message;
+          }
+        }
+        
+        // Add success message
+        const successTitleElement = createElement('h3', {
+          className: CSS_CLASSES.LEAD_FORM_TITLE,
+          textContent: successTitle
+        });
+        
+        const successMessageElement = createElement('div', {
+          className: CSS_CLASSES.LEAD_FORM_SUCCESS,
+          textContent: successMessage
+        });
+        
+        leadFormContainer.appendChild(successTitleElement);
+        leadFormContainer.appendChild(successMessageElement);
+        
+        // Remove the success message after 3 seconds
+        setTimeout(() => {
+          if (leadFormContainer.parentNode) {
+            leadFormContainer.remove();
+          }
+        }, 3000);
+      }
+
+    } catch (error) {
+      console.error('❌ Error submitting lead form:', error);
+      
+      // Show error message in form
+      const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
+      if (leadFormContainer) {
+        const existingError = leadFormContainer.querySelector(`.${CSS_CLASSES.LEAD_FORM_ERROR}`);
+        if (existingError) {
+          existingError.remove();
+        }
+        
+        const errorMessage = createElement('div', {
+          className: CSS_CLASSES.LEAD_FORM_ERROR,
+          textContent: 'Failed to submit form. Please try again.'
+        });
+        
+        leadFormContainer.appendChild(errorMessage);
+        
+        // Re-enable submit button
+        const submitButton = leadFormContainer.querySelector(`.${CSS_CLASSES.LEAD_FORM_SUBMIT}`);
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Submit';
+        }
+      }
+    }
+
+    this.scrollToBottom();
   }
 }

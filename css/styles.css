@@ -534,6 +534,129 @@
   transform: scale(1);
 }
 
+/* Lead Form Styles */
+.chatvia-widget .lead-form-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chatvia-widget .lead-form-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+}
+
+.chatvia-widget .lead-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chatvia-widget .lead-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chatvia-widget .lead-form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.chatvia-widget .lead-form-input {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: white;
+  color: #1f2937;
+  font-family: inherit;
+}
+
+.chatvia-widget .lead-form-input[type="textarea"],
+.chatvia-widget .lead-form-input:is(textarea) {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.chatvia-widget .lead-form-input:focus {
+  outline: none;
+  border-color: var(--chat-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chat-primary) 10%, transparent);
+}
+
+.chatvia-widget .lead-form-input::placeholder {
+  color: #9ca3af;
+}
+
+.chatvia-widget .lead-form-submit {
+  background: var(--chat-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.chatvia-widget .lead-form-submit:hover {
+  background: color-mix(in srgb, var(--chat-primary) 90%, black);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--chat-primary) 20%, transparent);
+}
+
+.chatvia-widget .lead-form-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--chat-primary) 15%, transparent);
+}
+
+.chatvia-widget .lead-form-submit:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.chatvia-widget .lead-form-loading {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  padding: 20px;
+}
+
+.chatvia-widget .lead-form-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-top: 12px;
+  border: 1px solid #fecaca;
+}
+
+.chatvia-widget .lead-form-success {
+  background: #f0fdf4;
+  color: #16a34a;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #bbf7d0;
+  line-height: 1.5;
+}
+
 
 
 /* Chat bubble (collapsed state) - Intercom style */

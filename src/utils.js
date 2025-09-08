@@ -61,7 +61,17 @@ export const CSS_CLASSES = {
   WINDOW_SMALL: 'small',
   WINDOW_MEDIUM: 'medium',
   WINDOW_LARGE: 'large',
-  STREAMING: 'streaming'
+  STREAMING: 'streaming',
+  LEAD_FORM: 'lead-form',
+  LEAD_FORM_CONTAINER: 'lead-form-container',
+  LEAD_FORM_FIELD: 'lead-form-field',
+  LEAD_FORM_INPUT: 'lead-form-input',
+  LEAD_FORM_LABEL: 'lead-form-label',
+  LEAD_FORM_SUBMIT: 'lead-form-submit',
+  LEAD_FORM_TITLE: 'lead-form-title',
+  LEAD_FORM_LOADING: 'lead-form-loading',
+  LEAD_FORM_ERROR: 'lead-form-error',
+  LEAD_FORM_SUCCESS: 'lead-form-success'
 };
 export const STREAMING_DONE_MARKER = '[DONE]';
 export const STREAMING_FINALIZE_TIMEOUT = 5000; // ms
