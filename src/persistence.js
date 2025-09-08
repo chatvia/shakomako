@@ -4,17 +4,17 @@ export class PersistenceManager {
   }
 
   set(name, value) {
-    const key = this.agentId ? `${this.agentId}_${name}` : name;
+    const key = this.agentId ? `${this.agentId}-${name}` : name;
     localStorage.setItem(key, value);
   }
 
   get(name) {
-    const key = this.agentId ? `${this.agentId}_${name}` : name;
+    const key = this.agentId ? `${this.agentId}-${name}` : name;
     return localStorage.getItem(key);
   }
 
   remove(name) {
-    const key = this.agentId ? `${this.agentId}_${name}` : name;
+    const key = this.agentId ? `${this.agentId}-${name}` : name;
     localStorage.removeItem(key);
   }
 
@@ -23,7 +23,7 @@ export class PersistenceManager {
       // Remove all keys for this specific agent
       const keys = Object.keys(localStorage);
       keys.forEach(key => {
-        if (key.startsWith(`${this.agentId}_`)) {
+        if (key.startsWith(`${this.agentId}-`)) {
           localStorage.removeItem(key);
         }
       });
