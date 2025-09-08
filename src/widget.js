@@ -455,7 +455,8 @@ export class ChatWidget {
       thread_id: this.getCurrentActiveThreadId(),
       type: 'message',
       content: text,
-      url: window.location.href
+      url: window.location.href,
+      referrer: document.referrer || ''
     };
 
     console.log('Sending SSE message:', messagePayload);
