@@ -508,6 +508,11 @@ export class ChatWidget {
         }
       }
 
+      // Lock body scroll when chat opens (fullscreen or mobile)
+      if (this.settings.is_fullscreen || this.isMobileApp) {
+        this._lockBodyScroll();
+      }
+
       setTimeout(() => this.chatInput?.focus(), 300);
     } else {
       this.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
@@ -519,6 +524,11 @@ export class ChatWidget {
         if (this.chatBubble) {
           this.chatBubble.style.display = 'flex';
         }
+      }
+
+      // Unlock body scroll when chat closes
+      if (this.settings.is_fullscreen || this.isMobileApp) {
+        this._unlockBodyScroll();
       }
     }
 
@@ -2219,5 +2229,36 @@ export class ChatWidget {
     }
 
     this.scrollToBottom();
+  }
+
+  _lockBodyScroll() {
+    // Save current scroll position
+    this._scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Apply styles to prevent scrolling
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${this._scrollPosition}px`;
+    document.body.style.width = '100%';
+    
+    // Add a class for additional CSS control if needed
+    document.body.classList.add('chatvia-scroll-locked');
+  }
+
+  _unlockBodyScroll() {
+    // Remove styles
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    
+    // Remove class
+    document.body.classList.remove('chatvia-scroll-locked');
+    
+    // Restore scroll position
+    if (this._scrollPosition !== undefined) {
+      window.scrollTo(0, this._scrollPosition);
+      this._scrollPosition = undefined;
+    }
   }
 }

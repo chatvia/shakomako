@@ -2135,3 +2135,10 @@
   border-radius: 0 !important;
 }
 
+/* Body scroll lock when chat is open in fullscreen */
+body.chatvia-scroll-locked {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
