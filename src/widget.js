@@ -692,6 +692,9 @@ export class ChatWidget {
         // Mobile non-flat initial hidden
         this.chatWindow.style.display = 'none';
         this.isOpen = false;
+        
+        // Hide expand button on mobile
+        if (this.expandButton) this.expandButton.style.display = 'none';
       }
 
       // Wait for next frame to ensure styles are applied
