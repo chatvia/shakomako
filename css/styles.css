@@ -1018,6 +1018,16 @@
   word-break: break-word;
 }
 
+/* Ensure lists are properly styled */
+.chatvia-widget .message-bubble ul,
+.chatvia-widget .message-bubble ol {
+  display: block !important;
+}
+
+.chatvia-widget .message-bubble li {
+  display: list-item !important;
+}
+
 /* Ensure code blocks and pre elements don't overflow */
 .chatvia-widget .message-bubble pre,
 .chatvia-widget .message-bubble code {
@@ -1355,6 +1365,41 @@
 .chatvia-widget .message.assistant ol {
   margin: 0.5em 0;
   padding-left: 1.5em;
+  list-style-position: outside;
+}
+
+.chatvia-widget .message.assistant ul {
+  list-style-type: disc !important;
+}
+
+.chatvia-widget .message.assistant ol {
+  list-style-type: decimal !important;
+}
+
+.chatvia-widget .message.assistant li {
+  display: list-item !important;
+  margin: 0.25em 0;
+}
+
+/* Nested lists */
+.chatvia-widget .message.assistant ul ul {
+  list-style-type: circle !important;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.chatvia-widget .message.assistant ul ul ul {
+  list-style-type: square !important;
+}
+
+.chatvia-widget .message.assistant ol ol {
+  list-style-type: lower-alpha !important;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.chatvia-widget .message.assistant ol ol ol {
+  list-style-type: lower-roman !important;
 }
 
 .chatvia-widget .message.assistant blockquote {
