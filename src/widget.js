@@ -1677,7 +1677,7 @@ export class ChatWidget {
       this.showToast('No active chat to delete.');
       return;
     }
-    this.toggleMenuDropdown(); // Close menu first
+    this.closeMenuDropdown(); // Close menu first
     this._showConfirmationDialog(
       'Delete Chat',
       `Are you sure you want to delete "${threadToDelete.title || 'Untitled Chat'}"? This action cannot be undone.`,
@@ -1687,7 +1687,7 @@ export class ChatWidget {
   }
 
   confirmClearAllThreads() {
-    this.toggleMenuDropdown(); // Close menu first
+    this.closeMenuDropdown(); // Close menu first
     this._showConfirmationDialog(
       'Delete All Chats',
       'Are you sure you want to delete ALL your chat history? This action cannot be undone.',
@@ -1793,7 +1793,7 @@ export class ChatWidget {
   }
 
   async loadChatHistory() {
-    this.toggleMenuDropdown(); // Close menu
+    this.closeMenuDropdown(); // Close menu
     this.clearMessages();
     this.showLoading();
     if (this.inputContainer) this.inputContainer.style.display = 'none';
@@ -1824,13 +1824,13 @@ export class ChatWidget {
       Array.isArray(activeThread.messages) &&
       activeThread.messages.length === 0
     ) {
-      this.toggleMenuDropdown();
+      this.closeMenuDropdown();
       this.chatInput?.focus();
       return;
     }
 
     console.log('Starting a new thread...');
-    this.toggleMenuDropdown();
+    this.closeMenuDropdown();
 
     this.clearMessages();
     this.showLoading();
