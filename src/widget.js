@@ -1649,32 +1649,17 @@ export class ChatWidget {
     });
   }
 
-  showToast(message) {
-    let container = document.querySelector(`.${CSS_CLASSES.TOAST_CONTAINER}`);
-    if (!container) {
-      container = createElement('div', { className: CSS_CLASSES.TOAST_CONTAINER });
-      document.body.appendChild(container);
-    }
-    const toast = createElement('div', { className: CSS_CLASSES.TOAST, textContent: message });
-    container.appendChild(toast);
-    setTimeout(() => toast.classList.add(CSS_CLASSES.TOAST_SHOW), 10);
-    setTimeout(() => {
-      toast.classList.remove(CSS_CLASSES.TOAST_SHOW);
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
 
   confirmDeleteThread() {
     if (this.isStreaming) {
       console.log('Preventing delete thread while streaming.');
-      this.showToast('Please wait for the current response to finish.');
       return;
     }
 
     const threadIdToDelete = this.storageManager.getActiveThreadId();
     const threadToDelete = this.threads.find(t => t.id === threadIdToDelete);
     if (!threadToDelete) {
-      this.showToast('No active chat to delete.');
+      console.log('No active chat to delete.');
       return;
     }
     this.closeMenuDropdown(); // Close menu first
@@ -1757,12 +1742,10 @@ export class ChatWidget {
         await this.showDeleteSuccess(threadId);
       } else {
         console.error('Failed to delete thread via API.');
-        this.showToast('Failed to delete chat.');
       }
     } catch (error) {
       this.hideLoading();
       console.error('Error deleting thread:', error);
-      this.showToast('Error deleting chat.');
     }
   }
 
@@ -1778,17 +1761,14 @@ export class ChatWidget {
         this.threads = [];
         this.activeThreadId = null;
         this.messageHistory = [];
-        this.showToast('All chat history deleted.');
         console.log('Starting a new thread after deleting all...');
         await this.startNewThread();
       } else {
         console.error('Failed to delete all threads via API.');
-        this.showToast('Failed to delete chat history.');
       }
     } catch (error) {
       this.hideLoading();
       console.error('Error deleting all threads:', error);
-      this.showToast('Error clearing chat history.');
     }
   }
 
