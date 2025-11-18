@@ -1999,6 +1999,8 @@
   width: 100vw !important;
   height: 100vh !important;
   z-index: 99999 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .chatvia-widget.fullscreen .chat-window {
@@ -2017,6 +2019,10 @@
   transform: none !important;
   opacity: 1 !important;
   display: none !important; /* Force display none by default */
+  border: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .chatvia-widget.fullscreen .chat-window.open {
@@ -2049,6 +2055,8 @@
     width: 100vw !important;
     height: 100vh !important;
     z-index: 99999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .chatvia-widget.fullscreen .chat-window {
@@ -2067,6 +2075,10 @@
     transform: none !important;
     opacity: 1 !important;
     display: none !important; /* Force display none by default */
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .chatvia-widget.fullscreen .chat-window.open {
