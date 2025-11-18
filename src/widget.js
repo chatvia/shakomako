@@ -71,6 +71,7 @@ export class ChatWidget {
     this.sseClient = null;
     this.sseReconnectAttempts = 0;
     this.currentStreamedMessage = '';
+    this.currentStreamedMessageId = null;
     this.isStreaming = false;
     this.isWidthExpanded = false;
     this.startersVisible = true;
@@ -339,7 +340,10 @@ export class ChatWidget {
         // Handle new message structure with 'role' instead of 'type'
         // Prioritize 'role' field for message styling, fall back to 'type' if no role
         const messageType = message.role ? this._mapRoleToMessageType(message.role) : message.type;
-        await this.addMessage(messageType, message.content, false);
+        await this.addMessage(messageType, message.content, false, {
+          messageId: message.id,
+          feedback: message.feedback
+        });
       }
     } else if (this.settings.welcome_message) {
       console.log('Welcome message exists:', this.settings.welcome_message);
@@ -1178,14 +1182,25 @@ export class ChatWidget {
     
     const message = createElement('div', { className: `${CSS_CLASSES.MESSAGE} ${type}` });
 
+    // Create a content wrapper for avatar and bubble
+    const contentWrapper = createElement('div', { className: 'message-content-wrapper' });
+
     if (type === CSS_CLASSES.MESSAGE_AGENT) {
-      message.appendChild(this._createAvatar());
+      contentWrapper.appendChild(this._createAvatar());
     }
 
     const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
     
     await this._setMessageBubbleContent(bubble, type, text);
-    message.appendChild(bubble);
+    contentWrapper.appendChild(bubble);
+
+    message.appendChild(contentWrapper);
+
+    // Add action buttons for agent messages
+    if (type === CSS_CLASSES.MESSAGE_AGENT && text) {
+      const actionsContainer = this._createMessageActions(text, options.messageId, options.feedback);
+      message.appendChild(actionsContainer);
+    }
 
     if (addToHistory) {
       this._addMessageToHistory(type, text, options);
@@ -1209,6 +1224,123 @@ export class ChatWidget {
       avatar.innerHTML = DEFAULT_AVATAR_SVG;
     }
     return avatar;
+  }
+
+  _createMessageActions(messageText, messageId, feedback) {
+    const actionsContainer = createElement('div', { 
+      className: CSS_CLASSES.MESSAGE_ACTIONS 
+    });
+
+    // Copy button
+    const copyButton = createElement('button', {
+      className: 'message-action-btn copy-btn',
+      'aria-label': 'Copy message',
+      title: 'Copy'
+    });
+    copyButton.appendChild(createIcon('copy'));
+    copyButton.addEventListener('click', () => this._handleCopyMessage(messageText, copyButton));
+
+    // Thumbs up button
+    const thumbsUpButton = createElement('button', {
+      className: `message-action-btn thumbs-up-btn${feedback === true ? ' active' : ''}`,
+      'aria-label': 'Good response',
+      title: 'Good response',
+      'data-message-id': messageId
+    });
+    thumbsUpButton.appendChild(createIcon('thumbs-up'));
+    if (messageId) {
+      thumbsUpButton.addEventListener('click', () => this._handleFeedback(messageId, true, thumbsUpButton, thumbsDownButton));
+    } else {
+      thumbsUpButton.disabled = true;
+      thumbsUpButton.style.opacity = '0.3';
+    }
+
+    // Thumbs down button
+    const thumbsDownButton = createElement('button', {
+      className: `message-action-btn thumbs-down-btn${feedback === false ? ' active' : ''}`,
+      'aria-label': 'Bad response',
+      title: 'Bad response',
+      'data-message-id': messageId
+    });
+    thumbsDownButton.appendChild(createIcon('thumbs-down'));
+    if (messageId) {
+      thumbsDownButton.addEventListener('click', () => this._handleFeedback(messageId, false, thumbsDownButton, thumbsUpButton));
+    } else {
+      thumbsDownButton.disabled = true;
+      thumbsDownButton.style.opacity = '0.3';
+    }
+
+    actionsContainer.appendChild(copyButton);
+    actionsContainer.appendChild(thumbsUpButton);
+    actionsContainer.appendChild(thumbsDownButton);
+
+    return actionsContainer;
+  }
+
+  async _handleCopyMessage(text, button) {
+    try {
+      // Remove HTML tags and get plain text
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = text;
+      const plainText = tempDiv.textContent || tempDiv.innerText || text;
+      
+      await navigator.clipboard.writeText(plainText);
+      
+      // Visual feedback
+      const originalIcon = button.innerHTML;
+      button.innerHTML = '';
+      button.appendChild(createIcon('check'));
+      button.classList.add('copied');
+      
+      setTimeout(() => {
+        button.innerHTML = originalIcon;
+        button.classList.remove('copied');
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to copy message:', error);
+    }
+  }
+
+  async _handleFeedback(messageId, isPositive, clickedButton, otherButton) {
+    if (!messageId) return;
+
+    // Check if the same button was clicked (toggle off)
+    const isAlreadyActive = clickedButton.classList.contains('active');
+    
+    try {
+      // Import api function
+      const api = (await import('./api.js')).default;
+      
+      // Send feedback to API
+      const response = await api({
+        endpoint: 'feedback',
+        method: 'POST',
+        headers: {
+          'x-agent-id': this.agentId,
+          'x-session-id': this.sessionId,
+          'x-thread-id': this.getCurrentActiveThreadId(),
+          'x-message-id': messageId
+        },
+        body: JSON.stringify({
+          feedback: isPositive
+        })
+      });
+
+      if (response.ok) {
+        // Toggle the clicked button
+        if (isAlreadyActive) {
+          clickedButton.classList.remove('active');
+        } else {
+          clickedButton.classList.add('active');
+          // Remove active state from the other button (mutually exclusive)
+          otherButton.classList.remove('active');
+        }
+      } else {
+        console.error('Failed to submit feedback:', response.status);
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
   }
 
   async _setMessageBubbleContent(bubble, type, text) {
@@ -1302,6 +1434,12 @@ export class ChatWidget {
     const messageContent = message.content || '';
     console.log('Received message with content:', messageContent);
 
+    // Store message ID if available
+    if (message.id) {
+      this.currentStreamedMessageId = message.id;
+      console.log('Stored message ID:', message.id);
+    }
+
     if (messageContent) {
       if (this.isStreaming) {
         console.log('Adding to existing stream:', messageContent);
@@ -1360,18 +1498,25 @@ export class ChatWidget {
         await this._updateMessageBubbleContent(messageBubble, finalMessage);
       }
 
+      // Add action buttons after streaming is complete
+      const actionsContainer = this._createMessageActions(finalMessage, this.currentStreamedMessageId);
+      streamingMsgElement.appendChild(actionsContainer);
+
       // Just remove the streaming class but keep the assistant class
       streamingMsgElement.classList.remove(CSS_CLASSES.STREAMING);
       streamingMsgElement.removeAttribute('id');
 
       // Save final message to history (without the trigger)
-      this._addMessageToHistory(CSS_CLASSES.MESSAGE_AGENT, finalMessage);
+      this._addMessageToHistory(CSS_CLASSES.MESSAGE_AGENT, finalMessage, {
+        messageId: this.currentStreamedMessageId
+      });
     } else if (streamingMsgElement) {
       streamingMsgElement.remove();
     }
 
     this.isStreaming = false;
     this.currentStreamedMessage = '';
+    this.currentStreamedMessageId = null;
 
     // Show lead form after finalizing the message
     if (shouldShowLeadForm) {
@@ -1458,9 +1603,14 @@ export class ChatWidget {
       className: `${CSS_CLASSES.MESSAGE} ${CSS_CLASSES.MESSAGE_AGENT}`,
       id: CSS_CLASSES.STREAMING_MESSAGE
     });
-    streamingMsgElement.appendChild(this._createAvatar());
+    
+    // Create a content wrapper for avatar and bubble
+    const contentWrapper = createElement('div', { className: 'message-content-wrapper' });
+    contentWrapper.appendChild(this._createAvatar());
     const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE }); // Start empty
-    streamingMsgElement.appendChild(messageBubble);
+    contentWrapper.appendChild(messageBubble);
+    
+    streamingMsgElement.appendChild(contentWrapper);
 
     this.messagesContainer.appendChild(streamingMsgElement);
     this.scrollToBottom();

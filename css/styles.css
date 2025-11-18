@@ -951,7 +951,7 @@
 
 /* Message styling - Intercom style */
 .chatvia-widget .message {
-  display: flex;
+  display: block;
   position: relative;
   margin: 10px 0;
   padding: 0;
@@ -964,12 +964,16 @@
   min-width: 0; /* Prevent flex items from overflowing */
 }
 
+/* Message content wrapper - contains avatar and bubble */
+.chatvia-widget .message-content-wrapper {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
 /* assistant message styling - Intercom style */
 .chatvia-widget .message.assistant {
   align-self: flex-start;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
   width: 100%;
   margin-right: 60px;
   box-sizing: border-box;
@@ -998,12 +1002,13 @@
 /* User message styling - Intercom style */
 .chatvia-widget .message.user {
   align-self: flex-end;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
   margin-left: 10px; /* Reduced from 40px to prevent overflow */
   width: 100%;
   box-sizing: border-box;
+}
+
+.chatvia-widget .message.user .message-content-wrapper {
+  justify-content: flex-end;
 }
 
 .chatvia-widget .message.user .message-bubble {
@@ -1101,6 +1106,65 @@
 .chatvia-widget .message-bubble img {
   max-width: 100%;
   height: auto;
+}
+
+/* Message action buttons */
+.chatvia-widget .message-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  margin-left: 28px; /* Align with message bubble (avatar width 20px + gap 8px) */
+}
+
+.chatvia-widget .message-action-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #64748b;
+}
+
+.chatvia-widget .message-action-btn:hover {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.chatvia-widget .message-action-btn:active {
+  transform: scale(0.95);
+}
+
+.chatvia-widget .message-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Copy button specific styles */
+.chatvia-widget .copy-btn.copied {
+  color: #10b981;
+}
+
+/* Thumbs up/down active states */
+.chatvia-widget .thumbs-up-btn.active {
+  color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.chatvia-widget .thumbs-down-btn.active {
+  color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.chatvia-widget .thumbs-up-btn.active:hover {
+  background-color: #dcfce7;
+}
+
+.chatvia-widget .thumbs-down-btn.active:hover {
+  background-color: #fee2e2;
 }
 
 
