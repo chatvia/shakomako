@@ -373,9 +373,12 @@ export class ChatWidget {
         // Handle new message structure with 'role' instead of 'type'
         // Prioritize 'role' field for message styling, fall back to 'type' if no role
         const messageType = message.role ? this._mapRoleToMessageType(message.role) : message.type;
+        // Check if this is a welcome message and hide actions
+        const isWelcomeMessage = this.settings.welcome_message && message.content === this.settings.welcome_message;
         await this.addMessage(messageType, message.content, false, {
           messageId: message.id,
-          feedback: message.feedback
+          feedback: message.feedback,
+          hideActions: isWelcomeMessage
         });
       }
     } else if (this.settings.welcome_message) {
@@ -390,7 +393,9 @@ export class ChatWidget {
         
         setTimeout(async () => {
           console.log('Welcome message timeout fired, calling addMessage');
-          const result = await this.addMessage(CSS_CLASSES.MESSAGE_AGENT, this.settings.welcome_message, false);
+          const result = await this.addMessage(CSS_CLASSES.MESSAGE_AGENT, this.settings.welcome_message, false, {
+            hideActions: true
+          });
           console.log('addMessage result:', result);
         }, 500);
       } else {
@@ -1354,8 +1359,8 @@ export class ChatWidget {
 
     message.appendChild(contentWrapper);
 
-    // Add action buttons for agent messages
-    if (type === CSS_CLASSES.MESSAGE_AGENT && text) {
+    // Add action buttons for agent messages (unless hidden for welcome messages)
+    if (type === CSS_CLASSES.MESSAGE_AGENT && text && !options.hideActions) {
       const actionsContainer = this._createMessageActions(text, options.messageId, options.feedback);
       message.appendChild(actionsContainer);
     }
@@ -1433,6 +1438,58 @@ export class ChatWidget {
     actionsContainer.appendChild(thumbsDownButton);
 
     return actionsContainer;
+  }
+
+  _enableStreamingMessageActions(messageId) {
+    const streamingElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
+    if (!streamingElement || !messageId) return;
+    
+    let actionsContainer = streamingElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
+    
+    if (actionsContainer) {
+      // Update existing buttons - enable them if they're disabled
+      const thumbsUpBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_UP}`);
+      const thumbsDownBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_DOWN}`);
+      
+      if (thumbsUpBtn && (thumbsUpBtn.disabled || !thumbsUpBtn.getAttribute('data-message-id'))) {
+        // Remove all existing event listeners by cloning (preserves icon)
+        const newThumbsUpBtn = thumbsUpBtn.cloneNode(true);
+        thumbsUpBtn.parentNode.replaceChild(newThumbsUpBtn, thumbsUpBtn);
+        // Enable the button
+        newThumbsUpBtn.disabled = false;
+        newThumbsUpBtn.style.opacity = '1';
+        newThumbsUpBtn.style.pointerEvents = 'auto';
+        newThumbsUpBtn.setAttribute('data-message-id', messageId);
+        // Re-add click listener
+        newThumbsUpBtn.addEventListener('click', () => {
+          const otherBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_DOWN}`);
+          this._handleFeedback(messageId, true, newThumbsUpBtn, otherBtn);
+        });
+      }
+      
+      if (thumbsDownBtn && (thumbsDownBtn.disabled || !thumbsDownBtn.getAttribute('data-message-id'))) {
+        // Remove all existing event listeners by cloning (preserves icon)
+        const newThumbsDownBtn = thumbsDownBtn.cloneNode(true);
+        thumbsDownBtn.parentNode.replaceChild(newThumbsDownBtn, thumbsDownBtn);
+        // Enable the button
+        newThumbsDownBtn.disabled = false;
+        newThumbsDownBtn.style.opacity = '1';
+        newThumbsDownBtn.style.pointerEvents = 'auto';
+        newThumbsDownBtn.setAttribute('data-message-id', messageId);
+        // Re-add click listener
+        newThumbsDownBtn.addEventListener('click', () => {
+          const otherBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_UP}`);
+          this._handleFeedback(messageId, false, newThumbsDownBtn, otherBtn);
+        });
+      }
+    } else {
+      // Create action buttons if they don't exist yet (early in streaming)
+      // But only if we have some content
+      if (this.currentStreamedMessage && this.currentStreamedMessage.trim().length > 0) {
+        actionsContainer = this._createMessageActions(this.currentStreamedMessage, messageId, null);
+        streamingElement.appendChild(actionsContainer);
+      }
+    }
   }
 
   async _handleCopyMessage(text, button) {
@@ -1592,10 +1649,14 @@ export class ChatWidget {
     const messageContent = message.content || '';
     console.log('Received message with content:', messageContent);
 
-    // Store message ID if available
-    if (message.id) {
-      this.currentStreamedMessageId = message.id;
-      console.log('Stored message ID:', message.id);
+    // Store message ID if available (check both 'id' and 'message_id')
+    const messageId = message.id || message.message_id;
+    if (messageId) {
+      this.currentStreamedMessageId = messageId;
+      console.log('Stored message ID:', messageId);
+      
+      // Enable feedback buttons immediately when message ID arrives
+      this._enableStreamingMessageActions(messageId);
     }
 
     if (messageContent) {
@@ -1656,9 +1717,19 @@ export class ChatWidget {
         await this._updateMessageBubbleContent(messageBubble, finalMessage);
       }
 
-      // Add action buttons after streaming is complete
-      const actionsContainer = this._createMessageActions(finalMessage, this.currentStreamedMessageId);
-      streamingMsgElement.appendChild(actionsContainer);
+      // Check if action buttons already exist (created during streaming when ID arrived)
+      let actionsContainer = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
+      
+      if (!actionsContainer) {
+        // Add action buttons after streaming is complete
+        actionsContainer = this._createMessageActions(finalMessage, this.currentStreamedMessageId);
+        streamingMsgElement.appendChild(actionsContainer);
+      } else {
+        // Buttons exist - ensure they're enabled if we have a message ID
+        if (this.currentStreamedMessageId) {
+          this._enableStreamingMessageActions(this.currentStreamedMessageId);
+        }
+      }
 
       // Just remove the streaming class but keep the assistant class
       streamingMsgElement.classList.remove(CSS_CLASSES.STREAMING);
@@ -1735,6 +1806,13 @@ export class ChatWidget {
         // Use the helper method to update content
         await this._updateMessageBubbleContent(messageBubble, this.currentStreamedMessage);
       }
+
+      // Create action buttons early if they don't exist (will be enabled when message ID arrives)
+      if (!streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`) && this.currentStreamedMessage && this.currentStreamedMessage.trim().length > 0) {
+        const actionsContainer = this._createMessageActions(this.currentStreamedMessage, this.currentStreamedMessageId, null);
+        streamingMsgElement.appendChild(actionsContainer);
+      }
+
       this.scrollToBottom();
     }
   }
