@@ -21,6 +21,23 @@ const ChatWidgetLibs = {
   _loadingPromise: null // To ensure libraries are loaded only once
 };
 
+// Shared DOMPurify configuration to avoid duplication
+const DOMPURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3',
+    'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre',
+    'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
+    'ul', 'span', 'math', 'mi', 'mo', 'mn', 'mtext'
+  ],
+  ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
+  USE_PROFILES: { html: true },
+  KEEP_CONTENT: true,
+  ADD_ATTR: [
+    ['target', '_blank'],
+    ['rel', 'noopener noreferrer']
+  ]
+};
+
 // Load libraries dynamically to avoid conflicts
 const loadLibraries = async () => {
   if (!ChatWidgetLibs._loadingPromise) {
@@ -1581,21 +1598,8 @@ export class ChatWidget {
         });
 
         let html = ChatWidgetLibs.marked.parse(content);
-        html = ChatWidgetLibs.DOMPurify.sanitize(html, {
-          ALLOWED_TAGS: [
-            'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3',
-            'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre',
-            'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
-            'ul', 'span', 'math', 'mi', 'mo', 'mn', 'mtext'
-          ],
-          ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
-          USE_PROFILES: { html: true },
-          KEEP_CONTENT: true,
-          ADD_ATTR: [
-            ['target', '_blank'],
-            ['rel', 'noopener noreferrer']
-          ]
-        });
+        // Use shared DOMPurify config to avoid duplication
+        html = ChatWidgetLibs.DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
         messageBubble.innerHTML = html;
       } else {
         // Fallback if markdown libraries not available
@@ -1858,20 +1862,37 @@ export class ChatWidget {
 
   _showConfirmationDialog(title, message, confirmText, onConfirm) {
     const dialog = createElement('div', { className: CSS_CLASSES.CONFIRM_DIALOG });
-    dialog.innerHTML = `
-      <div class="${CSS_CLASSES.CONFIRM_CONTENT}">
-        <h3>${title}</h3>
-        <p>${message}</p>
-        <div class="${CSS_CLASSES.CONFIRM_BUTTONS}">
-          <button class="${CSS_CLASSES.CONFIRM_CANCEL}">Cancel</button>
-          <button class="${CSS_CLASSES.CONFIRM_DELETE}">${confirmText}</button>
-        </div>
-      </div>
-    `;
+    
+    // Build dialog safely without innerHTML to prevent XSS
+    const content = createElement('div', { className: CSS_CLASSES.CONFIRM_CONTENT });
+    
+    const titleEl = createElement('h3');
+    titleEl.textContent = title; // Safe: textContent escapes HTML
+    
+    const messageEl = createElement('p');
+    messageEl.textContent = message; // Safe: textContent escapes HTML
+    
+    const buttonsContainer = createElement('div', { className: CSS_CLASSES.CONFIRM_BUTTONS });
+    
+    const cancelButton = createElement('button', { 
+      className: CSS_CLASSES.CONFIRM_CANCEL,
+      textContent: 'Cancel'
+    });
+    
+    const deleteButton = createElement('button', { 
+      className: CSS_CLASSES.CONFIRM_DELETE,
+      textContent: confirmText // Safe: textContent escapes HTML
+    });
+    
+    buttonsContainer.appendChild(cancelButton);
+    buttonsContainer.appendChild(deleteButton);
+    
+    content.appendChild(titleEl);
+    content.appendChild(messageEl);
+    content.appendChild(buttonsContainer);
+    dialog.appendChild(content);
+    
     document.body.appendChild(dialog);
-
-    const cancelButton = dialog.querySelector(`.${CSS_CLASSES.CONFIRM_CANCEL}`);
-    const deleteButton = dialog.querySelector(`.${CSS_CLASSES.CONFIRM_DELETE}`);
 
     cancelButton.addEventListener('click', () => dialog.remove());
     deleteButton.addEventListener('click', () => {
@@ -2127,49 +2148,8 @@ export class ChatWidget {
       });
 
       let html = ChatWidgetLibs.marked.parse(text);
-      html = ChatWidgetLibs.DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: [
-          'a',
-          'b',
-          'br',
-          'code',
-          'div',
-          'em',
-          'h1',
-          'h2',
-          'h3',
-          'h4',
-          'h5',
-          'h6',
-          'hr',
-          'i',
-          'li',
-          'ol',
-          'p',
-          'pre',
-          'strong',
-          'table',
-          'tbody',
-          'td',
-          'th',
-          'thead',
-          'tr',
-          'ul',
-          'span',
-          'math',
-          'mi',
-          'mo',
-          'mn',
-          'mtext'
-        ],
-        ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
-        USE_PROFILES: { html: true },
-        KEEP_CONTENT: true,
-        ADD_ATTR: [
-          ['target', '_blank'],
-          ['rel', 'noopener noreferrer']
-        ]
-      });
+      // Use shared DOMPurify config to avoid duplication
+      html = ChatWidgetLibs.DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
       return html;
     } catch (error) {
       console.error('Error parsing markdown:', error);
