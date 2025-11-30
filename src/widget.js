@@ -2672,7 +2672,7 @@ export class ChatWidget {
         leadFormContainer.innerHTML = '';
         
         // Extract success data from API response
-        let successTitle = '✅ Thank you!'; // Default fallback
+        let successTitle = 'Thank you!'; // Default fallback
         let successMessage = 'Your information has been received and someone will get back to you soon.'; // Default fallback
         
         if (result && result.success) {

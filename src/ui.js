@@ -175,7 +175,7 @@ export async function createLeadForm(onSubmit, agentId) {
       console.warn('Form config response is not JSON, using default fields');
     }
     
-    console.log('📋 Received form configuration:', formConfig);
+    console.log('Received form configuration:', formConfig);
     
     // Update form title
     if (formConfig.title) {
