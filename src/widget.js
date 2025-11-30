@@ -1903,29 +1903,138 @@ export class ChatWidget {
   }
 
   _setupGlobalListeners() {
-    document.addEventListener('click', e => {
+    // Single handler for closing menu dropdown on outside interaction
+    // Using mousedown for faster response than click
+    const closeMenuOnOutside = e => {
       if (
         this.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN) &&
         !this.menuDropdown.contains(e.target) &&
         !this.menuButton?.contains(e.target)
       ) {
-        this.toggleMenuDropdown();
+        this.closeMenuDropdown();
+      }
+    };
+    
+    // Use mousedown for desktop (faster than click)
+    document.addEventListener('mousedown', closeMenuOnOutside);
+    // Use touchstart for mobile (passive for better scroll performance)
+    document.addEventListener('touchstart', closeMenuOnOutside, { passive: true });
+
+    // Keyboard shortcuts
+    this._setupKeyboardShortcuts();
+  }
+
+  _setupKeyboardShortcuts() {
+    // Track history navigation index
+    this._historyIndex = -1;
+    this._userInputHistory = [];
+
+    document.addEventListener('keydown', e => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+
+      // Cmd/Ctrl + K to toggle search/chat (open/close)
+      if (modifierKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        
+        if (this.mode === 'search') {
+          // In search mode: toggle behavior
+          if (this.isOpen) {
+            // Close the panel
+            this.toggleChat(false);
+          } else if (this.searchBar?.classList.contains('chatvia-widget-expanded')) {
+            // Collapse search bar if expanded
+            this.searchBar.classList.remove('chatvia-widget-expanded');
+            this.searchInput?.blur();
+          } else {
+            // Expand and focus search bar
+            this.searchBar?.classList.add('chatvia-widget-expanded');
+            this.searchInput?.focus();
+          }
+        } else {
+          // In bubble mode: toggle chat
+          this.toggleChat();
+          if (this.isOpen) {
+            setTimeout(() => this.chatInput?.focus(), 100);
+          }
+        }
+        return;
+      }
+
+      // Escape to close panel
+      if (e.key === 'Escape') {
+        if (this.menuDropdownIsOpened()) {
+          this.closeMenuDropdown();
+          return;
+        }
+        if (this.isOpen) {
+          e.preventDefault();
+          this.toggleChat(false);
+          return;
+        }
+        // In search mode, also collapse the search bar
+        if (this.mode === 'search' && this.searchBar?.classList.contains('chatvia-widget-expanded')) {
+          this.searchBar.classList.remove('chatvia-widget-expanded');
+          this.searchInput?.blur();
+          return;
+        }
+      }
+
+      // Arrow up/down to navigate user message history (when input is focused)
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement === this.chatInput || activeElement === this.searchInput;
+      
+      if (isInputFocused && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        const userMessages = this._getUserMessageHistory();
+        if (userMessages.length === 0) return;
+
+        e.preventDefault();
+
+        if (e.key === 'ArrowUp') {
+          // Navigate to older messages
+          if (this._historyIndex < userMessages.length - 1) {
+            // Save current input if first time navigating
+            if (this._historyIndex === -1) {
+              this._savedInput = activeElement.value;
+            }
+            this._historyIndex++;
+            activeElement.value = userMessages[userMessages.length - 1 - this._historyIndex];
+          }
+        } else if (e.key === 'ArrowDown') {
+          // Navigate to newer messages
+          if (this._historyIndex > 0) {
+            this._historyIndex--;
+            activeElement.value = userMessages[userMessages.length - 1 - this._historyIndex];
+          } else if (this._historyIndex === 0) {
+            // Return to saved input
+            this._historyIndex = -1;
+            activeElement.value = this._savedInput || '';
+          }
+        }
+
+        // Move cursor to end
+        activeElement.selectionStart = activeElement.selectionEnd = activeElement.value.length;
       }
     });
 
-    // Also listen for mousedown / touchstart for quicker response on some devices
-    const closeOnOutside = e => {
-      if (
-        this.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN) &&
-        !this.menuDropdown.contains(e.target) &&
-        !this.menuButton?.contains(e.target)
-      ) {
-        this.toggleMenuDropdown();
-      }
+    // Reset history index when user types
+    const resetHistoryIndex = () => {
+      this._historyIndex = -1;
+      this._savedInput = '';
     };
-    document.addEventListener('mousedown', closeOnOutside);
-    // Touchstart can be passive to improve scrolling performance
-    document.addEventListener('touchstart', closeOnOutside, { passive: true });
+
+    this.chatInput?.addEventListener('input', resetHistoryIndex);
+    this.searchInput?.addEventListener('input', resetHistoryIndex);
+  }
+
+  _getUserMessageHistory() {
+    // Get user messages from current thread
+    const activeThread = this.getActiveThread();
+    if (!activeThread?.messages) return [];
+    
+    return activeThread.messages
+      .filter(m => m.role === 'user')
+      .map(m => m.content);
   }
 
   removeConnectionErrorMessages() {
