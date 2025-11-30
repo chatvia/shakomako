@@ -1153,11 +1153,15 @@ export class ChatWidget {
 
   _createInputContainer() {
     const container = createElement('div', { className: CSS_CLASSES.INPUT_CONTAINER });
+    
+    // Use welcome message from settings as placeholder, with fallback
+    const placeholder = this.settings?.welcome_message || this.options?.placeholder || 'Type a message...';
+    
     this.chatInput = createElement('textarea', {
       className: CSS_CLASSES.INPUT,
-      placeholder: 'Type a message...',
+      placeholder: placeholder,
       rows: 1,
-      'aria-label': 'Type a message',
+      'aria-label': placeholder,
       autocomplete: 'off',
       autocorrect: 'on',
       spellcheck: 'true'
@@ -1207,8 +1211,22 @@ export class ChatWidget {
     this._applyLogos();
     this._applyTitle();
     this._applyBranding();
+    this._applyInputPlaceholder();
     await this._loadExternalLibrariesIfNeeded();
     this._updateStartersContainer();
+  }
+
+  _applyInputPlaceholder() {
+    const placeholder = this.settings?.welcome_message || this.options?.placeholder || 'Type a message...';
+    
+    if (this.chatInput) {
+      this.chatInput.placeholder = placeholder;
+      this.chatInput.setAttribute('aria-label', placeholder);
+    }
+    
+    if (this.searchInput) {
+      this.searchInput.placeholder = placeholder;
+    }
   }
 
   _applyColors() {
