@@ -6,6 +6,7 @@ import strip from '@rollup/plugin-strip';
 import { visualizer } from 'rollup-plugin-visualizer';
 import gzipPlugin from 'rollup-plugin-gzip';
 import postcss from 'rollup-plugin-postcss';
+import postcssImport from 'postcss-import';
 import { brotliCompressSync } from 'zlib';
 import dotenv from 'dotenv';
 
@@ -99,6 +100,7 @@ const mainBundleConfig = {
   },
   plugins: [
     postcss({
+      plugins: [postcssImport()],
       minimize: true,
       extract: false,
       inject: true,

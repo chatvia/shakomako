@@ -1,4 +1,4 @@
-import '../css/styles.css';
+import '../css/widget.css';
 
 import StorageManager from './storage.js';
 import { AgentManager } from './agent.js';
@@ -686,7 +686,7 @@ export class ChatWidget {
       // Behavior for flat mode
       if (isFlat) {
         // Show window immediately, no bubble toggle
-        this.chatWindow.classList.add(CSS_CLASSES.WINDOW_OPEN, 'flat');
+        this.chatWindow.classList.add(CSS_CLASSES.WINDOW_OPEN, CSS_CLASSES.WINDOW_FLAT);
         this.isOpen = true;
 
         // Hide controls not needed in flat mode
@@ -812,7 +812,7 @@ export class ChatWidget {
       className: CSS_CLASSES.WINDOW,
       role: 'dialog',
       'aria-modal': 'true',
-      'aria-labelledby': 'chat-header-title' // Matches ID set in _createHeader
+      'aria-labelledby': 'chatvia-widget-header-title' // Matches ID set in _createHeader
     });
 
     this.chatHeader = this._createHeader();
@@ -840,7 +840,7 @@ export class ChatWidget {
     });
     this.headerTitle = createElement('div', {
       className: CSS_CLASSES.HEADER_TITLE,
-      id: 'chat-header-title'
+      id: 'chatvia-widget-header-title'
     });
     this.menuButton = this._createHeaderButton('menu', 'Menu', CSS_CLASSES.MENU_BUTTON, {
       'aria-haspopup': 'true',
@@ -987,7 +987,7 @@ export class ChatWidget {
       this.startersContainer.style.height = '0';
       this.startersContainer.style.padding = '0';
       this.startersContainer.style.opacity = '0';
-      this.startersContainer.style.overflow = 'hidden';
+      this.startersContainer.style.overflow = 'chatvia-widget-hidden';
       return;
     }
 
@@ -1074,7 +1074,8 @@ export class ChatWidget {
     if (!this.container) return; // Ensure elements are created
 
     // Set the base widget class and position (flat overrides)
-    this.container.className = `${CSS_CLASSES.WIDGET} ${this.isFlat ? 'flat-mode' : this.settings.position || 'bottom-right'}`;
+    const positionClass = this.settings.position === 'bottom-left' ? CSS_CLASSES.POSITION_BOTTOM_LEFT : CSS_CLASSES.POSITION_BOTTOM_RIGHT;
+    this.container.className = `${CSS_CLASSES.WIDGET} ${this.isFlat ? CSS_CLASSES.FLAT_MODE : positionClass}`;
 
     if (this.isFlat) {
       // Hide bubble if it exists
@@ -1125,25 +1126,49 @@ export class ChatWidget {
 
   _applyBranding() {
     if (!this.brandFooter) return;
-    const showBranding = this.settings.branding.enabled;
+    const showBranding = this.settings.branding?.enabled;
     if (showBranding) {
-      const brandName = this.settings.branding.name;
-      const brandUrl = this.settings.branding.url;
-      const brandLogoUrl = this.settings.branding.logo_url;
+      // Clear existing content safely
+      this.brandFooter.innerHTML = '';
       
-      if (brandUrl) {
-        if (brandLogoUrl) {
-          this.brandFooter.innerHTML = `<a href="${brandUrl}" target="_blank" rel="noopener noreferrer"><img src="${brandLogoUrl}" alt="Logo" class="brand-logo" />${brandName}</a>`;
-        } else {
-          this.brandFooter.innerHTML = `<a href="${brandUrl}" target="_blank" rel="noopener noreferrer">${brandName}</a>`;
+      const brandName = this.settings.branding.name || '';
+      const brandUrl = this.settings.branding.url || '';
+      const brandLogoUrl = this.settings.branding.logo_url || '';
+      
+      // Validate URLs to prevent XSS (only allow http/https)
+      const isValidUrl = (url) => {
+        if (!url) return false;
+        try {
+          const parsed = new URL(url, window.location.origin);
+          return ['http:', 'https:'].includes(parsed.protocol);
+        } catch {
+          return false;
         }
-      } else {
-        if (brandLogoUrl) {
-          this.brandFooter.innerHTML = `<span><img src="${brandLogoUrl}" alt="Logo" class="brand-logo" />${brandName}</span>`;
-        } else {
-          this.brandFooter.innerHTML = `<span>${brandName}</span>`;
-        }
+      };
+      
+      // Create elements safely (no innerHTML with user data)
+      const container = brandUrl && isValidUrl(brandUrl) 
+        ? createElement('a', { 
+            href: brandUrl, 
+            target: '_blank', 
+            rel: 'noopener noreferrer' 
+          }) 
+        : createElement('span');
+      
+      if (brandLogoUrl && isValidUrl(brandLogoUrl)) {
+        const logo = createElement('img', {
+          src: brandLogoUrl,
+          alt: 'Logo',
+          className: CSS_CLASSES.BRAND_LOGO
+        });
+        container.appendChild(logo);
       }
+      
+      // Use textContent for brand name (prevents XSS)
+      const textNode = document.createTextNode(brandName);
+      container.appendChild(textNode);
+      
+      this.brandFooter.appendChild(container);
       this.brandFooter.style.display = 'block';
     } else {
       this.brandFooter.style.display = 'none';
@@ -1183,7 +1208,7 @@ export class ChatWidget {
     const message = createElement('div', { className: `${CSS_CLASSES.MESSAGE} ${type}` });
 
     // Create a content wrapper for avatar and bubble
-    const contentWrapper = createElement('div', { className: 'message-content-wrapper' });
+    const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
 
     if (type === CSS_CLASSES.MESSAGE_AGENT) {
       contentWrapper.appendChild(this._createAvatar());
@@ -1233,7 +1258,7 @@ export class ChatWidget {
 
     // Copy button
     const copyButton = createElement('button', {
-      className: 'message-action-btn copy-btn',
+      className: 'chatvia-widget-action-btn chatvia-widget-copy-btn',
       'aria-label': 'Copy message',
       title: 'Copy'
     });
@@ -1242,7 +1267,7 @@ export class ChatWidget {
 
     // Thumbs up button
     const thumbsUpButton = createElement('button', {
-      className: `message-action-btn thumbs-up-btn${feedback === true ? ' active' : ''}`,
+      className: `chatvia-widget-action-btn chatvia-widget-thumbs-up${feedback === true ? ' chatvia-widget-active' : ''}`,
       'aria-label': 'Good response',
       title: 'Good response',
       'data-message-id': messageId
@@ -1257,7 +1282,7 @@ export class ChatWidget {
 
     // Thumbs down button
     const thumbsDownButton = createElement('button', {
-      className: `message-action-btn thumbs-down-btn${feedback === false ? ' active' : ''}`,
+      className: `chatvia-widget-action-btn chatvia-widget-thumbs-down${feedback === false ? ' chatvia-widget-active' : ''}`,
       'aria-label': 'Bad response',
       title: 'Bad response',
       'data-message-id': messageId
@@ -1290,11 +1315,11 @@ export class ChatWidget {
       const originalIcon = button.innerHTML;
       button.innerHTML = '';
       button.appendChild(createIcon('check'));
-      button.classList.add('copied');
+      button.classList.add('chatvia-widget-copied');
       
       setTimeout(() => {
         button.innerHTML = originalIcon;
-        button.classList.remove('copied');
+        button.classList.remove('chatvia-widget-copied');
       }, 2000);
     } catch (error) {
       console.error('Failed to copy message:', error);
@@ -1305,7 +1330,7 @@ export class ChatWidget {
     if (!messageId) return;
 
     // Check if the same button was clicked (toggle off)
-    const isAlreadyActive = clickedButton.classList.contains('active');
+    const isAlreadyActive = clickedButton.classList.contains('chatvia-widget-active');
     
     try {
       // Import api function
@@ -1329,11 +1354,11 @@ export class ChatWidget {
       if (response.ok) {
         // Toggle the clicked button
         if (isAlreadyActive) {
-          clickedButton.classList.remove('active');
+          clickedButton.classList.remove('chatvia-widget-active');
         } else {
-          clickedButton.classList.add('active');
+          clickedButton.classList.add('chatvia-widget-active');
           // Remove active state from the other button (mutually exclusive)
-          otherButton.classList.remove('active');
+          otherButton.classList.remove('chatvia-widget-active');
         }
       } else {
         console.error('Failed to submit feedback:', response.status);
@@ -1605,7 +1630,7 @@ export class ChatWidget {
     });
     
     // Create a content wrapper for avatar and bubble
-    const contentWrapper = createElement('div', { className: 'message-content-wrapper' });
+    const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
     contentWrapper.appendChild(this._createAvatar());
     const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE }); // Start empty
     contentWrapper.appendChild(messageBubble);
@@ -1720,8 +1745,8 @@ export class ChatWidget {
   }
 
   removeConnectionErrorMessages() {
-    this.messagesContainer?.querySelectorAll('.message.system').forEach(element => {
-      const bubble = element.querySelector('.message-bubble');
+    this.messagesContainer?.querySelectorAll(`.${CSS_CLASSES.MESSAGE}.${CSS_CLASSES.MESSAGE_SYSTEM}`).forEach(element => {
+      const bubble = element.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
       if (
         bubble &&
         (bubble.textContent.includes('Unable to') ||
@@ -1988,7 +2013,7 @@ export class ChatWidget {
 
   _createThreadsContainer(threads) {
     const container = createElement('div', {
-      className: `${CSS_CLASSES.THREADS_CONTAINER} threads-list`
+      className: `${CSS_CLASSES.THREADS_CONTAINER} ${CSS_CLASSES.THREADS_LIST}`
     });
 
     if (!threads || threads.length === 0) {
@@ -2016,7 +2041,7 @@ export class ChatWidget {
     }
 
     // Create content container for title, subtitle, and date
-    const contentContainer = createElement('div', { className: 'thread-content' });
+    const contentContainer = createElement('div', { className: CSS_CLASSES.THREAD_CONTENT });
     
     const titleEl = createElement('div', { className: CSS_CLASSES.THREAD_TITLE });
     titleEl.textContent =
@@ -2024,7 +2049,7 @@ export class ChatWidget {
     contentContainer.appendChild(titleEl);
 
     // Add subtitle (agent name or source)
-    const subtitleEl = createElement('div', { className: 'thread-subtitle' });
+    const subtitleEl = createElement('div', { className: CSS_CLASSES.THREAD_SUBTITLE });
     subtitleEl.textContent = this.settings.title || 'Chatbase AI';
     contentContainer.appendChild(subtitleEl);
 
@@ -2040,7 +2065,7 @@ export class ChatWidget {
     item.appendChild(contentContainer);
 
     // Create arrow icon only
-    const arrowIcon = createElement('div', { className: 'thread-arrow-icon' });
+    const arrowIcon = createElement('div', { className: CSS_CLASSES.THREAD_ARROW_ICON });
     arrowIcon.appendChild(createIcon('arrow-right'));
     item.appendChild(arrowIcon);
 
@@ -2369,7 +2394,7 @@ export class ChatWidget {
     this._scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
     
     // Apply styles to prevent scrolling
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'chatvia-widget-hidden';
     document.body.style.position = 'fixed';
     document.body.style.top = `-${this._scrollPosition}px`;
     document.body.style.width = '100%';
