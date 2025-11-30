@@ -1,0 +1,9 @@
+/**
+ * SearchWidget Styles
+ * 
+ * All styles are shared with the ChatWidget.
+ * This file exists for API consistency - customers can import
+ * either widget.css or search.css and get the same styles.
+ */
+
+@import './widget.css';

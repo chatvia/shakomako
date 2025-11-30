@@ -9,6 +9,7 @@
     "build": "npm run clean && rollup -c rollup.config.js",
     "build:prod": "NODE_ENV=production npm run clean && rollup -c rollup.config.js",
     "clean": "rimraf dist && mkdir dist",
+    "demo": "node serve-demo.js",
     "lint": "eslint \"src/**/*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "format": "prettier --write \"src/**/*.js\"",

@@ -25,8 +25,10 @@ window.chatbot =
 
   const agentId = embedScriptTag.getAttribute('agent-id');
   const mountId = embedScriptTag.getAttribute('mount-id');
+  const type = embedScriptTag.getAttribute('type') || 'widget'; // 'widget' or 'search'
 
   window[namespace].agentId = agentId;
+  window[namespace].type = type;
   if (mountId) window[namespace].mountId = mountId;
 
   /* global __SCRIPT_URL__ */
@@ -64,9 +66,10 @@ window.chatbot =
       const version = versionData.version || '1.0.0';
       console.log('chatbot: Using version:', version);
       
-      const scriptId = 'chatbot-embed-script-' + version.replace(/\./g, '-');
-      const fullScriptUrl = `${scriptHost}/${version}/widget.min.js`;
-      console.log('chatbot: Loading widget from:', fullScriptUrl);
+      const bundleFile = type === 'search' ? 'search.min.js' : 'widget.min.js';
+      const scriptId = 'chatvia-embed-script-' + type + '-' + version.replace(/\./g, '-');
+      const fullScriptUrl = `${scriptHost}/${version}/${bundleFile}`;
+      console.log(`chatvia: Loading ${type} from:`, fullScriptUrl);
 
       if (document.getElementById(scriptId)) {
         console.log('chatbot: Bundle script tag already exists for version:', version);

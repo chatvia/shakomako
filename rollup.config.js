@@ -123,6 +123,35 @@ const mainBundleConfig = {
   ].filter(Boolean)
 };
 
+const searchBundleConfig = {
+  input: 'src/search.js',
+  output: {
+    dir: `dist/${appVersion}`,
+    format: 'es',
+    sourcemap: false,
+    compact: true,
+    entryFileNames: 'search.min.js',
+    chunkFileNames: '[name]-[hash].js'
+  },
+  plugins: [
+    postcss({
+      plugins: [postcssImport()],
+      minimize: true,
+      extract: false,
+      inject: true,
+      modules: false
+    }),
+    ...commonPlugins,
+    isProduction && gzipPlugin({ fileName: '.gz' }),
+    isProduction &&
+      gzipPlugin({
+        fileName: '.br',
+        customCompression: content => brotliCompressSync(Buffer.from(content)),
+        additionalFiles: []
+      })
+  ].filter(Boolean)
+};
+
 const embedScriptConfig = {
   input: 'src/embed.js',
   output: {
@@ -146,4 +175,4 @@ const embedScriptConfig = {
   ].filter(Boolean)
 };
 
-export default [mainBundleConfig, embedScriptConfig];
+export default [mainBundleConfig, searchBundleConfig, embedScriptConfig];

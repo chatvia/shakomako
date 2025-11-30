@@ -61,11 +61,27 @@ const loadLibraries = async () => {
 };
 
 export class ChatWidget {
-  constructor(agentId, mountId = null) {
+  constructor(agentId, options = {}) {
     this.agentId = agentId;
-    this.mountId = mountId;
+    
+    // Handle null/undefined options, or legacy mountId parameter (string)
+    if (!options) {
+      this.mountId = null;
+      this.options = {};
+    } else if (typeof options === 'string') {
+      this.mountId = options;
+      this.options = {};
+    } else {
+      this.mountId = options.mountId || null;
+      this.options = options;
+    }
+    
+    // Mode: 'bubble' (default chat bubble) or 'search' (search bar with slider)
+    this.mode = this.options.mode || 'bubble';
+    this.searchPosition = this.options.position || 'bottom'; // 'top' or 'bottom' for search bar
+    
     this.sessionId = null;
-    this.isFlat = !!mountId;
+    this.isFlat = !!this.mountId;
 
     this.settings = {};
     this.isMobileApp = (() => {
@@ -510,18 +526,26 @@ export class ChatWidget {
       'isMobile:',
       this.isMobileApp,
       'show_on_load:',
-      this.settings.show_on_load
+      this.settings.show_on_load,
+      'mode:',
+      this.mode
     );
     this.isOpen = typeof open === 'boolean' ? open : !this.isOpen;
+    const isSearchMode = this.mode === 'search';
 
     if (this.isOpen) {
       this.chatWindow?.classList.add(CSS_CLASSES.WINDOW_OPEN);
-      this.chatBubble?.classList.add(CSS_CLASSES.BUBBLE_ACTIVE);
       
+      if (isSearchMode) {
+        // Search mode: hide search bar when panel opens
+        this.searchBar?.classList.add('chatvia-widget-hidden');
+      } else {
+        this.chatBubble?.classList.add(CSS_CLASSES.BUBBLE_ACTIVE);
       // Stop message bubbles when chat opens
       this._stopMessageBubbles();
+      }
 
-      if (this.settings.is_fullscreen) {
+      if (this.settings.is_fullscreen && !isSearchMode) {
         this.container.classList.add(CSS_CLASSES.FULLSCREEN);
         // Hide chat bubble when window is open in fullscreen
         if (this.chatBubble) {
@@ -529,14 +553,19 @@ export class ChatWidget {
         }
       }
 
-      // Lock body scroll when chat opens (fullscreen or mobile)
-      if (this.settings.is_fullscreen || this.isMobileApp) {
+      // Lock body scroll when chat opens (fullscreen, mobile, or search mode)
+      if (this.settings.is_fullscreen || this.isMobileApp || isSearchMode) {
         this._lockBodyScroll();
       }
 
       setTimeout(() => this.chatInput?.focus(), 300);
     } else {
       this.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
+      
+      if (isSearchMode) {
+        // Search mode: show search bar again and reset to normal size
+        this.searchBar?.classList.remove('chatvia-widget-hidden', 'chatvia-widget-expanded');
+      } else {
       this.chatBubble?.classList.remove(CSS_CLASSES.BUBBLE_ACTIVE);
       // Remove fullscreen when closing
       if (this.settings.is_fullscreen) {
@@ -544,11 +573,12 @@ export class ChatWidget {
         // Show chat bubble when window is closed in fullscreen
         if (this.chatBubble) {
           this.chatBubble.style.display = 'flex';
+          }
         }
       }
 
       // Unlock body scroll when chat closes
-      if (this.settings.is_fullscreen || this.isMobileApp) {
+      if (this.settings.is_fullscreen || this.isMobileApp || isSearchMode) {
         this._unlockBodyScroll();
       }
     }
@@ -684,10 +714,21 @@ export class ChatWidget {
       this._loadExternalLibrariesIfNeeded();
 
       const isFlat = this.isFlat;
+      const isSearchMode = this.mode === 'search';
 
       this.container = this._createContainer();
+      
+      // Add mode-specific classes
+      if (isSearchMode) {
+        this.container.classList.add('chatvia-widget-search-mode');
+      }
 
       if (!isFlat) {
+        if (isSearchMode) {
+          // Search mode: create search bar instead of bubble
+          this.searchBar = this._createSearchBar();
+          this.container.appendChild(this.searchBar);
+        } else {
         // Standard widget with bubble
         this.chatBubble = this._createChatBubble();
         this.container.appendChild(this.chatBubble);
@@ -695,9 +736,16 @@ export class ChatWidget {
         // Create message bubbles container
         this.messageBubblesContainer = this._createMessageBubblesContainer();
         this.container.appendChild(this.messageBubblesContainer);
+        }
       }
 
       this.chatWindow = this._createChatWindow();
+      
+      // Add slider class for search mode
+      if (isSearchMode) {
+        this.chatWindow.classList.add('chatvia-widget-slider-mode');
+      }
+      
       this.container.appendChild(this.chatWindow);
 
       // Behavior for flat mode
@@ -709,8 +757,8 @@ export class ChatWidget {
         // Hide controls not needed in flat mode
         if (this.expandButton) this.expandButton.style.display = 'none';
         if (this.closeButton) this.closeButton.style.display = 'none';
-      } else if (this.isMobileApp) {
-        // Mobile non-flat initial hidden
+      } else if (this.isMobileApp && !isSearchMode) {
+        // Mobile non-flat initial hidden (not for search mode)
         this.chatWindow.style.display = 'none';
         this.isOpen = false;
         
@@ -748,6 +796,56 @@ export class ChatWidget {
     });
     bubble.appendChild(this.bubbleLogo);
     return bubble;
+  }
+
+  _createSearchBar() {
+    const positionClass = this.searchPosition === 'top' ? CSS_CLASSES.SEARCH_POSITION_TOP : CSS_CLASSES.SEARCH_POSITION_BOTTOM;
+    const searchContainer = createElement('div', {
+      className: `${CSS_CLASSES.SEARCH_CONTAINER} ${positionClass}`
+    });
+
+    const inputWrapper = createElement('div', {
+      className: CSS_CLASSES.SEARCH_INPUT_WRAPPER
+    });
+
+    // Use welcome message from settings as placeholder
+    const placeholder = this.settings.welcome_message || this.options.placeholder || 'Ask a question...';
+
+    this.searchInput = createElement('input', {
+      className: CSS_CLASSES.SEARCH_INPUT,
+      type: 'text',
+      placeholder: placeholder
+    });
+
+    // Keyboard shortcut hint
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const shortcutHint = createElement('span', {
+      className: CSS_CLASSES.SEARCH_SHORTCUT_HINT,
+      textContent: isMac ? '⌘K' : 'Ctrl+K',
+      title: 'Press to toggle search'
+    });
+
+    // Search submit button
+    this.searchButton = createElement('button', {
+      className: CSS_CLASSES.SEARCH_BUTTON,
+      'aria-label': 'Search'
+    });
+    this.searchButton.appendChild(createIcon('arrow-right'));
+
+    // History button
+    this.historyButton = createElement('button', {
+      className: CSS_CLASSES.SEARCH_HISTORY_BUTTON,
+      title: 'View chat history'
+    });
+    this.historyButton.appendChild(createIcon('history'));
+
+    inputWrapper.appendChild(this.searchInput);
+    inputWrapper.appendChild(shortcutHint);
+    inputWrapper.appendChild(this.searchButton);
+    inputWrapper.appendChild(this.historyButton);
+    searchContainer.appendChild(inputWrapper);
+
+    return searchContainer;
   }
 
   _createMessageBubblesContainer() {
@@ -1646,7 +1744,11 @@ export class ChatWidget {
   }
 
   _setupEventListeners() {
+    if (this.mode === 'search') {
+      this._setupSearchBarListeners();
+    } else {
     this._setupBubbleListeners();
+    }
     this._setupWindowControlListeners();
     this._setupInputListeners();
     this._setupHeaderButtonListeners();
@@ -1662,6 +1764,66 @@ export class ChatWidget {
         this.toggleChat();
       }
     });
+  }
+
+  _setupSearchBarListeners() {
+    // Expand search bar on focus
+    this.searchInput?.addEventListener('focus', () => {
+      this.searchBar?.classList.add('chatvia-widget-expanded');
+    });
+
+    // Contract search bar on blur (if panel is not open)
+    this.searchInput?.addEventListener('blur', () => {
+      if (!this.isOpen) {
+        this.searchBar?.classList.remove('chatvia-widget-expanded');
+      }
+    });
+
+    // Also expand on click anywhere in the search bar
+    this.searchBar?.addEventListener('click', () => {
+      this.searchBar?.classList.add('chatvia-widget-expanded');
+      this.searchInput?.focus();
+    });
+
+    // Search input - submit on Enter
+    this.searchInput?.addEventListener('keydown', async e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        await this._handleSearchSubmit();
+      }
+    });
+
+    // Search button click
+    this.searchButton?.addEventListener('click', async () => {
+      await this._handleSearchSubmit();
+    });
+
+    // History button - open panel with thread list
+    this.historyButton?.addEventListener('click', () => {
+      this.toggleChat(true);
+      this._showThreadsList();
+    });
+  }
+
+  async _handleSearchSubmit() {
+    const query = this.searchInput?.value?.trim();
+    if (!query) return;
+
+    // Clear search input
+    this.searchInput.value = '';
+
+    // Open the chat panel if not already open
+    if (!this.isOpen) {
+      this.toggleChat(true);
+    }
+
+    // Send the message
+    await this.sendUserMessage(query);
+  }
+
+  _showThreadsList() {
+    // Toggle menu to show threads
+    this.toggleMenuDropdown();
   }
 
   _setupWindowControlListeners() {
