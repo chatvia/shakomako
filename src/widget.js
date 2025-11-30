@@ -2766,4 +2766,50 @@ export class ChatWidget {
       this._scrollPosition = undefined;
     }
   }
+
+  /**
+   * Clean up resources when widget is destroyed
+   * Call this method to prevent memory leaks
+   */
+  destroy() {
+    // Cancel any pending requestAnimationFrame calls
+    if (this._scrollRAF) {
+      cancelAnimationFrame(this._scrollRAF);
+      this._scrollRAF = null;
+    }
+    if (this._resizeRAF) {
+      cancelAnimationFrame(this._resizeRAF);
+      this._resizeRAF = null;
+    }
+
+    // Clear all timeouts
+    if (this._finalizeTimeout) {
+      clearTimeout(this._finalizeTimeout);
+      this._finalizeTimeout = null;
+    }
+    if (this._loadingSafetyTimeout) {
+      clearTimeout(this._loadingSafetyTimeout);
+      this._loadingSafetyTimeout = null;
+    }
+    if (this._wsMessageLoadingTimeout) {
+      clearTimeout(this._wsMessageLoadingTimeout);
+      this._wsMessageLoadingTimeout = null;
+    }
+
+    // Close SSE connection
+    if (this.sseClient) {
+      this.sseClient.close();
+      this.sseClient = null;
+    }
+
+    // Unlock body scroll if locked
+    this._unlockBodyScroll();
+
+    // Remove widget from DOM
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
+
+    console.log('Widget destroyed and resources cleaned up');
+  }
 }
