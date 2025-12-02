@@ -1,64 +1,28 @@
+/**
+ * ChatWidget - Main Widget Class
+ * Orchestrates all widget functionality using state modules
+ */
+
 import '../css/widget.css';
 
 import StorageManager from './storage.js';
 import { AgentManager } from './agent.js';
-import { createSSEClient } from './sse.js';
 import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
 import {
   CSS_CLASSES,
   DEFAULT_AVATAR_SVG,
-  DEFAULT_LOGO_SVG,
-  STREAMING_DONE_MARKER,
-  STREAMING_FINALIZE_TIMEOUT
+  DEFAULT_LOGO_SVG
 } from './utils.js';
 import { createElement, createIcon, createLeadForm } from './ui.js';
 
-// Create a namespace for our libraries
-const ChatWidgetLibs = {
-  marked: null,
-  DOMPurify: null,
-  _loadingPromise: null // To ensure libraries are loaded only once
-};
-
-// Shared DOMPurify configuration to avoid duplication
-const DOMPURIFY_CONFIG = {
-  ALLOWED_TAGS: [
-    'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3',
-    'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre',
-    'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
-    'ul', 'span', 'math', 'mi', 'mo', 'mn', 'mtext'
-  ],
-  ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
-  USE_PROFILES: { html: true },
-  KEEP_CONTENT: true,
-  ADD_ATTR: [
-    ['target', '_blank'],
-    ['rel', 'noopener noreferrer']
-  ]
-};
-
-// Load libraries dynamically to avoid conflicts
-const loadLibraries = async () => {
-  if (!ChatWidgetLibs._loadingPromise) {
-    ChatWidgetLibs._loadingPromise = (async () => {
-      try {
-        // Use Promise.all to load them in parallel
-        const [markedModule, DOMPurifyModule] = await Promise.all([
-          import('marked'),
-          import('dompurify')
-        ]);
-        ChatWidgetLibs.marked = markedModule.marked;
-        ChatWidgetLibs.DOMPurify = DOMPurifyModule.default;
-        console.log('Libraries loaded successfully.');
-      } catch (error) {
-        console.error('Failed to load markdown libraries:', error);
-        ChatWidgetLibs._loadingPromise = null;
-      }
-    })();
-  }
-  return ChatWidgetLibs._loadingPromise;
-};
+// Import state modules
+import * as threads from './state/threads.js';
+import * as messages from './state/messages.js';
+import * as sse from './state/sse.js';
+import * as events from './state/events.js';
+import * as controls from './state/controls.js';
+import * as config from './state/config.js';
 
 export class ChatWidget {
   constructor(agentId, options = {}) {
@@ -78,25 +42,19 @@ export class ChatWidget {
     
     // Mode: 'bubble' (default chat bubble) or 'search' (search bar with slider)
     this.mode = this.options.mode || 'bubble';
-    this.searchPosition = this.options.position || 'bottom'; // 'top' or 'bottom' for search bar
+    this.searchPosition = this.options.position || 'bottom';
     
     this.sessionId = null;
     this.isFlat = !!this.mountId;
 
     this.settings = {};
-    this.isMobileApp = (() => {
-      const mobileRegex = /Mobile|Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i;
-      if (mobileRegex.test(navigator.userAgent)) {
-        const tabletRegex = /iPad|Android(?!.*Mobile)|Tablet|Tab/i;
-        return !tabletRegex.test(navigator.userAgent);
-      }
-      return window.innerWidth <= 768;
-    })();
+    this.isMobileApp = this._detectMobile();
 
     this.agentManager = new AgentManager(agentId);
     this.storageManager = null;
     this.sessionManager = null;
 
+    // State
     this.threads = [];
     this.activeThreadId = null;
     this.messageHistory = [];
@@ -109,12 +67,26 @@ export class ChatWidget {
     this.isWidthExpanded = false;
     this.startersVisible = true;
 
+    // Internal timers/state
     this._previousWindowSize = null;
     this._finalizeTimeout = null;
     this._loadingSafetyTimeout = null;
     this._wsMessageLoadingTimeout = null;
   }
 
+  _detectMobile() {
+    const mobileRegex = /Mobile|Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i;
+    if (mobileRegex.test(navigator.userAgent)) {
+      const tabletRegex = /iPad|Android(?!.*Mobile)|Tablet|Tab/i;
+      return !tabletRegex.test(navigator.userAgent);
+    }
+    return window.innerWidth <= 768;
+  }
+
+  // ========================================
+  // Initialization
+  // ========================================
+  
   async init() {
     return await this._initialize();
   }
@@ -144,8 +116,6 @@ export class ChatWidget {
       this.setupSSE();
       await this.loadActiveThread();
 
-      // Only check show_on_load once
-      console.log('Checking show_on_load:', this.settings.show_on_load);
       if (this.settings.show_on_load) {
         console.log('Setting up show_on_load timer');
         setTimeout(() => {
@@ -155,7 +125,6 @@ export class ChatWidget {
       }
       console.log('Widget initialization complete.');
       
-      // Initialize message bubbles
       this._initializeMessageBubbles();
 
       setTimeout(() => {
@@ -171,548 +140,213 @@ export class ChatWidget {
 
   async _verifyClient() {
     const isVerified = await this.agentManager.verifyClient();
-
     if (!isVerified) {
       console.error('Client verification failed. Disabling chat.');
       await this.disabledChat('Client verification failed.');
-      throw new Error('Client verification failed'); // Throw to stop initialization
+      throw new Error('Client verification failed');
     }
-
     console.log('Client verified.');
   }
 
   async _initializeSession() {
     console.log('Initializing session...');
-
     const sessionId = await this.sessionManager.startSession();
-
-    console.log('Session started:', this.sessionId);
 
     if (!sessionId) {
       console.error('Failed to initialize session. Disabling chat.');
       await this.disabledChat('Session initialization failed.');
-      throw new Error('Session initialization failed'); // Throw to stop initialization
+      throw new Error('Session initialization failed');
     }
 
     this.sessionId = sessionId;
-
     console.log('Session initialized:', sessionId);
   }
 
-  async disabledChat(message = 'Chat disabled') {
-    if (this.sendButton) {
-      this.sendButton.disabled = true;
-    }
-    if (this.chatInput) {
-      this.chatInput.disabled = true;
-      this.chatInput.placeholder = message;
-    }
-    this.clearMessages();
-    await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, message, false);
-  }
+  // ========================================
+  // Thread Management (delegated)
+  // ========================================
 
   async initThreads() {
-    console.log('Initializing threads...');
-    try {
-      const { threads, activeThreadId } = await this.storageManager.loadThreads();
-      console.log('Loaded threads from API:', threads, 'Active ID:', activeThreadId);
-
-      this.threads = threads || [];
-      this.activeThreadId = activeThreadId || null;
-
-      // Check if the stored active thread ID actually exists in the threads list
-      if (this.activeThreadId && this.threads.length > 0) {
-        const activeThreadExists = this.threads.find(t => t.id === this.activeThreadId);
-        if (!activeThreadExists) {
-          console.log('Stored active thread no longer exists, selecting first available thread');
-          const firstThread = this.threads[0];
-          this.storageManager.setActiveThreadId(firstThread.id);
-          this.activeThreadId = firstThread.id;
-        }
-      }
-
-      if (this.threads.length === 0) {
-        console.log('No threads found, creating a new one...');
-        await this.createNewThread();
-      }
-      console.log(`Active thread ID (most recent): ${this.activeThreadId}`);
-    } catch (error) {
-      console.error('Error initializing threads:', error);
-      await this.disabledChat('Could not load chat threads.');
-      throw error;
-    }
+    return threads.initThreads(this);
   }
 
   async createNewThread() {
-    console.log('Requesting new thread from API...');
-    try {
-      const newThread = await this.storageManager.createNewThread();
-      if (newThread) {
-        this.threads.unshift(newThread);
-        this.activeThreadId = newThread.id; // Set by storageManager
-        this.messageHistory = [];
-        console.log('New thread created successfully:', newThread);
-
-        // Re-setup SSE with the new thread ID
-        this.setupSSE();
-
-        await this.displayHistoryMessages();
-        this._updateThreadActionButtons();
-        // Close menu dropdown if it's open
-        this.closeMenuDropdown();
-        this.scrollToBottom();
-
-        return newThread;
-      } else {
-        console.error('API did not return a new thread object.');
-        await this.disabledChat('Failed to create new chat.');
-        return null;
-      }
-    } catch (error) {
-      console.error('Failed to create new thread:', error);
-      await this.disabledChat('Error creating new chat.');
-      return null;
-    }
+    return threads.createNewThread(this);
   }
 
   getActiveThread() {
-    // Always use the localStorage stored active thread ID
-    const storedActiveThreadId = this.storageManager ? this.storageManager.getActiveThreadId() : this.activeThreadId;
-    return this.threads.find(t => t.id === storedActiveThreadId);
+    return threads.getActiveThread(this);
   }
 
   getCurrentActiveThreadId() {
-    // Helper method to get the current active thread ID from localStorage
-    return this.storageManager ? this.storageManager.getActiveThreadId() : this.activeThreadId;
+    return threads.getCurrentActiveThreadId(this);
   }
 
   async loadActiveThread() {
-    this.clearMessages();
-    if (this.inputContainer) this.inputContainer.style.display = 'flex';
-
-    const activeThread = this.getActiveThread();
-
-    if (!activeThread) {
-      console.warn('loadActiveThread called with no active thread. Re-initializing.');
-      try {
-        await this.initThreads();
-        const potentiallyNewActiveThread = this.getActiveThread();
-        if (!potentiallyNewActiveThread) {
-          console.error('Failed to establish an active thread even after re-init.');
-          await this.disabledChat('Cannot load chat.');
-          return;
-        }
-        // Don't recurse - just load the messages for the newly established thread
-        const messages = await this.storageManager.getMessages(potentiallyNewActiveThread.id);
-        this.messageHistory = messages || [];
-        potentiallyNewActiveThread.messages = this.messageHistory;
-        console.log(`Loaded ${this.messageHistory.length} messages for thread ${potentiallyNewActiveThread.id}`);
-        await this.displayHistoryMessages();
-        this._updateThreadActionButtons();
-        this.scrollToBottom();
-        return;
-      } catch (error) {
-        console.error('Error during re-initialization in loadActiveThread:', error);
-        await this.disabledChat('Cannot load chat.');
-        return;
-      }
-    }
-
-    console.log(`Loading messages for active thread: ${activeThread.id}`);
-
-    try {
-      const messages = await this.storageManager.getMessages(activeThread.id);
-      this.messageHistory = messages || [];
-
-      activeThread.messages = this.messageHistory;
-      console.log(`Loaded ${this.messageHistory.length} messages for thread ${activeThread.id}`);
-      await this.displayHistoryMessages();
-
-      // Check if there are any user messages in the thread or if thread has previous interaction
-      const hasUserMessages = this.messageHistory.some(
-        message => {
-          const messageType = message.role ? this._mapRoleToMessageType(message.role) : message.type;
-          return messageType === CSS_CLASSES.MESSAGE_USER;
-        }
-      );
-
-      if (hasUserMessages || activeThread.hasUserInteraction) {
-        // Hide starters if there are user messages or previous interaction
-        this.hideStarters();
-      } else if (
-        !this.messageHistory.length ||
-        (this.messageHistory.length === 1 &&
-          (this.messageHistory[0].role ? 
-            this._mapRoleToMessageType(this.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT :
-            this.messageHistory[0].type === CSS_CLASSES.MESSAGE_AGENT))
-      ) {
-        // Show starters only for empty threads or threads with just a welcome message
-        this.showStarters();
-      } else {
-        this.hideStarters();
-      }
-
-      // Update buttons state based on presence of user messages
-      this._updateThreadActionButtons();
-    } catch (error) {
-      console.error(`Error loading messages for thread ${activeThread.id}:`, error);
-      await this.addMessage(
-        CSS_CLASSES.MESSAGE_SYSTEM,
-        'Error loading messages for this chat.',
-        false
-      );
-    }
-    this.scrollToBottom();
+    return threads.loadActiveThread(this);
   }
 
-  async displayHistoryMessages() {
-    this.clearMessages();
-
-    if (this.messageHistory && this.messageHistory.length > 0) {
-      for (const message of this.messageHistory) {
-        // Handle new message structure with 'role' instead of 'type'
-        // Prioritize 'role' field for message styling, fall back to 'type' if no role
-        const messageType = message.role ? this._mapRoleToMessageType(message.role) : message.type;
-        // Check if this is a welcome message and hide actions
-        const isWelcomeMessage = this.settings.welcome_message && message.content === this.settings.welcome_message;
-        await this.addMessage(messageType, message.content, false, {
-          messageId: message.id,
-          feedback: message.feedback,
-          hideActions: isWelcomeMessage
-        });
-      }
-    } else if (this.settings.welcome_message) {
-      console.log('Welcome message exists:', this.settings.welcome_message);
-      const activeThread = this.getActiveThread();
-      console.log('Active thread:', activeThread);
-
-      if (activeThread && !activeThread.welcomeShown) {
-        console.log('Showing welcome message');
-        // Set the flag immediately to prevent duplicate calls
-        activeThread.welcomeShown = true;
-        
-        setTimeout(async () => {
-          console.log('Welcome message timeout fired, calling addMessage');
-          const result = await this.addMessage(CSS_CLASSES.MESSAGE_AGENT, this.settings.welcome_message, false, {
-            hideActions: true
-          });
-          console.log('addMessage result:', result);
-        }, 500);
-      } else {
-        console.log('Welcome message already shown or no active thread');
-      }
-    } else {
-      console.log('No welcome message in settings');
-    }
+  async startNewThread() {
+    return threads.startNewThread(this);
   }
 
-  _mapRoleToMessageType(role) {
-    // Map the new 'role' field to the appropriate message type
-    let messageType;
-    switch (role) {
-      case 'user':
-        messageType = CSS_CLASSES.MESSAGE_USER;
-        break;
-      case 'assistant':
-        messageType = CSS_CLASSES.MESSAGE_AGENT;
-        break;
-      case 'system':
-        messageType = CSS_CLASSES.MESSAGE_SYSTEM;
-        break;
-      default:
-        messageType = CSS_CLASSES.MESSAGE_AGENT; // Default fallback
-    }
-    return messageType;
+  async loadChatHistory() {
+    return threads.loadChatHistory(this);
   }
 
-  setupSSE() {
-    if (this.sseClient) {
-      this.sseClient.close();
-    }
+  confirmDeleteThread() {
+    return threads.confirmDeleteThread(this);
+  }
 
-    // Always use the current active thread ID from localStorage
-    const currentActiveThreadId = this.getCurrentActiveThreadId();
-    this.sseClient = createSSEClient(this.agentId, this.sessionId, currentActiveThreadId, {
-      onOpen: () => this.removeConnectionErrorMessages(),
-      onClose: () => {
-        this.hideLoading();
-        this.finalizeStreamingMessage(); // Immediately finalize streaming when done
-      },
-      onError: error => this._handleSSEError(error),
-      onMessage: data => this._handleSSEMessage(data)
-    });
+  confirmClearAllThreads() {
+    return threads.confirmClearAllThreads(this);
+  }
+
+  _updateThreadActionButtons() {
+    return threads.updateThreadActionButtons(this);
+  }
+
+  // ========================================
+  // Message Handling (delegated)
+  // ========================================
+
+  async addMessage(type, text, addToHistory = true, options = {}) {
+    return messages.addMessage(this, type, text, addToHistory, options);
   }
 
   async sendUserMessage(customText) {
-    const text = customText || this.chatInput.value.trim();
-    if (!text) return;
-
-    await this.addMessage(CSS_CLASSES.MESSAGE_USER, text, true);
-
-    if (!customText) {
-      this.chatInput.value = '';
-      this.autoResizeInput();
-    }
-
-    // Hide starters permanently for this thread
-    this.hideStarters();
-
-    // Set flag to prevent starters from showing again for this thread
-    const activeThread = this.getActiveThread();
-
-    if (activeThread) {
-      activeThread.hasUserInteraction = true;
-      this._updateThreadActionButtons();
-    }
-
-    let needsLoading = true;
-    const loadingTimeout = setTimeout(() => {
-      if (needsLoading && !document.getElementById(CSS_CLASSES.STREAMING_MESSAGE)) {
-        this.showLoading();
-      }
-    }, 150);
-
-    const cleanupLoading = () => {
-      needsLoading = false;
-      clearTimeout(loadingTimeout);
-      this.hideLoading();
-    };
-
-    if (!this.sseClient) {
-      console.error('SSE client not initialized.');
-      cleanupLoading();
-      await this.addMessage(
-        CSS_CLASSES.MESSAGE_SYSTEM,
-        'SSE client error. Cannot send message.',
-        false,
-        {
-          retryText: text
-        }
-      );
-      return;
-    }
-
-    const messagePayload = {
-      session_id: this.sessionId,
-      thread_id: this.getCurrentActiveThreadId(),
-      type: 'message',
-      content: text,
-      url: window.location.href,
-      referrer: document.referrer || ''
-    };
-
-    console.log('Sending SSE message:', messagePayload);
-
-    const success = await this.sseClient.send(messagePayload);
-
-    if (!success) {
-      console.error('Failed to send message via SSE.');
-      cleanupLoading();
-      await this.addMessage(
-        CSS_CLASSES.MESSAGE_SYSTEM,
-        'Failed to send message. Please try again.',
-        false,
-        { retryText: text }
-      );
-      this.chatInput.disabled = false;
-      this.sendButton.disabled = false;
-    } else {
-      this.chatInput.disabled = true;
-      this.sendButton.disabled = true;
-    }
-
-    this.scrollToBottom();
+    return messages.sendUserMessage(this, customText);
   }
 
-  toggleChat(open) {
-    console.log(
-      'toggleChat called with:',
-      open,
-      'isMobile:',
-      this.isMobileApp,
-      'show_on_load:',
-      this.settings.show_on_load,
-      'mode:',
-      this.mode
-    );
-    this.isOpen = typeof open === 'boolean' ? open : !this.isOpen;
-    const isSearchMode = this.mode === 'search';
+  async displayHistoryMessages() {
+    return messages.displayHistoryMessages(this);
+  }
 
-    if (this.isOpen) {
-      this.chatWindow?.classList.add(CSS_CLASSES.WINDOW_OPEN);
-      
-      if (isSearchMode) {
-        // Search mode: hide search bar when panel opens
-        this.searchBar?.classList.add('chatvia-widget-hidden');
-      } else {
-        this.chatBubble?.classList.add(CSS_CLASSES.BUBBLE_ACTIVE);
-      // Stop message bubbles when chat opens
-      this._stopMessageBubbles();
-      }
+  _mapRoleToMessageType(role) {
+    return messages.mapRoleToMessageType(role);
+  }
 
-      if (this.settings.is_fullscreen && !isSearchMode) {
-        this.container.classList.add(CSS_CLASSES.FULLSCREEN);
-        // Hide chat bubble when window is open in fullscreen
-        if (this.chatBubble) {
-          this.chatBubble.style.display = 'none';
-        }
-      }
+  async parseMarkdown(text) {
+    return messages.parseMarkdown(text);
+  }
 
-      // Lock body scroll when chat opens (fullscreen, mobile, or search mode)
-      if (this.settings.is_fullscreen || this.isMobileApp || isSearchMode) {
-        this._lockBodyScroll();
-      }
+  startStreamingMessage() {
+    return messages.startStreamingMessage(this);
+  }
 
-      setTimeout(() => this.chatInput?.focus(), 300);
-    } else {
-      this.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
-      
-      if (isSearchMode) {
-        // Search mode: show search bar again and reset to normal size
-        this.searchBar?.classList.remove('chatvia-widget-hidden', 'chatvia-widget-expanded');
-      } else {
-      this.chatBubble?.classList.remove(CSS_CLASSES.BUBBLE_ACTIVE);
-      // Remove fullscreen when closing
-      if (this.settings.is_fullscreen) {
-        this.container.classList.remove(CSS_CLASSES.FULLSCREEN);
-        // Show chat bubble when window is closed in fullscreen
-        if (this.chatBubble) {
-          this.chatBubble.style.display = 'flex';
-          }
-        }
-      }
+  async updateStreamingMessage() {
+    return messages.updateStreamingMessage(this);
+  }
 
-      // Unlock body scroll when chat closes
-      if (this.settings.is_fullscreen || this.isMobileApp || isSearchMode) {
-        this._unlockBodyScroll();
-      }
+  async finalizeStreamingMessage() {
+    return messages.finalizeStreamingMessage(this);
+  }
+
+  async refreshStreamingMessages() {
+    if (this.isStreaming) {
+      await this.updateStreamingMessage();
     }
+  }
 
-    const event = new CustomEvent(this.isOpen ? 'chat:opened' : 'chat:closed', {
-      detail: { widget: this }
-    });
-    document.dispatchEvent(event);
+  // ========================================
+  // SSE Handling (delegated)
+  // ========================================
+
+  setupSSE() {
+    return sse.setupSSE(this);
+  }
+
+  removeConnectionErrorMessages() {
+    return sse.removeConnectionErrorMessages(this);
+  }
+
+  // ========================================
+  // Event Listeners (delegated)
+  // ========================================
+
+  _setupEventListeners() {
+    return events.setupEventListeners(this);
+  }
+
+  // ========================================
+  // UI Controls (delegated)
+  // ========================================
+
+  toggleChat(open) {
+    return controls.toggleChat(this, open);
   }
 
   toggleExpand() {
-    if (this.settings.window_size === CSS_CLASSES.WINDOW_LARGE && !this._previousWindowSize) {
-      console.log('Already in large mode, cannot expand further unless collapsed first.');
-      return;
-    }
-
-    this.chatWindow?.classList.add(CSS_CLASSES.WINDOW_ANIMATING);
-
-    if (!this.isWidthExpanded) {
-      this._previousWindowSize = this.settings.window_size;
-      this.settings.window_size = CSS_CLASSES.WINDOW_LARGE;
-      this.isWidthExpanded = true;
-      this.expandButton.title = 'Collapse chat';
-      this.expandButton.innerHTML = ''; // Clear previous icon
-      this.expandButton.appendChild(createIcon('collapse'));
-      console.log('Expanded chat window to large from ' + this._previousWindowSize);
-    } else {
-      this.settings.window_size = this._previousWindowSize || CSS_CLASSES.WINDOW_MEDIUM;
-      this._previousWindowSize = null;
-      this.isWidthExpanded = false;
-      this.expandButton.title = 'Expand chat';
-      this.expandButton.innerHTML = ''; // Clear previous icon
-      this.expandButton.appendChild(createIcon('expand'));
-      console.log('Collapsed chat window to ' + this.settings.window_size);
-    }
-
-    this.applyWindowSize();
-
-    setTimeout(() => {
-      this.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_ANIMATING);
-    }, 600);
-
-    setTimeout(() => this.scrollToBottom(), 300);
+    return controls.toggleExpand(this);
   }
 
   toggleTheme() {
-    this.settings.theme = this.settings.theme === 'dark' ? 'light' : 'dark';
-
-    if (this.settings.theme === 'dark') {
-      this.chatWindow?.classList.add(CSS_CLASSES.WINDOW_DARK);
-      this.themeToggleButton?.setAttribute('aria-label', 'Switch to light theme');
-      this.themeToggleButton.title = 'Switch to light theme';
-      this.themeToggleButton.innerHTML = '';
-      this.themeToggleButton.appendChild(createIcon('sun'));
-    } else {
-      this.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_DARK);
-      this.themeToggleButton?.setAttribute('aria-label', 'Switch to dark theme');
-      this.themeToggleButton.title = 'Switch to dark theme';
-      this.themeToggleButton.innerHTML = '';
-      this.themeToggleButton.appendChild(createIcon('moon'));
-    }
-
-    this._updateStartersContainer();
-
-    const event = new CustomEvent('chat:theme-changed', {
-      detail: { widget: this, theme: this.settings.theme }
-    });
-    document.dispatchEvent(event);
-
-    // Theme menu option update removed - dark mode disabled
+    return controls.toggleTheme(this);
   }
 
-  // Theme menu option update method removed - dark mode disabled
-
   toggleMenuDropdown() {
-    if (this.isStreaming) {
-      console.log('Preventing menu open while streaming.');
-      return;
-    }
-
-    const isOpen = this.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-
-    if (isOpen) {
-      this.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-      const onTransitionEnd = e => {
-        if (e.propertyName === 'opacity') {
-          this.menuDropdown.style.display = 'none';
-          this.menuDropdown.removeEventListener('transitionend', onTransitionEnd);
-        }
-      };
-      this.menuDropdown.addEventListener('transitionend', onTransitionEnd);
-      // Fallback hide in case transition event doesn't fire
-      if (
-        this.menuDropdown &&
-        !this.menuDropdown.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN)
-      ) {
-        this.menuDropdown.style.display = 'none';
-      }
-    } else if (this.menuDropdown) {
-      this.menuDropdown.style.display = 'block';
-      void this.menuDropdown.offsetWidth; // Force reflow
-      this.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-      this.menuDropdown.style.opacity = '1';
-      this.menuDropdown.style.zIndex = '10001';
-    }
+    return controls.toggleMenuDropdown(this);
   }
 
   menuDropdownIsOpened() {
-    return this.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN) || false;
+    return controls.menuDropdownIsOpened(this);
   }
 
   closeMenuDropdown() {
-    if (this.menuDropdownIsOpened()) {
-      this.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-      const onTransitionEnd = e => {
-        if (e.propertyName === 'opacity') {
-          this.menuDropdown.style.display = 'none';
-          this.menuDropdown.removeEventListener('transitionend', onTransitionEnd);
-        }
-      };
-      this.menuDropdown.addEventListener('transitionend', onTransitionEnd);
-      // Fallback hide in case transition event doesn't fire
-      setTimeout(() => {
-        if (this.menuDropdown && !this.menuDropdownIsOpened()) {
-          this.menuDropdown.style.display = 'none';
-        }
-      }, 300);
-    }
+    return controls.closeMenuDropdown(this);
   }
+
+  scrollToBottom() {
+    return controls.scrollToBottom(this);
+  }
+
+  clearMessages() {
+    return controls.clearMessages(this);
+  }
+
+  showLoading() {
+    return controls.showLoading(this);
+  }
+
+  hideLoading() {
+    return controls.hideLoading(this);
+  }
+
+  autoResizeInput() {
+    return controls.autoResizeInput(this);
+  }
+
+  hideStarters() {
+    return controls.hideStarters(this);
+  }
+
+  showStarters() {
+    return controls.showStarters(this);
+  }
+
+  async disabledChat(message) {
+    return controls.disabledChat(this, message);
+  }
+
+  // ========================================
+  // Configuration (delegated)
+  // ========================================
+
+  async applyConfiguration() {
+    return config.applyConfiguration(this);
+  }
+
+  applyWindowSize() {
+    return config.applyWindowSize(this);
+  }
+
+  _updateStartersContainer() {
+    return config.updateStartersContainer(this);
+  }
+
+  // ========================================
+  // UI Element Creation
+  // ========================================
 
   async _createWidgetElements() {
     return new Promise(resolve => {
@@ -721,67 +355,50 @@ export class ChatWidget {
       const isFlat = this.isFlat;
       const isSearchMode = this.mode === 'search';
 
-      this.container = this._createContainer();
+      this.container = createElement('div', { className: CSS_CLASSES.WIDGET });
       
-      // Add mode-specific classes
       if (isSearchMode) {
         this.container.classList.add('chatvia-widget-search-mode');
       }
 
       if (!isFlat) {
         if (isSearchMode) {
-          // Search mode: create search bar instead of bubble
           this.searchBar = this._createSearchBar();
           this.container.appendChild(this.searchBar);
         } else {
-        // Standard widget with bubble
-        this.chatBubble = this._createChatBubble();
-        this.container.appendChild(this.chatBubble);
-        
-        // Create message bubbles container
-        this.messageBubblesContainer = this._createMessageBubblesContainer();
-        this.container.appendChild(this.messageBubblesContainer);
+          this.chatBubble = this._createChatBubble();
+          this.container.appendChild(this.chatBubble);
+          
+          this.messageBubblesContainer = this._createMessageBubblesContainer();
+          this.container.appendChild(this.messageBubblesContainer);
         }
       }
 
       this.chatWindow = this._createChatWindow();
       
-      // Add slider class for search mode
       if (isSearchMode) {
         this.chatWindow.classList.add('chatvia-widget-slider-mode');
       }
       
       this.container.appendChild(this.chatWindow);
 
-      // Behavior for flat mode
       if (isFlat) {
-        // Show window immediately, no bubble toggle
         this.chatWindow.classList.add(CSS_CLASSES.WINDOW_OPEN, CSS_CLASSES.WINDOW_FLAT);
         this.isOpen = true;
-
-        // Hide controls not needed in flat mode
         if (this.expandButton) this.expandButton.style.display = 'none';
         if (this.closeButton) this.closeButton.style.display = 'none';
       } else if (this.isMobileApp && !isSearchMode) {
-        // Mobile non-flat initial hidden (not for search mode)
         this.chatWindow.style.display = 'none';
         this.isOpen = false;
-        
-        // Hide expand button on mobile
         if (this.expandButton) this.expandButton.style.display = 'none';
       }
 
-      // Wait for next frame to ensure styles are applied
       requestAnimationFrame(() => {
         const mountEl = this.mountId ? document.getElementById(this.mountId) : null;
         (mountEl || document.body).appendChild(this.container);
         resolve();
       });
     });
-  }
-
-  _createContainer() {
-    return createElement('div', { className: CSS_CLASSES.WIDGET });
   }
 
   _createChatBubble() {
@@ -804,7 +421,9 @@ export class ChatWidget {
   }
 
   _createSearchBar() {
-    const positionClass = this.searchPosition === 'top' ? CSS_CLASSES.SEARCH_POSITION_TOP : CSS_CLASSES.SEARCH_POSITION_BOTTOM;
+    const positionClass = this.searchPosition === 'top' 
+      ? CSS_CLASSES.SEARCH_POSITION_TOP 
+      : CSS_CLASSES.SEARCH_POSITION_BOTTOM;
     const searchContainer = createElement('div', {
       className: `${CSS_CLASSES.SEARCH_CONTAINER} ${positionClass}`
     });
@@ -813,7 +432,6 @@ export class ChatWidget {
       className: CSS_CLASSES.SEARCH_INPUT_WRAPPER
     });
 
-    // Use welcome message from settings as placeholder
     const placeholder = this.settings.welcome_message || this.options.placeholder || 'Ask a question...';
 
     this.searchInput = createElement('input', {
@@ -822,7 +440,6 @@ export class ChatWidget {
       placeholder: placeholder
     });
 
-    // Keyboard shortcut hint
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const shortcutHint = createElement('span', {
       className: CSS_CLASSES.SEARCH_SHORTCUT_HINT,
@@ -830,14 +447,12 @@ export class ChatWidget {
       title: 'Press to toggle search'
     });
 
-    // Search submit button
     this.searchButton = createElement('button', {
       className: CSS_CLASSES.SEARCH_BUTTON,
       'aria-label': 'Search'
     });
     this.searchButton.appendChild(createIcon('arrow-right'));
 
-    // History button
     this.historyButton = createElement('button', {
       className: CSS_CLASSES.SEARCH_HISTORY_BUTTON,
       title: 'View chat history'
@@ -860,17 +475,12 @@ export class ChatWidget {
   }
 
   _initializeMessageBubbles() {
-    // Only show bubbles if not in flat mode and bubbles exist
     if (this.isFlat || !this.settings.bubbles || !Array.isArray(this.settings.bubbles) || this.settings.bubbles.length === 0) {
       return;
     }
 
     this.currentBubbleIndex = 0;
-    
-    // Start showing bubbles after a delay
-    setTimeout(() => {
-      this._showNextBubble();
-    }, 1000); // Show first bubble after 1 second
+    setTimeout(() => this._showNextBubble(), 1000);
   }
 
   _showNextBubble() {
@@ -878,52 +488,36 @@ export class ChatWidget {
       return;
     }
 
-    // Check if we've shown all bubbles
     if (this.currentBubbleIndex >= this.settings.bubbles.length) {
-      return; // All bubbles have been shown
+      return;
     }
 
-    // Get current bubble text
     const bubbleText = this.settings.bubbles[this.currentBubbleIndex];
     
-    // Create bubble element
     const bubble = createElement('div', {
       className: CSS_CLASSES.FLOATING_BUBBLE,
       textContent: bubbleText
     });
 
-    // Add click listener to hide the bubble
     bubble.addEventListener('click', () => {
       bubble.classList.remove(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
       setTimeout(() => {
         if (bubble.parentNode) {
           bubble.parentNode.removeChild(bubble);
         }
-      }, 300); // Wait for hide animation
+      }, 300);
     });
 
-    // Add to container (they stack up)
     this.messageBubblesContainer.appendChild(bubble);
 
-    // Animate in
     setTimeout(() => {
       bubble.classList.add(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
     }, 100);
 
-    // Move to next bubble
     this.currentBubbleIndex++;
     
-    // Show next bubble after a delay (if there are more)
     if (this.currentBubbleIndex < this.settings.bubbles.length) {
-      setTimeout(() => {
-        this._showNextBubble();
-      }, 2000); // 2 second delay between bubbles
-    }
-  }
-
-  _stopMessageBubbles() {
-    if (this.messageBubblesContainer) {
-      this.messageBubblesContainer.innerHTML = '';
+      setTimeout(() => this._showNextBubble(), 2000);
     }
   }
 
@@ -932,12 +526,12 @@ export class ChatWidget {
       className: CSS_CLASSES.WINDOW,
       role: 'dialog',
       'aria-modal': 'true',
-      'aria-labelledby': 'chatvia-widget-header-title' // Matches ID set in _createHeader
+      'aria-labelledby': 'chatvia-widget-header-title'
     });
 
     this.chatHeader = this._createHeader();
     this.messagesContainer = this._createMessagesContainer();
-    this.loadingIndicator = this._createLoadingIndicator(); // Create but don't append yet
+    this.loadingIndicator = this._createLoadingIndicator();
     this.startersContainer = this._createStartersContainer();
     this.inputContainer = this._createInputContainer();
     this.brandFooter = this._createBrandFooter();
@@ -966,18 +560,9 @@ export class ChatWidget {
       'aria-haspopup': 'true',
       'aria-expanded': 'false'
     });
-    this.deleteThreadButton = this._createHeaderButton(
-      'delete',
-      'Clear current chat',
-      CSS_CLASSES.DELETE_BUTTON
-    );
+    this.deleteThreadButton = this._createHeaderButton('delete', 'Clear current chat', CSS_CLASSES.DELETE_BUTTON);
     this.deleteThreadButton.style.display = 'none';
-    this.expandButton = this._createHeaderButton(
-      'expand',
-      'Expand chat',
-      CSS_CLASSES.EXPAND_BUTTON
-    );
-    // Theme toggle removed - dark mode disabled
+    this.expandButton = this._createHeaderButton('expand', 'Expand chat', CSS_CLASSES.EXPAND_BUTTON);
     this.closeButton = this._createHeaderButton('close', 'Close chat', CSS_CLASSES.CLOSE_BUTTON);
     this.menuDropdown = this._createMenuDropdown();
 
@@ -1011,51 +596,36 @@ export class ChatWidget {
       role: 'menu'
     });
 
-    this.newChatOption = this._createMenuOption('Start new chat', 'new-chat', () =>
-      this.startNewThread()
-    );
-    this.historyOption = this._createMenuOption('Chat history', 'history', () =>
-      this.loadChatHistory()
-    );
-    // Theme option removed - dark mode disabled
-    this.clearCurrentOption = this._createMenuOption('Clear current chat', 'delete', () =>
-      this.confirmDeleteThread()
-    );
-    this.clearAllOption = this._createMenuOption('Clear all', 'clear-all', () =>
-      this.confirmClearAllThreads()
-    );
+    this.newChatOption = this._createMenuOption('Start new chat', 'new-chat', () => this.startNewThread());
+    this.historyOption = this._createMenuOption('Chat history', 'history', () => this.loadChatHistory());
+    this.clearCurrentOption = this._createMenuOption('Clear current chat', 'delete', () => this.confirmDeleteThread());
+    this.clearAllOption = this._createMenuOption('Clear all', 'clear-all', () => this.confirmClearAllThreads());
 
     dropdown.appendChild(this.newChatOption);
     dropdown.appendChild(this.historyOption);
-    dropdown.appendChild(
-      createElement('hr', {
-        style: 'border:none;border-top:1px solid var(--chat-border);margin:4px 0;'
-      })
-    );
+    dropdown.appendChild(createElement('hr', {
+      style: 'border:none;border-top:1px solid var(--chat-border);margin:4px 0;'
+    }));
     dropdown.appendChild(this.clearCurrentOption);
     dropdown.appendChild(this.clearAllOption);
-    dropdown.style.display = 'none'; // Start hidden
+    dropdown.style.display = 'none';
     return dropdown;
   }
 
   _createMenuOption(text, iconName, action) {
-    const option = createElement(
-      'div',
-      {
-        className: CSS_CLASSES.MENU_OPTION,
-        role: 'menuitem',
-        tabIndex: 0
-      },
-      {
-        click: action,
-        keydown: e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            action();
-          }
+    const option = createElement('div', {
+      className: CSS_CLASSES.MENU_OPTION,
+      role: 'menuitem',
+      tabIndex: 0
+    }, {
+      click: action,
+      keydown: e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          action();
         }
       }
-    );
+    });
     option.appendChild(createIcon(iconName));
     option.appendChild(createElement('span', { textContent: text }));
     return option;
@@ -1079,87 +649,19 @@ export class ChatWidget {
       dotsContainer.appendChild(createElement('div', { className: CSS_CLASSES.LOADING_DOT }));
     }
     indicator.appendChild(dotsContainer);
-    indicator.style.display = 'none'; // Start hidden
+    indicator.style.display = 'none';
     return indicator;
   }
 
   _createStartersContainer() {
-    const container = createElement('div', {
+    return createElement('div', {
       className: CSS_CLASSES.STARTERS_CONTAINER
     });
-
-    return container;
-  }
-
-  _updateStartersContainer() {
-    if (!this.startersContainer) return;
-
-    // Clear existing starters
-    this.startersContainer.innerHTML = '';
-
-    // Check if we should show starters
-    if (
-      !this.settings.starters ||
-      !Array.isArray(this.settings.starters) ||
-      this.settings.starters.length === 0 ||
-      !this.startersVisible
-    ) {
-      this.startersContainer.style.height = '0';
-      this.startersContainer.style.padding = '0';
-      this.startersContainer.style.opacity = '0';
-      this.startersContainer.style.overflow = 'chatvia-widget-hidden';
-      return;
-    }
-
-    // Show starters container
-    this.startersContainer.style.display = 'flex';
-    this.startersContainer.style.height = 'auto';
-    this.startersContainer.style.padding = '16px';
-    this.startersContainer.style.opacity = '1';
-    this.startersContainer.style.overflow = 'auto';
-
-    // Create starter buttons
-    this.settings.starters.forEach(starter => {
-      const starterButton = createElement('div', {
-        className: CSS_CLASSES.STARTER_BUTTON,
-        textContent: starter,
-        role: 'button',
-        tabIndex: 0
-      });
-
-      starterButton.addEventListener('click', () => {
-        this.sendUserMessage(starter);
-        this.hideStarters();
-      });
-
-      starterButton.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          this.sendUserMessage(starter);
-          this.hideStarters();
-        }
-      });
-
-      this.startersContainer.appendChild(starterButton);
-    });
-  }
-
-  hideStarters() {
-    this.startersVisible = false;
-    this._updateStartersContainer();
-    this.autoResizeInput(); // Recalculate messagesContainer spacing
-  }
-
-  showStarters() {
-    this.startersVisible = true;
-    this._updateStartersContainer();
-    this.autoResizeInput(); // Recalculate messagesContainer spacing
   }
 
   _createInputContainer() {
     const container = createElement('div', { className: CSS_CLASSES.INPUT_CONTAINER });
     
-    // Use welcome message from settings as placeholder, with fallback
     const placeholder = this.settings?.welcome_message || this.options?.placeholder || 'Type a message...';
     
     this.chatInput = createElement('textarea', {
@@ -1189,1055 +691,24 @@ export class ChatWidget {
   }
 
   async _loadExternalLibrariesIfNeeded() {
-    // Always load markdown libraries
-    await loadLibraries();
+    await messages.loadLibraries();
     await this.refreshStreamingMessages();
   }
 
-  async applyConfiguration() {
-    if (!this.container) return; // Ensure elements are created
-
-    // Set the base widget class and position (flat overrides)
-    const positionClass = this.settings.position === 'bottom-left' ? CSS_CLASSES.POSITION_BOTTOM_LEFT : CSS_CLASSES.POSITION_BOTTOM_RIGHT;
-    this.container.className = `${CSS_CLASSES.WIDGET} ${this.isFlat ? CSS_CLASSES.FLAT_MODE : positionClass}`;
-
-    if (this.isFlat) {
-      // Hide bubble if it exists
-      if (this.chatBubble) this.chatBubble.style.display = 'none';
-    }
-
-    // Dark theme initialization removed - dark mode disabled
-
-    this.applyWindowSize();
-
-    // Theme toggle button removed - dark mode disabled
-
-    this._applyColors();
-    this._applyLogos();
-    this._applyTitle();
-    this._applyBranding();
-    this._applyInputPlaceholder();
-    await this._loadExternalLibrariesIfNeeded();
-    this._updateStartersContainer();
-  }
-
-  _applyInputPlaceholder() {
-    const placeholder = this.settings?.welcome_message || this.options?.placeholder || 'Type a message...';
-    
-    if (this.chatInput) {
-      this.chatInput.placeholder = placeholder;
-      this.chatInput.setAttribute('aria-label', placeholder);
-    }
-    
-    if (this.searchInput) {
-      this.searchInput.placeholder = placeholder;
-    }
-  }
-
-  _applyColors() {
-    const colorTheme = this.settings.color_theme;
-    const colorShade = this.settings.color_shade;
-    
-    // Only apply colors if both theme and shade are set
-    if (!colorTheme || colorShade == null) {
-      return; // No color set, leave CSS defaults
-    }
-    
-    // Use the CSS variable for the theme and shade
-    document.documentElement.style.setProperty('--chat-primary', `var(--${colorTheme}-${colorShade})`);
-  }
-
-
-
-  _applyLogos() {
-    const logoUrl = this.settings.logo_url || DEFAULT_LOGO_SVG;
-    if (this.headerLogo && !this.headerLogo.src) {
-      this.headerLogo.src = logoUrl;
-    }
-  }
-
-  _applyTitle() {
-    if (this.headerTitle) {
-      this.headerTitle.textContent = this.settings.title;
-    }
-  }
-
-  _applyBranding() {
-    if (!this.brandFooter) return;
-    const showBranding = this.settings.branding?.enabled;
-    if (showBranding) {
-      // Clear existing content safely
-      this.brandFooter.innerHTML = '';
-      
-      const brandName = this.settings.branding.name || '';
-      const brandUrl = this.settings.branding.url || '';
-      const brandLogoUrl = this.settings.branding.logo_url || '';
-      
-      // Validate URLs to prevent XSS (only allow http/https)
-      const isValidUrl = (url) => {
-        if (!url) return false;
-        try {
-          const parsed = new URL(url, window.location.origin);
-          return ['http:', 'https:'].includes(parsed.protocol);
-        } catch {
-          return false;
-        }
-      };
-      
-      // Create elements safely (no innerHTML with user data)
-      const container = brandUrl && isValidUrl(brandUrl) 
-        ? createElement('a', { 
-            href: brandUrl, 
-            target: '_blank', 
-            rel: 'noopener noreferrer' 
-          }) 
-        : createElement('span');
-      
-      if (brandLogoUrl && isValidUrl(brandLogoUrl)) {
-        const logo = createElement('img', {
-          src: brandLogoUrl,
-          alt: 'Logo',
-          className: CSS_CLASSES.BRAND_LOGO
-        });
-        container.appendChild(logo);
-      }
-      
-      // Use textContent for brand name (prevents XSS)
-      const textNode = document.createTextNode(brandName);
-      container.appendChild(textNode);
-      
-      this.brandFooter.appendChild(container);
-      this.brandFooter.style.display = 'block';
-    } else {
-      this.brandFooter.style.display = 'none';
-    }
-  }
-
-  applyWindowSize() {
-    if (!this.chatWindow) return;
-    
-    // Skip applying window sizes in flat mode - let the container control the size
-    if (this.isFlat) return;
-
-    this.chatWindow.classList.remove(CSS_CLASSES.WINDOW_SMALL, CSS_CLASSES.WINDOW_MEDIUM, CSS_CLASSES.WINDOW_LARGE);
-
-    if ([CSS_CLASSES.WINDOW_SMALL, CSS_CLASSES.WINDOW_MEDIUM, CSS_CLASSES.WINDOW_LARGE].includes(this.settings.window_size)) {
-      this.chatWindow.classList.add(this.settings.window_size);
-
-      if (this.expandButton) {
-        if (this.settings.window_size === CSS_CLASSES.WINDOW_LARGE) {
-          this.expandButton.style.display = this._previousWindowSize ? 'flex' : 'none';
-        } else {
-          this.expandButton.style.display = 'flex';
-        }
-      }
-    }
-  }
-
-  async addMessage(type, text, addToHistory = true, options = {}) {
-    console.log('addMessage called:', { type, text, addToHistory, messagesContainer: !!this.messagesContainer });
-    if (!this.messagesContainer) {
-      console.log('No messagesContainer found, returning null');
-      return null;
-    }
-    
-
-    
-    const message = createElement('div', { className: `${CSS_CLASSES.MESSAGE} ${type}` });
-
-    // Create a content wrapper for avatar and bubble
-    const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
-
-    if (type === CSS_CLASSES.MESSAGE_AGENT) {
-      contentWrapper.appendChild(this._createAvatar());
-    }
-
-    const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
-    
-    await this._setMessageBubbleContent(bubble, type, text);
-    contentWrapper.appendChild(bubble);
-
-    message.appendChild(contentWrapper);
-
-    // Add action buttons for agent messages (unless hidden for welcome messages)
-    if (type === CSS_CLASSES.MESSAGE_AGENT && text && !options.hideActions) {
-      const actionsContainer = this._createMessageActions(text, options.messageId, options.feedback);
-      message.appendChild(actionsContainer);
-    }
-
-    if (addToHistory) {
-      this._addMessageToHistory(type, text, options);
-    }
-
-    this.messagesContainer.appendChild(message);
-    this.scrollToBottom();
-    return message;
-  }
-
-  _createAvatar() {
-    const avatar = createElement('div', { className: CSS_CLASSES.MESSAGE_AVATAR });
-    const brandLogoUrl = this.settings.branding.logo_url;
-    if (brandLogoUrl) {
-      const avatarImg = createElement('img', {
-        src: brandLogoUrl,
-        alt: 'Assistant'
-      });
-      avatar.appendChild(avatarImg);
-    } else {
-      avatar.innerHTML = DEFAULT_AVATAR_SVG;
-    }
-    return avatar;
-  }
-
-  _createMessageActions(messageText, messageId, feedback) {
-    const actionsContainer = createElement('div', { 
-      className: CSS_CLASSES.MESSAGE_ACTIONS 
-    });
-
-    // Copy button
-    const copyButton = createElement('button', {
-      className: 'chatvia-widget-action-btn chatvia-widget-copy-btn',
-      'aria-label': 'Copy message',
-      title: 'Copy'
-    });
-    copyButton.appendChild(createIcon('copy'));
-    copyButton.addEventListener('click', () => this._handleCopyMessage(messageText, copyButton));
-
-    // Thumbs up button
-    const thumbsUpButton = createElement('button', {
-      className: `chatvia-widget-action-btn chatvia-widget-thumbs-up${feedback === true ? ' chatvia-widget-active' : ''}`,
-      'aria-label': 'Good response',
-      title: 'Good response',
-      'data-message-id': messageId
-    });
-    thumbsUpButton.appendChild(createIcon('thumbs-up'));
-    if (messageId) {
-      thumbsUpButton.addEventListener('click', () => this._handleFeedback(messageId, true, thumbsUpButton, thumbsDownButton));
-    } else {
-      thumbsUpButton.disabled = true;
-      thumbsUpButton.style.opacity = '0.3';
-    }
-
-    // Thumbs down button
-    const thumbsDownButton = createElement('button', {
-      className: `chatvia-widget-action-btn chatvia-widget-thumbs-down${feedback === false ? ' chatvia-widget-active' : ''}`,
-      'aria-label': 'Bad response',
-      title: 'Bad response',
-      'data-message-id': messageId
-    });
-    thumbsDownButton.appendChild(createIcon('thumbs-down'));
-    if (messageId) {
-      thumbsDownButton.addEventListener('click', () => this._handleFeedback(messageId, false, thumbsDownButton, thumbsUpButton));
-    } else {
-      thumbsDownButton.disabled = true;
-      thumbsDownButton.style.opacity = '0.3';
-    }
-
-    actionsContainer.appendChild(copyButton);
-    actionsContainer.appendChild(thumbsUpButton);
-    actionsContainer.appendChild(thumbsDownButton);
-
-    return actionsContainer;
-  }
-
-  _enableStreamingMessageActions(messageId) {
-    const streamingElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-    if (!streamingElement || !messageId) return;
-    
-    let actionsContainer = streamingElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
-    
-    if (actionsContainer) {
-      // Update existing buttons - enable them if they're disabled
-      const thumbsUpBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_UP}`);
-      const thumbsDownBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_DOWN}`);
-      
-      if (thumbsUpBtn && (thumbsUpBtn.disabled || !thumbsUpBtn.getAttribute('data-message-id'))) {
-        // Remove all existing event listeners by cloning (preserves icon)
-        const newThumbsUpBtn = thumbsUpBtn.cloneNode(true);
-        thumbsUpBtn.parentNode.replaceChild(newThumbsUpBtn, thumbsUpBtn);
-        // Enable the button
-        newThumbsUpBtn.disabled = false;
-        newThumbsUpBtn.style.opacity = '1';
-        newThumbsUpBtn.style.pointerEvents = 'auto';
-        newThumbsUpBtn.setAttribute('data-message-id', messageId);
-        // Re-add click listener
-        newThumbsUpBtn.addEventListener('click', () => {
-          const otherBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_DOWN}`);
-          this._handleFeedback(messageId, true, newThumbsUpBtn, otherBtn);
-        });
-      }
-      
-      if (thumbsDownBtn && (thumbsDownBtn.disabled || !thumbsDownBtn.getAttribute('data-message-id'))) {
-        // Remove all existing event listeners by cloning (preserves icon)
-        const newThumbsDownBtn = thumbsDownBtn.cloneNode(true);
-        thumbsDownBtn.parentNode.replaceChild(newThumbsDownBtn, thumbsDownBtn);
-        // Enable the button
-        newThumbsDownBtn.disabled = false;
-        newThumbsDownBtn.style.opacity = '1';
-        newThumbsDownBtn.style.pointerEvents = 'auto';
-        newThumbsDownBtn.setAttribute('data-message-id', messageId);
-        // Re-add click listener
-        newThumbsDownBtn.addEventListener('click', () => {
-          const otherBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_UP}`);
-          this._handleFeedback(messageId, false, newThumbsDownBtn, otherBtn);
-        });
-      }
-    } else {
-      // Create action buttons if they don't exist yet (early in streaming)
-      // But only if we have some content
-      if (this.currentStreamedMessage && this.currentStreamedMessage.trim().length > 0) {
-        actionsContainer = this._createMessageActions(this.currentStreamedMessage, messageId, null);
-        streamingElement.appendChild(actionsContainer);
-      }
-    }
-  }
-
-  async _handleCopyMessage(text, button) {
-    try {
-      // Remove HTML tags and get plain text
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = text;
-      const plainText = tempDiv.textContent || tempDiv.innerText || text;
-      
-      await navigator.clipboard.writeText(plainText);
-      
-      // Visual feedback
-      const originalIcon = button.innerHTML;
-      button.innerHTML = '';
-      button.appendChild(createIcon('check'));
-      button.classList.add('chatvia-widget-copied');
-      
-      setTimeout(() => {
-        button.innerHTML = originalIcon;
-        button.classList.remove('chatvia-widget-copied');
-      }, 2000);
-    } catch (error) {
-      console.error('Failed to copy message:', error);
-    }
-  }
-
-  async _handleFeedback(messageId, isPositive, clickedButton, otherButton) {
-    if (!messageId) return;
-
-    // Check if the same button was clicked (toggle off)
-    const isAlreadyActive = clickedButton.classList.contains('chatvia-widget-active');
-    
-    try {
-      // Import api function
-      const api = (await import('./api.js')).default;
-      
-      // Send feedback to API
-      const response = await api({
-        endpoint: 'feedback',
-        method: 'POST',
-        headers: {
-          'x-agent-id': this.agentId,
-          'x-session-id': this.sessionId,
-          'x-thread-id': this.getCurrentActiveThreadId(),
-          'x-message-id': messageId
-        },
-        body: JSON.stringify({
-          feedback: isPositive
-        })
-      });
-
-      if (response.ok) {
-        // Toggle the clicked button
-        if (isAlreadyActive) {
-          clickedButton.classList.remove('chatvia-widget-active');
-        } else {
-          clickedButton.classList.add('chatvia-widget-active');
-          // Remove active state from the other button (mutually exclusive)
-          otherButton.classList.remove('chatvia-widget-active');
-        }
-      } else {
-        console.error('Failed to submit feedback:', response.status);
-      }
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-    }
-  }
-
-  async _setMessageBubbleContent(bubble, type, text) {
-    if (type === CSS_CLASSES.MESSAGE_AGENT) {
-      bubble.innerHTML = await this.parseMarkdown(text);
-    } else {
-      bubble.textContent = text;
-    }
-  }
-
-  _addMessageToHistory(type, text, options) {
-    const messageData = { type, text, timestamp: new Date().toISOString(), options };
-    this.messageHistory.push(messageData);
-    const activeThread = this.getActiveThread();
-
-    if (activeThread) {
-      if (!Array.isArray(activeThread.messages)) activeThread.messages = [];
-
-      activeThread.messages.push(messageData);
-      activeThread.updatedAt = new Date().toISOString();
-
-      // Set hasUserInteraction flag when a user message is added
-      if (type === CSS_CLASSES.MESSAGE_USER) {
-        activeThread.hasUserInteraction = true;
-        this._updateThreadActionButtons();
-      }
-    }
-  }
-
-  async _handleSSEError(error) {
-    console.error('SSE Error:', error);
-    this.hideLoading();
-    if (!this.sseReconnectAttempts) {
-      // Only show initial connection error
-      await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, 'Unable to connect.', false);
-    }
-    // Re-enable input and button on error
-    if (this.chatInput) this.chatInput.disabled = false;
-    if (this.sendButton) {
-      this.sendButton.disabled = false;
-    }
-  }
-
-
-
-  _handleSSEMessage(data) {
-    console.log('Received raw SSE data:', data);
-    this.hideLoading();
-
-    // Check if data is already an object (from SSE client) or needs parsing
-    let message;
-    if (typeof data === 'object' && data !== null) {
-      message = data;
-    } else {
-      try {
-        message = JSON.parse(data);
-      } catch (error) {
-        console.error('Failed to parse SSE data as JSON:', error);
-        console.log('Raw data:', data);
-        return;
-      }
-    }
-
-    this._clearSSETimeouts();
-
-    if (message.content === STREAMING_DONE_MARKER) {
-      console.log('Stream [DONE] received. Finalizing immediately.');
-      this.finalizeStreamingMessage();
-      return;
-    }
-
-    this._handleReceivedMessage(message);
-  }
-
-  async _handleStreamChunk(content) {
-    console.log('Stream chunk received:', content);
-    if (!this.isStreaming) {
-      this.isStreaming = true;
-      this.currentStreamedMessage = '';
-      this.startStreamingMessage();
-      console.log('Started new streaming message');
-    }
-
-    this.currentStreamedMessage += content;
-    console.log('Updated accumulated message:', this.currentStreamedMessage);
-    await this.updateStreamingMessage();
-    this._resetFinalizeTimeout();
-  }
-
-  async _handleReceivedMessage(message) {
-    const messageContent = message.content || '';
-    console.log('Received message with content:', messageContent);
-
-    // Store message ID if available (check both 'id' and 'message_id')
-    const messageId = message.id || message.message_id;
-    if (messageId) {
-      this.currentStreamedMessageId = messageId;
-      console.log('Stored message ID:', messageId);
-      
-      // Enable feedback buttons immediately when message ID arrives
-      this._enableStreamingMessageActions(messageId);
-    }
-
-    if (messageContent) {
-      if (this.isStreaming) {
-        console.log('Adding to existing stream:', messageContent);
-        this.currentStreamedMessage += messageContent;
-        await this.updateStreamingMessage();
-        this._resetFinalizeTimeout();
-      } else {
-        console.log('Starting new stream with:', messageContent);
-        await this._handleStreamChunk(messageContent);
-      }
-    }
-  }
-
-  _resetFinalizeTimeout() {
-    if (this._finalizeTimeout) clearTimeout(this._finalizeTimeout);
-    this._finalizeTimeout = setTimeout(
-      () => this.finalizeStreamingMessage(),
-      STREAMING_FINALIZE_TIMEOUT
-    );
-  }
-
-  _clearSSETimeouts() {
-    if (this._sseMessageLoadingTimeout) {
-      clearTimeout(this._sseMessageLoadingTimeout);
-      this._sseMessageLoadingTimeout = null;
-    }
-    if (this._finalizeTimeout) {
-      clearTimeout(this._finalizeTimeout);
-      this._finalizeTimeout = null;
-    }
-  }
-
-  async finalizeStreamingMessage() {
-    if (!this.isStreaming) return;
-    console.log('Finalizing streaming message');
-
-    this._clearSSETimeouts();
-    this.hideLoading();
-
-    // Check for lead form trigger in the complete accumulated message
-    let finalMessage = this.currentStreamedMessage;
-    let shouldShowLeadForm = false;
-
-    if (finalMessage.includes('<ShowLeadForm/>')) {
-      console.log('🎯 ShowLeadForm detected in final message! Triggering lead form');
-      finalMessage = finalMessage.replace('<ShowLeadForm/>', '').trim();
-      shouldShowLeadForm = true;
-      console.log('📝 Final message after stripping:', finalMessage);
-    }
-
-    const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-    if (streamingMsgElement && finalMessage !== '') {
-      // Update the message content with the stripped content
-      const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
-      if (messageBubble) {
-        await this._updateMessageBubbleContent(messageBubble, finalMessage);
-      }
-
-      // Check if action buttons already exist (created during streaming when ID arrived)
-      let actionsContainer = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
-      
-      if (!actionsContainer) {
-        // Add action buttons after streaming is complete
-        actionsContainer = this._createMessageActions(finalMessage, this.currentStreamedMessageId);
-        streamingMsgElement.appendChild(actionsContainer);
-      } else {
-        // Buttons exist - ensure they're enabled if we have a message ID
-        if (this.currentStreamedMessageId) {
-          this._enableStreamingMessageActions(this.currentStreamedMessageId);
-        }
-      }
-
-      // Just remove the streaming class but keep the assistant class
-      streamingMsgElement.classList.remove(CSS_CLASSES.STREAMING);
-      streamingMsgElement.removeAttribute('id');
-
-      // Save final message to history (without the trigger)
-      this._addMessageToHistory(CSS_CLASSES.MESSAGE_AGENT, finalMessage, {
-        messageId: this.currentStreamedMessageId
-      });
-    } else if (streamingMsgElement) {
-      streamingMsgElement.remove();
-    }
-
-    this.isStreaming = false;
-    this.currentStreamedMessage = '';
-    this.currentStreamedMessageId = null;
-
-    // Show lead form after finalizing the message
-    if (shouldShowLeadForm) {
-      console.log('📋 Showing lead form after message finalization');
-      this._showLeadForm();
-    }
-
-    // Re-enable input and button
-    if (this.chatInput) {
-      this.chatInput.disabled = false;
-      this.chatInput.focus(); // Focus on the input field
-    }
-    if (this.sendButton) {
-      this.sendButton.disabled = false;
-    }
-    this.autoResizeInput(); // Adjust layout after potential input enable
-  }
-
-  async _updateMessageBubbleContent(messageBubble, content) {
-    // Process markdown and update message bubble content
-    try {
-      // Ensure libraries are loaded
-      if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
-        await loadLibraries();
-      }
-      
-      if (ChatWidgetLibs.marked && ChatWidgetLibs.DOMPurify) {
-        ChatWidgetLibs.marked.setOptions({
-          gfm: true,
-          breaks: true,
-          headerIds: false,
-          mangle: false,
-          smartLists: true,
-          smartypants: true,
-          xhtml: false,
-          tables: true
-        });
-
-        let html = ChatWidgetLibs.marked.parse(content);
-        // Use shared DOMPurify config to avoid duplication
-        html = ChatWidgetLibs.DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
-        messageBubble.innerHTML = html;
-      } else {
-        // Fallback if markdown libraries not available
-        messageBubble.textContent = content;
-      }
-    } catch (error) {
-      console.error('Error processing markdown:', error);
-      messageBubble.textContent = content;
-    }
-  }
-
-  async updateStreamingMessage() {
-    const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-    if (streamingMsgElement) {
-      const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
-      if (messageBubble) {
-        // Use the helper method to update content
-        await this._updateMessageBubbleContent(messageBubble, this.currentStreamedMessage);
-      }
-
-      // Create action buttons early if they don't exist (will be enabled when message ID arrives)
-      if (!streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`) && this.currentStreamedMessage && this.currentStreamedMessage.trim().length > 0) {
-        const actionsContainer = this._createMessageActions(this.currentStreamedMessage, this.currentStreamedMessageId, null);
-        streamingMsgElement.appendChild(actionsContainer);
-      }
-
-      this.scrollToBottom();
-    }
-  }
-
-  startStreamingMessage() {
-    if (document.getElementById(CSS_CLASSES.STREAMING_MESSAGE) || !this.messagesContainer) {
-      return; // Don't create if already exists or container is missing
-    }
-
-    const streamingMsgElement = createElement('div', {
-      className: `${CSS_CLASSES.MESSAGE} ${CSS_CLASSES.MESSAGE_AGENT}`,
-      id: CSS_CLASSES.STREAMING_MESSAGE
-    });
-    
-    // Create a content wrapper for avatar and bubble
-    const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
-    contentWrapper.appendChild(this._createAvatar());
-    const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE }); // Start empty
-    contentWrapper.appendChild(messageBubble);
-    
-    streamingMsgElement.appendChild(contentWrapper);
-
-    this.messagesContainer.appendChild(streamingMsgElement);
-    this.scrollToBottom();
-  }
-
-  _setupEventListeners() {
-    if (this.mode === 'search') {
-      this._setupSearchBarListeners();
-    } else {
-    this._setupBubbleListeners();
-    }
-    this._setupWindowControlListeners();
-    this._setupInputListeners();
-    this._setupHeaderButtonListeners();
-    this._setupGlobalListeners();
-    this.autoResizeInput();
-  }
-
-  _setupBubbleListeners() {
-    this.chatBubble?.addEventListener('click', () => this.toggleChat());
-    this.chatBubble?.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        this.toggleChat();
-      }
-    });
-  }
-
-  _setupSearchBarListeners() {
-    // Expand search bar on focus
-    this.searchInput?.addEventListener('focus', () => {
-      this.searchBar?.classList.add('chatvia-widget-expanded');
-    });
-
-    // Contract search bar on blur (if panel is not open)
-    this.searchInput?.addEventListener('blur', () => {
-      if (!this.isOpen) {
-        this.searchBar?.classList.remove('chatvia-widget-expanded');
-      }
-    });
-
-    // Also expand on click anywhere in the search bar
-    this.searchBar?.addEventListener('click', () => {
-      this.searchBar?.classList.add('chatvia-widget-expanded');
-      this.searchInput?.focus();
-    });
-
-    // Search input - submit on Enter
-    this.searchInput?.addEventListener('keydown', async e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        await this._handleSearchSubmit();
-      }
-    });
-
-    // Search button click
-    this.searchButton?.addEventListener('click', async () => {
-      await this._handleSearchSubmit();
-    });
-
-    // History button - open panel with thread list
-    this.historyButton?.addEventListener('click', () => {
-      this.toggleChat(true);
-      this._showThreadsList();
-    });
-  }
-
-  async _handleSearchSubmit() {
-    const query = this.searchInput?.value?.trim();
-    if (!query) return;
-
-    // Clear search input
-    this.searchInput.value = '';
-
-    // Open the chat panel if not already open
-    if (!this.isOpen) {
-      this.toggleChat(true);
-    }
-
-    // Send the message
-    await this.sendUserMessage(query);
-  }
-
-  _showThreadsList() {
-    // Toggle menu to show threads
-    this.toggleMenuDropdown();
-  }
-
-  _setupWindowControlListeners() {
-    this.closeButton?.addEventListener('click', () => this.toggleChat(false));
-    this.closeButton?.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        this.toggleChat(false);
-      }
-    });
-  }
-
-  async _setupInputListeners() {
-    this.sendButton?.addEventListener('click', () => this.sendUserMessage());
-    this.sendButton?.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        this.sendUserMessage();
-      }
-    });
-    this.chatInput?.addEventListener('keydown', async e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        await this.sendUserMessage();
-      }
-    });
-    this.chatInput?.addEventListener('input', () => this.autoResizeInput());
-  }
-
-  _setupHeaderButtonListeners() {
-    if (this.settings.show_theme_switcher) {
-      // Theme toggle event listeners removed - dark mode disabled
-    }
-    this.expandButton?.addEventListener('click', () => this.toggleExpand());
-    this.expandButton?.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        this.toggleExpand();
-      }
-    });
-    this.deleteThreadButton?.addEventListener('click', () => this.confirmDeleteThread());
-    this.deleteThreadButton?.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        this.confirmDeleteThread();
-      }
-    });
-    this.menuButton?.addEventListener('click', e => {
-      e.stopPropagation();
-      this.toggleMenuDropdown();
-    });
-    this.menuButton?.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        e.stopPropagation();
-        this.toggleMenuDropdown();
-      }
-    });
-  }
-
-  _setupGlobalListeners() {
-    // Single handler for closing menu dropdown on outside interaction
-    // Using mousedown for faster response than click
-    const closeMenuOnOutside = e => {
-      if (
-        this.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN) &&
-        !this.menuDropdown.contains(e.target) &&
-        !this.menuButton?.contains(e.target)
-      ) {
-        this.closeMenuDropdown();
-      }
-    };
-    
-    // Use mousedown for desktop (faster than click)
-    document.addEventListener('mousedown', closeMenuOnOutside);
-    // Use touchstart for mobile (passive for better scroll performance)
-    document.addEventListener('touchstart', closeMenuOnOutside, { passive: true });
-
-    // Keyboard shortcuts
-    this._setupKeyboardShortcuts();
-  }
-
-  _setupKeyboardShortcuts() {
-    // Track history navigation index
-    this._historyIndex = -1;
-    this._userInputHistory = [];
-
-    document.addEventListener('keydown', e => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const modifierKey = isMac ? e.metaKey : e.ctrlKey;
-
-      // Cmd/Ctrl + K to toggle search/chat (open/close)
-      if (modifierKey && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        
-        if (this.mode === 'search') {
-          // In search mode: toggle behavior
-          if (this.isOpen) {
-            // Close the panel
-            this.toggleChat(false);
-          } else if (this.searchBar?.classList.contains('chatvia-widget-expanded')) {
-            // Collapse search bar if expanded
-            this.searchBar.classList.remove('chatvia-widget-expanded');
-            this.searchInput?.blur();
-          } else {
-            // Expand and focus search bar
-            this.searchBar?.classList.add('chatvia-widget-expanded');
-            this.searchInput?.focus();
-          }
-        } else {
-          // In bubble mode: toggle chat
-          this.toggleChat();
-          if (this.isOpen) {
-            setTimeout(() => this.chatInput?.focus(), 100);
-          }
-        }
-        return;
-      }
-
-      // Escape to close panel
-      if (e.key === 'Escape') {
-        if (this.menuDropdownIsOpened()) {
-          this.closeMenuDropdown();
-          return;
-        }
-        if (this.isOpen) {
-          e.preventDefault();
-          this.toggleChat(false);
-          return;
-        }
-        // In search mode, also collapse the search bar
-        if (this.mode === 'search' && this.searchBar?.classList.contains('chatvia-widget-expanded')) {
-          this.searchBar.classList.remove('chatvia-widget-expanded');
-          this.searchInput?.blur();
-          return;
-        }
-      }
-
-      // Arrow up/down to navigate user message history (when input is focused)
-      const activeElement = document.activeElement;
-      const isInputFocused = activeElement === this.chatInput || activeElement === this.searchInput;
-      
-      if (isInputFocused && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-        const userMessages = this._getUserMessageHistory();
-        if (userMessages.length === 0) return;
-
-        e.preventDefault();
-
-        if (e.key === 'ArrowUp') {
-          // Navigate to older messages
-          if (this._historyIndex < userMessages.length - 1) {
-            // Save current input if first time navigating
-            if (this._historyIndex === -1) {
-              this._savedInput = activeElement.value;
-            }
-            this._historyIndex++;
-            activeElement.value = userMessages[userMessages.length - 1 - this._historyIndex];
-          }
-        } else if (e.key === 'ArrowDown') {
-          // Navigate to newer messages
-          if (this._historyIndex > 0) {
-            this._historyIndex--;
-            activeElement.value = userMessages[userMessages.length - 1 - this._historyIndex];
-          } else if (this._historyIndex === 0) {
-            // Return to saved input
-            this._historyIndex = -1;
-            activeElement.value = this._savedInput || '';
-          }
-        }
-
-        // Move cursor to end
-        activeElement.selectionStart = activeElement.selectionEnd = activeElement.value.length;
-      }
-    });
-
-    // Reset history index when user types
-    const resetHistoryIndex = () => {
-      this._historyIndex = -1;
-      this._savedInput = '';
-    };
-
-    this.chatInput?.addEventListener('input', resetHistoryIndex);
-    this.searchInput?.addEventListener('input', resetHistoryIndex);
-  }
-
-  _getUserMessageHistory() {
-    // Get user messages from current thread
-    const activeThread = this.getActiveThread();
-    if (!activeThread?.messages) return [];
-    
-    return activeThread.messages
-      .filter(m => m.role === 'user')
-      .map(m => m.content);
-  }
-
-  removeConnectionErrorMessages() {
-    this.messagesContainer?.querySelectorAll(`.${CSS_CLASSES.MESSAGE}.${CSS_CLASSES.MESSAGE_SYSTEM}`).forEach(element => {
-      const bubble = element.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
-      if (
-        bubble &&
-        (bubble.textContent.includes('Unable to') ||
-          bubble.textContent.includes('Failed to') ||
-          bubble.textContent.includes('Connection lost'))
-      ) {
-        element.remove();
-      }
-    });
-  }
-
-  scrollToBottom() {
-    if (!this.messagesContainer) return;
-    // Use rAF to batch DOM reads/writes and provide smoother UX
-    if (this._scrollRAF) cancelAnimationFrame(this._scrollRAF);
-    this._scrollRAF = requestAnimationFrame(() => {
-      this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-    });
-  }
-
-  clearMessages() {
-    if (this.messagesContainer) {
-      this.messagesContainer.innerHTML = '';
-    }
-  }
-
-  showLoading() {
-    if (!this.loadingIndicator || !this.messagesContainer) return;
-
-    if (!this.loadingIndicator.parentNode) {
-      this.messagesContainer.appendChild(this.loadingIndicator);
-    }
-    this.loadingIndicator.style.display = 'flex';
-    this.scrollToBottom();
-
-    if (this._loadingSafetyTimeout) clearTimeout(this._loadingSafetyTimeout);
-    this._loadingSafetyTimeout = setTimeout(() => this.hideLoading(), 30000);
-  }
-
-  hideLoading() {
-    if (this._loadingSafetyTimeout) {
-      clearTimeout(this._loadingSafetyTimeout);
-      this._loadingSafetyTimeout = null;
-    }
-    if (this.loadingIndicator) {
-      // More robust removal
-      if (this.loadingIndicator.parentNode === this.messagesContainer) {
-        this.messagesContainer.removeChild(this.loadingIndicator);
-      }
-      this.loadingIndicator.style.display = 'none'; // Ensure hidden even if removal fails
-    }
-  }
-
-  autoResizeInput() {
-    if (!this.chatInput || !this.inputContainer || !this.messagesContainer) return;
-
-    if (this._resizeRAF) cancelAnimationFrame(this._resizeRAF);
-    this._resizeRAF = requestAnimationFrame(() => {
-      this.chatInput.style.height = 'auto'; // Reset
-      const newHeight = Math.min(this.chatInput.scrollHeight, 120); // Max 120px
-      this.chatInput.style.height = `${newHeight}px`;
-
-      const inputHeight = this.inputContainer.offsetHeight;
-
-      // Account for starters container if visible
-      const startersHeight =
-        this.startersContainer &&
-        this.startersVisible &&
-        this.settings.starters &&
-        this.settings.starters.length > 0
-          ? this.startersContainer.offsetHeight
-          : 0;
-
-      this.messagesContainer.style.bottom = `${inputHeight + startersHeight}px`;
-    });
-  }
-
-
-  confirmDeleteThread() {
-    if (this.isStreaming) {
-      console.log('Preventing delete thread while streaming.');
-      return;
-    }
-
-    const threadIdToDelete = this.storageManager.getActiveThreadId();
-    const threadToDelete = this.threads.find(t => t.id === threadIdToDelete);
-    if (!threadToDelete) {
-      console.log('No active chat to delete.');
-      return;
-    }
-    this.closeMenuDropdown(); // Close menu first
-    this._showConfirmationDialog(
-      'Delete Chat',
-      `Are you sure you want to delete "${threadToDelete.title || 'Untitled Chat'}"? This action cannot be undone.`,
-      'Delete',
-      () => this.deleteCurrentThread(threadIdToDelete)
-    );
-  }
-
-  confirmClearAllThreads() {
-    this.closeMenuDropdown(); // Close menu first
-    this._showConfirmationDialog(
-      'Delete All Chats',
-      'Are you sure you want to delete ALL your chat history? This action cannot be undone.',
-      'Delete All',
-      () => this.deleteAllThreadsApi()
-    );
-  }
+  // ========================================
+  // Dialogs
+  // ========================================
 
   _showConfirmationDialog(title, message, confirmText, onConfirm) {
     const dialog = createElement('div', { className: CSS_CLASSES.CONFIRM_DIALOG });
     
-    // Build dialog safely without innerHTML to prevent XSS
     const content = createElement('div', { className: CSS_CLASSES.CONFIRM_CONTENT });
     
     const titleEl = createElement('h3');
-    titleEl.textContent = title; // Safe: textContent escapes HTML
+    titleEl.textContent = title;
     
     const messageEl = createElement('p');
-    messageEl.textContent = message; // Safe: textContent escapes HTML
+    messageEl.textContent = message;
     
     const buttonsContainer = createElement('div', { className: CSS_CLASSES.CONFIRM_BUTTONS });
     
@@ -2248,7 +719,7 @@ export class ChatWidget {
     
     const deleteButton = createElement('button', { 
       className: CSS_CLASSES.CONFIRM_DELETE,
-      textContent: confirmText // Safe: textContent escapes HTML
+      textContent: confirmText
     });
     
     buttonsContainer.appendChild(cancelButton);
@@ -2268,358 +739,31 @@ export class ChatWidget {
     });
   }
 
-  async showDeleteSuccess(deletedThreadId) {
-    this.threads = this.threads.filter(t => t.id !== deletedThreadId);
-
-    if (this.threads.length > 0) {
-      const sortedThreads = [...this.threads].sort(
-        (a, b) =>
-          new Date(b.updatedAt || b.created_at || 0) - new Date(a.updatedAt || a.created_at || 0)
-      );
-      const nextActiveThreadId = sortedThreads[0].id;
-      console.log('Setting next active thread to:', nextActiveThreadId);
-      this.storageManager.setActiveThreadId(nextActiveThreadId);
-      this.activeThreadId = nextActiveThreadId;
-      
-      // Re-setup SSE with the new active thread
-      this.setupSSE();
-      
-      await this.loadActiveThread();
-    } else {
-      console.log('No threads left after deletion. Creating a new one.');
-      await this.startNewThread();
-    }
-  }
-
-  async deleteCurrentThread(threadId) {
-    if (!threadId) {
-      console.error('Cannot delete thread without an ID.');
-      return;
-    }
-    console.log(`Attempting to delete thread: ${threadId}`);
-    this.showLoading();
-    try {
-      const success = await this.storageManager.deleteThread(threadId);
-      this.hideLoading();
-      if (success) {
-        await this.showDeleteSuccess(threadId);
-      } else {
-        console.error('Failed to delete thread via API.');
-      }
-    } catch (error) {
-      this.hideLoading();
-      console.error('Error deleting thread:', error);
-    }
-  }
-
-  async deleteAllThreadsApi() {
-    console.log('Attempting to delete all threads via API...');
-    this.showLoading();
-    try {
-      const success = await this.storageManager.deleteAllThreads();
-
-      this.hideLoading();
-
-      if (success) {
-        this.threads = [];
-        this.activeThreadId = null;
-        this.messageHistory = [];
-        console.log('Starting a new thread after deleting all...');
-        await this.startNewThread();
-      } else {
-        console.error('Failed to delete all threads via API.');
-      }
-    } catch (error) {
-      this.hideLoading();
-      console.error('Error deleting all threads:', error);
-    }
-  }
-
-  async loadChatHistory() {
-    this.closeMenuDropdown(); // Close menu
-    this.clearMessages();
-    this.showLoading();
-    if (this.inputContainer) this.inputContainer.style.display = 'none';
-
-    try {
-      const { threads } = await this.storageManager.loadThreads();
-      this.threads = threads;
-      this.activeThreadId = this.storageManager.getActiveThreadId();
-      this.hideLoading();
-      this.hideStarters();
-
-      const threadsContainer = this._createThreadsContainer(threads);
-      this.messagesContainer?.appendChild(threadsContainer);
-    } catch (error) {
-      this.hideLoading();
-      console.error('Error loading chat history:', error);
-      await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, 'Could not load chat history.', false);
-      if (this.inputContainer) this.inputContainer.style.display = 'flex'; // Show input on error
-    }
-  }
-
-  async startNewThread() {
-    const activeThread = this.getActiveThread();
-
-    // If current thread is already empty, just stay on it and focus input
-    if (
-      activeThread &&
-      Array.isArray(activeThread.messages) &&
-      activeThread.messages.length === 0
-    ) {
-      this.closeMenuDropdown();
-      this.chatInput?.focus();
-      return;
-    }
-
-    console.log('Starting a new thread...');
-    this.closeMenuDropdown();
-
-    this.clearMessages();
-    this.showLoading();
-
-    try {
-      const newThread = await this.createNewThread();
-
-      if (newThread) {
-        if (this.inputContainer) this.inputContainer.style.display = 'flex';
-
-        // Always show starters for new threads
-        this.showStarters();
-
-        setTimeout(() => this.chatInput?.focus(), 300);
-      } else {
-        throw new Error('Failed to create new thread');
-      }
-    } catch (error) {
-      console.error('Error starting new thread:', error);
-      await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to start a new chat.', false);
-    } finally {
-      this.hideLoading();
-    }
-  }
-
-  _createThreadsContainer(threads) {
-    const container = createElement('div', {
-      className: `${CSS_CLASSES.THREADS_CONTAINER} ${CSS_CLASSES.THREADS_LIST}`
-    });
-
-    if (!threads || threads.length === 0) {
-      const noThreadsMsg = createElement('p', {
-        textContent: 'No chat history available.',
-        className: CSS_CLASSES.NO_THREADS_MESSAGE
-      });
-      container.appendChild(noThreadsMsg);
-    } else {
-      const sortedThreads = [...threads].sort(
-        (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
-      );
-      sortedThreads.forEach(thread => {
-        const threadItem = this._createThreadItem(thread);
-        container.appendChild(threadItem);
-      });
-    }
-    return container;
-  }
-
-  _createThreadItem(thread) {
-    const item = createElement('div', { className: CSS_CLASSES.THREAD_ITEM });
-    if (thread.id === this.activeThreadId) {
-      item.classList.add(CSS_CLASSES.THREAD_ITEM_ACTIVE);
-    }
-
-    // Create content container for title, subtitle, and date
-    const contentContainer = createElement('div', { className: CSS_CLASSES.THREAD_CONTENT });
-    
-    const titleEl = createElement('div', { className: CSS_CLASSES.THREAD_TITLE });
-    titleEl.textContent =
-      thread.title || this._getFirstUserMessage(thread) || "New conversation";
-    contentContainer.appendChild(titleEl);
-
-    // Add subtitle (agent name or source)
-    const subtitleEl = createElement('div', { className: CSS_CLASSES.THREAD_SUBTITLE });
-    subtitleEl.textContent = this.settings.title || 'Chatbase AI';
-    contentContainer.appendChild(subtitleEl);
-
-    // Add timestamp with bullet separator
-    if (thread.timestamp) {
-      const timestampEl = createElement('span', { 
-        className: CSS_CLASSES.THREAD_DATE,
-        textContent: ` • ${this._formatTimestamp(thread.timestamp)}`
-      });
-      subtitleEl.appendChild(timestampEl);
-    }
-
-    item.appendChild(contentContainer);
-
-    // Create arrow icon only
-    const arrowIcon = createElement('div', { className: CSS_CLASSES.THREAD_ARROW_ICON });
-    arrowIcon.appendChild(createIcon('arrow-right'));
-    item.appendChild(arrowIcon);
-
-    item.addEventListener('click', async () => {
-      // Save the active thread ID to localStorage
-      this.storageManager.setActiveThreadId(thread.id);
-      this.activeThreadId = thread.id;
-      
-      // Re-setup SSE with the new thread ID
-      this.setupSSE();
-      
-      // Load the thread messages
-      await this.loadActiveThread();
-    });
-    return item;
-  }
-
-  _getFirstUserMessage(thread) {
-    if (!thread.messages || !Array.isArray(thread.messages)) return null;
-    
-    const firstUserMessage = thread.messages.find(msg => {
-      const messageType = msg.role ? this._mapRoleToMessageType(msg.role) : msg.type;
-      return messageType === CSS_CLASSES.MESSAGE_USER;
-    });
-    
-    return firstUserMessage ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '') : null;
-  }
-
-  async refreshStreamingMessages() {
-    if (this.isStreaming) {
-      await this.updateStreamingMessage();
-    }
-  }
-
-  async parseMarkdown(text) {
-    if (!text) return '';
-
-    try {
-      // Wait for libraries to load if they haven't already
-      if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
-        await loadLibraries();
-      }
-
-      // Double check libraries are available after loading attempt
-      if (!ChatWidgetLibs.marked || !ChatWidgetLibs.DOMPurify) {
-        console.warn('Markdown libraries failed to load, falling back to plain text');
-        return this._escapeHtml(text);
-      }
-
-      ChatWidgetLibs.marked.setOptions({
-        gfm: true,
-        breaks: true,
-        headerIds: false,
-        mangle: false,
-        smartLists: true,
-        smartypants: true,
-        xhtml: false,
-        tables: true
-      });
-
-      let html = ChatWidgetLibs.marked.parse(text);
-      // Use shared DOMPurify config to avoid duplication
-      html = ChatWidgetLibs.DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
-      return html;
-    } catch (error) {
-      console.error('Error parsing markdown:', error);
-      return this._escapeHtml(text);
-    }
-  }
-
-  _escapeHtml(text) {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-      .replace(/\n/g, '<br>');
-  }
-
-  _updateThreadActionButtons() {
-    const activeThread = this.getActiveThread();
-    let hasUserMessages = false;
-    if (activeThread && Array.isArray(activeThread.messages)) {
-      hasUserMessages = activeThread.messages.some(m => {
-        const messageType = m.role ? this._mapRoleToMessageType(m.role) : m.type;
-        return messageType === CSS_CLASSES.MESSAGE_USER;
-      });
-    }
-
-    // Menu button enabled as long as there is at least one thread
-    const deleteDisabled = !hasUserMessages;
-    const newChatDisabled = !hasUserMessages;
-
-    // Disable history / clear options when only one empty thread exists
-    const onlyEmptyThread =
-      this.threads.length === 1 &&
-      (!activeThread || !activeThread.messages || activeThread.messages.length === 0);
-
-    const setState = (el, disabled) => {
-      if (!el) return;
-      el.style.pointerEvents = disabled ? 'none' : 'auto';
-      el.style.opacity = disabled ? '0.4' : '1';
-      el.setAttribute('aria-disabled', disabled);
-    };
-
-    setState(this.deleteThreadButton, deleteDisabled);
-    setState(this.newChatOption, newChatDisabled);
-    setState(this.historyOption, onlyEmptyThread);
-    setState(this.clearCurrentOption, onlyEmptyThread);
-    setState(this.clearAllOption, onlyEmptyThread);
-  }
-
-  _formatTimestamp(timestamp) {
-    if (!timestamp) return 'Unknown date';
-    
-    // Convert Unix timestamp to Date object
-    const date = new Date(timestamp * 1000);
-    
-    // Check if it's today
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    
-    // Check if it's yesterday
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-    
-    if (isToday) {
-      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } else if (isYesterday) {
-      return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } else {
-      // For older dates, show the date
-      return date.toLocaleDateString([], { 
-        month: 'short', 
-        day: 'numeric',
-        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-      });
-    }
-  }
+  // ========================================
+  // Lead Form
+  // ========================================
 
   async _showLeadForm() {
-    console.log('🎯 _showLeadForm called - creating and displaying lead form');
+    console.log('_showLeadForm called - creating and displaying lead form');
     
-    // Create the lead form with dynamic fields
     const leadForm = await createLeadForm((leadData) => {
       this._handleLeadFormSubmission(leadData);
     }, this.agentId);
 
-    // Insert the lead form into the messages container
     const messagesContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.MESSAGES_CONTAINER}`);
     if (messagesContainer) {
-      console.log('📋 Adding lead form to messages container');
+      console.log('Adding lead form to messages container');
       messagesContainer.appendChild(leadForm);
       this.scrollToBottom();
     } else {
-      console.log('❌ Messages container not found!');
+      console.log('Messages container not found!');
     }
   }
 
   async _handleLeadFormSubmission(leadData) {
-    console.log('📋 Submitting lead form data:', leadData);
+    console.log('Submitting lead form data:', leadData);
     
     try {
-      // Submit to API
       /* global __API_URL__ */
       const response = await fetch(`${__API_URL__}/leads/form`, {
         method: 'POST',
@@ -2643,7 +787,6 @@ export class ChatWidget {
         throw new Error(`Failed to submit lead form: ${response.status}`);
       }
 
-      // Check if response has content before parsing JSON
       let result = null;
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
@@ -2659,32 +802,23 @@ export class ChatWidget {
           result = { success: true, message: 'Form submitted successfully' };
         }
       } else {
-        // Non-JSON response, treat as success
         result = { success: true, message: 'Form submitted successfully' };
       }
       
-      console.log('✅ Lead form submitted successfully:', result);
+      console.log('Lead form submitted successfully:', result);
 
-      // Replace form with success message
       const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
       if (leadFormContainer) {
-        // Clear the form container
         leadFormContainer.innerHTML = '';
         
-        // Extract success data from API response
-        let successTitle = 'Thank you!'; // Default fallback
-        let successMessage = 'Your information has been received and someone will get back to you soon.'; // Default fallback
+        let successTitle = 'Thank you!';
+        let successMessage = 'Your information has been received and someone will get back to you soon.';
         
         if (result && result.success) {
-          if (result.success.title) {
-            successTitle = result.success.title;
-          }
-          if (result.success.message) {
-            successMessage = result.success.message;
-          }
+          if (result.success.title) successTitle = result.success.title;
+          if (result.success.message) successMessage = result.success.message;
         }
         
-        // Add success message
         const successTitleElement = createElement('h3', {
           className: CSS_CLASSES.LEAD_FORM_TITLE,
           textContent: successTitle
@@ -2698,7 +832,6 @@ export class ChatWidget {
         leadFormContainer.appendChild(successTitleElement);
         leadFormContainer.appendChild(successMessageElement);
         
-        // Remove the success message after 3 seconds
         setTimeout(() => {
           if (leadFormContainer.parentNode) {
             leadFormContainer.remove();
@@ -2707,15 +840,12 @@ export class ChatWidget {
       }
 
     } catch (error) {
-      console.error('❌ Error submitting lead form:', error);
+      console.error('Error submitting lead form:', error);
       
-      // Show error message in form
       const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
       if (leadFormContainer) {
         const existingError = leadFormContainer.querySelector(`.${CSS_CLASSES.LEAD_FORM_ERROR}`);
-        if (existingError) {
-          existingError.remove();
-        }
+        if (existingError) existingError.remove();
         
         const errorMessage = createElement('div', {
           className: CSS_CLASSES.LEAD_FORM_ERROR,
@@ -2724,7 +854,6 @@ export class ChatWidget {
         
         leadFormContainer.appendChild(errorMessage);
         
-        // Re-enable submit button
         const submitButton = leadFormContainer.querySelector(`.${CSS_CLASSES.LEAD_FORM_SUBMIT}`);
         if (submitButton) {
           submitButton.disabled = false;
@@ -2736,43 +865,11 @@ export class ChatWidget {
     this.scrollToBottom();
   }
 
-  _lockBodyScroll() {
-    // Save current scroll position
-    this._scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // Apply styles to prevent scrolling
-    document.body.style.overflow = 'chatvia-widget-hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${this._scrollPosition}px`;
-    document.body.style.width = '100%';
-    
-    // Add a class for additional CSS control if needed
-    document.body.classList.add('chatvia-scroll-locked');
-  }
+  // ========================================
+  // Cleanup
+  // ========================================
 
-  _unlockBodyScroll() {
-    // Remove styles
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    
-    // Remove class
-    document.body.classList.remove('chatvia-scroll-locked');
-    
-    // Restore scroll position
-    if (this._scrollPosition !== undefined) {
-      window.scrollTo(0, this._scrollPosition);
-      this._scrollPosition = undefined;
-    }
-  }
-
-  /**
-   * Clean up resources when widget is destroyed
-   * Call this method to prevent memory leaks
-   */
   destroy() {
-    // Cancel any pending requestAnimationFrame calls
     if (this._scrollRAF) {
       cancelAnimationFrame(this._scrollRAF);
       this._scrollRAF = null;
@@ -2782,7 +879,6 @@ export class ChatWidget {
       this._resizeRAF = null;
     }
 
-    // Clear all timeouts
     if (this._finalizeTimeout) {
       clearTimeout(this._finalizeTimeout);
       this._finalizeTimeout = null;
@@ -2796,16 +892,13 @@ export class ChatWidget {
       this._wsMessageLoadingTimeout = null;
     }
 
-    // Close SSE connection
     if (this.sseClient) {
       this.sseClient.close();
       this.sseClient = null;
     }
 
-    // Unlock body scroll if locked
-    this._unlockBodyScroll();
+    controls.unlockBodyScroll(this);
 
-    // Remove widget from DOM
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }

@@ -227,7 +227,7 @@ export class BaseWidget {
       className: CSS_CLASSES.MESSAGE_ACTIONS
     });
 
-    // Copy button
+    // Copy button - always show
     const copyButton = createElement('button', {
       className: `${CSS_CLASSES.MESSAGE_ACTION_BTN} ${CSS_CLASSES.MESSAGE_COPY_BTN}`,
       'aria-label': 'Copy message',
@@ -235,40 +235,35 @@ export class BaseWidget {
     });
     copyButton.appendChild(createIcon('copy'));
     copyButton.addEventListener('click', () => this._handleCopyMessage(messageText, copyButton));
-
-    // Thumbs up button
-    const thumbsUpButton = createElement('button', {
-      className: `${CSS_CLASSES.MESSAGE_ACTION_BTN} ${CSS_CLASSES.MESSAGE_THUMBS_UP}${feedback === true ? ` ${CSS_CLASSES.MESSAGE_ACTION_ACTIVE}` : ''}`,
-      'aria-label': 'Good response',
-      title: 'Good response',
-      'data-message-id': messageId
-    });
-    thumbsUpButton.appendChild(createIcon('thumbs-up'));
-    if (messageId) {
-      thumbsUpButton.addEventListener('click', () => this._handleFeedback(messageId, true, thumbsUpButton, thumbsDownButton));
-    } else {
-      thumbsUpButton.disabled = true;
-      thumbsUpButton.style.opacity = '0.3';
-    }
-
-    // Thumbs down button
-    const thumbsDownButton = createElement('button', {
-      className: `${CSS_CLASSES.MESSAGE_ACTION_BTN} ${CSS_CLASSES.MESSAGE_THUMBS_DOWN}${feedback === false ? ` ${CSS_CLASSES.MESSAGE_ACTION_ACTIVE}` : ''}`,
-      'aria-label': 'Bad response',
-      title: 'Bad response',
-      'data-message-id': messageId
-    });
-    thumbsDownButton.appendChild(createIcon('thumbs-down'));
-    if (messageId) {
-      thumbsDownButton.addEventListener('click', () => this._handleFeedback(messageId, false, thumbsDownButton, thumbsUpButton));
-    } else {
-      thumbsDownButton.disabled = true;
-      thumbsDownButton.style.opacity = '0.3';
-    }
-
     actionsContainer.appendChild(copyButton);
-    actionsContainer.appendChild(thumbsUpButton);
-    actionsContainer.appendChild(thumbsDownButton);
+
+    // Only show feedback buttons if there's a message ID
+    if (messageId) {
+      // Thumbs up button
+      const thumbsUpButton = createElement('button', {
+        className: `${CSS_CLASSES.MESSAGE_ACTION_BTN} ${CSS_CLASSES.MESSAGE_THUMBS_UP}${feedback === true ? ` ${CSS_CLASSES.MESSAGE_ACTION_ACTIVE}` : ''}`,
+        'aria-label': 'Good response',
+        title: 'Good response',
+        'data-message-id': messageId
+      });
+      thumbsUpButton.appendChild(createIcon('thumbs-up'));
+
+      // Thumbs down button
+      const thumbsDownButton = createElement('button', {
+        className: `${CSS_CLASSES.MESSAGE_ACTION_BTN} ${CSS_CLASSES.MESSAGE_THUMBS_DOWN}${feedback === false ? ` ${CSS_CLASSES.MESSAGE_ACTION_ACTIVE}` : ''}`,
+        'aria-label': 'Bad response',
+        title: 'Bad response',
+        'data-message-id': messageId
+      });
+      thumbsDownButton.appendChild(createIcon('thumbs-down'));
+
+      // Add event listeners
+      thumbsUpButton.addEventListener('click', () => this._handleFeedback(messageId, true, thumbsUpButton, thumbsDownButton));
+      thumbsDownButton.addEventListener('click', () => this._handleFeedback(messageId, false, thumbsDownButton, thumbsUpButton));
+
+      actionsContainer.appendChild(thumbsUpButton);
+      actionsContainer.appendChild(thumbsDownButton);
+    }
 
     return actionsContainer;
   }

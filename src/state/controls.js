@@ -1,0 +1,353 @@
+/**
+ * UI Controls Module
+ * Handles toggle, expand, scroll, and other UI state management
+ */
+
+import { CSS_CLASSES } from '../utils.js';
+import { createIcon } from '../ui.js';
+
+/**
+ * Toggle chat open/close
+ */
+export function toggleChat(widget, open) {
+  console.log(
+    'toggleChat called with:',
+    open,
+    'isMobile:',
+    widget.isMobileApp,
+    'show_on_load:',
+    widget.settings.show_on_load,
+    'mode:',
+    widget.mode
+  );
+  widget.isOpen = typeof open === 'boolean' ? open : !widget.isOpen;
+  const isSearchMode = widget.mode === 'search';
+
+  if (widget.isOpen) {
+    widget.chatWindow?.classList.add(CSS_CLASSES.WINDOW_OPEN);
+    
+    if (isSearchMode) {
+      widget.searchBar?.classList.add('chatvia-widget-hidden');
+    } else {
+      widget.chatBubble?.classList.add(CSS_CLASSES.BUBBLE_ACTIVE);
+      stopMessageBubbles(widget);
+    }
+
+    if (widget.settings.is_fullscreen && !isSearchMode) {
+      widget.container.classList.add(CSS_CLASSES.FULLSCREEN);
+      if (widget.chatBubble) {
+        widget.chatBubble.style.display = 'none';
+      }
+    }
+
+    if (widget.settings.is_fullscreen || widget.isMobileApp || isSearchMode) {
+      lockBodyScroll(widget);
+    }
+
+    setTimeout(() => widget.chatInput?.focus(), 300);
+  } else {
+    widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
+    
+    if (isSearchMode) {
+      widget.searchBar?.classList.remove('chatvia-widget-hidden', 'chatvia-widget-expanded');
+    } else {
+      widget.chatBubble?.classList.remove(CSS_CLASSES.BUBBLE_ACTIVE);
+      if (widget.settings.is_fullscreen) {
+        widget.container.classList.remove(CSS_CLASSES.FULLSCREEN);
+        if (widget.chatBubble) {
+          widget.chatBubble.style.display = 'flex';
+        }
+      }
+    }
+
+    if (widget.settings.is_fullscreen || widget.isMobileApp || isSearchMode) {
+      unlockBodyScroll(widget);
+    }
+  }
+
+  const event = new CustomEvent(widget.isOpen ? 'chat:opened' : 'chat:closed', {
+    detail: { widget }
+  });
+  document.dispatchEvent(event);
+}
+
+/**
+ * Toggle expand/collapse
+ */
+export function toggleExpand(widget) {
+  if (widget.settings.window_size === CSS_CLASSES.WINDOW_LARGE && !widget._previousWindowSize) {
+    console.log('Already in large mode, cannot expand further unless collapsed first.');
+    return;
+  }
+
+  widget.chatWindow?.classList.add(CSS_CLASSES.WINDOW_ANIMATING);
+
+  if (!widget.isWidthExpanded) {
+    widget._previousWindowSize = widget.settings.window_size;
+    widget.settings.window_size = CSS_CLASSES.WINDOW_LARGE;
+    widget.isWidthExpanded = true;
+    widget.expandButton.title = 'Collapse chat';
+    widget.expandButton.innerHTML = '';
+    widget.expandButton.appendChild(createIcon('collapse'));
+    console.log('Expanded chat window to large from ' + widget._previousWindowSize);
+  } else {
+    widget.settings.window_size = widget._previousWindowSize || CSS_CLASSES.WINDOW_MEDIUM;
+    widget._previousWindowSize = null;
+    widget.isWidthExpanded = false;
+    widget.expandButton.title = 'Expand chat';
+    widget.expandButton.innerHTML = '';
+    widget.expandButton.appendChild(createIcon('expand'));
+    console.log('Collapsed chat window to ' + widget.settings.window_size);
+  }
+
+  widget.applyWindowSize();
+
+  setTimeout(() => {
+    widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_ANIMATING);
+  }, 600);
+
+  setTimeout(() => widget.scrollToBottom(), 300);
+}
+
+/**
+ * Toggle theme
+ */
+export function toggleTheme(widget) {
+  widget.settings.theme = widget.settings.theme === 'dark' ? 'light' : 'dark';
+
+  if (widget.settings.theme === 'dark') {
+    widget.chatWindow?.classList.add(CSS_CLASSES.WINDOW_DARK);
+    widget.themeToggleButton?.setAttribute('aria-label', 'Switch to light theme');
+    widget.themeToggleButton.title = 'Switch to light theme';
+    widget.themeToggleButton.innerHTML = '';
+    widget.themeToggleButton.appendChild(createIcon('sun'));
+  } else {
+    widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_DARK);
+    widget.themeToggleButton?.setAttribute('aria-label', 'Switch to dark theme');
+    widget.themeToggleButton.title = 'Switch to dark theme';
+    widget.themeToggleButton.innerHTML = '';
+    widget.themeToggleButton.appendChild(createIcon('moon'));
+  }
+
+  widget._updateStartersContainer();
+
+  const event = new CustomEvent('chat:theme-changed', {
+    detail: { widget, theme: widget.settings.theme }
+  });
+  document.dispatchEvent(event);
+}
+
+/**
+ * Toggle menu dropdown
+ */
+export function toggleMenuDropdown(widget) {
+  if (widget.isStreaming) {
+    console.log('Preventing menu open while streaming.');
+    return;
+  }
+
+  const isOpen = widget.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+
+  if (isOpen) {
+    widget.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+    const onTransitionEnd = e => {
+      if (e.propertyName === 'opacity') {
+        widget.menuDropdown.style.display = 'none';
+        widget.menuDropdown.removeEventListener('transitionend', onTransitionEnd);
+      }
+    };
+    widget.menuDropdown.addEventListener('transitionend', onTransitionEnd);
+    if (
+      widget.menuDropdown &&
+      !widget.menuDropdown.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN)
+    ) {
+      widget.menuDropdown.style.display = 'none';
+    }
+  } else if (widget.menuDropdown) {
+    widget.menuDropdown.style.display = 'block';
+    void widget.menuDropdown.offsetWidth;
+    widget.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+    widget.menuDropdown.style.opacity = '1';
+    widget.menuDropdown.style.zIndex = '10001';
+  }
+}
+
+/**
+ * Check if menu dropdown is opened
+ */
+export function menuDropdownIsOpened(widget) {
+  return widget.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN) || false;
+}
+
+/**
+ * Close menu dropdown
+ */
+export function closeMenuDropdown(widget) {
+  if (menuDropdownIsOpened(widget)) {
+    widget.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+    const onTransitionEnd = e => {
+      if (e.propertyName === 'opacity') {
+        widget.menuDropdown.style.display = 'none';
+        widget.menuDropdown.removeEventListener('transitionend', onTransitionEnd);
+      }
+    };
+    widget.menuDropdown.addEventListener('transitionend', onTransitionEnd);
+    setTimeout(() => {
+      if (widget.menuDropdown && !menuDropdownIsOpened(widget)) {
+        widget.menuDropdown.style.display = 'none';
+      }
+    }, 300);
+  }
+}
+
+/**
+ * Scroll to bottom of messages
+ */
+export function scrollToBottom(widget) {
+  if (!widget.messagesContainer) return;
+  if (widget._scrollRAF) cancelAnimationFrame(widget._scrollRAF);
+  widget._scrollRAF = requestAnimationFrame(() => {
+    widget.messagesContainer.scrollTop = widget.messagesContainer.scrollHeight;
+  });
+}
+
+/**
+ * Clear all messages
+ */
+export function clearMessages(widget) {
+  if (widget.messagesContainer) {
+    widget.messagesContainer.innerHTML = '';
+  }
+}
+
+/**
+ * Show loading indicator
+ */
+export function showLoading(widget) {
+  if (!widget.loadingIndicator || !widget.messagesContainer) return;
+
+  if (!widget.loadingIndicator.parentNode) {
+    widget.messagesContainer.appendChild(widget.loadingIndicator);
+  }
+  widget.loadingIndicator.style.display = 'flex';
+  scrollToBottom(widget);
+
+  if (widget._loadingSafetyTimeout) clearTimeout(widget._loadingSafetyTimeout);
+  widget._loadingSafetyTimeout = setTimeout(() => hideLoading(widget), 30000);
+}
+
+/**
+ * Hide loading indicator
+ */
+export function hideLoading(widget) {
+  if (widget._loadingSafetyTimeout) {
+    clearTimeout(widget._loadingSafetyTimeout);
+    widget._loadingSafetyTimeout = null;
+  }
+  if (widget.loadingIndicator) {
+    if (widget.loadingIndicator.parentNode === widget.messagesContainer) {
+      widget.messagesContainer.removeChild(widget.loadingIndicator);
+    }
+    widget.loadingIndicator.style.display = 'none';
+  }
+}
+
+/**
+ * Auto resize input textarea
+ */
+export function autoResizeInput(widget) {
+  if (!widget.chatInput || !widget.inputContainer || !widget.messagesContainer) return;
+
+  if (widget._resizeRAF) cancelAnimationFrame(widget._resizeRAF);
+  widget._resizeRAF = requestAnimationFrame(() => {
+    widget.chatInput.style.height = 'auto';
+    const newHeight = Math.min(widget.chatInput.scrollHeight, 120);
+    widget.chatInput.style.height = `${newHeight}px`;
+
+    const inputHeight = widget.inputContainer.offsetHeight;
+
+    const startersHeight =
+      widget.startersContainer &&
+      widget.startersVisible &&
+      widget.settings.starters &&
+      widget.settings.starters.length > 0
+        ? widget.startersContainer.offsetHeight
+        : 0;
+
+    widget.messagesContainer.style.bottom = `${inputHeight + startersHeight}px`;
+  });
+}
+
+/**
+ * Lock body scroll
+ */
+export function lockBodyScroll(widget) {
+  widget._scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${widget._scrollPosition}px`;
+  document.body.style.width = '100%';
+  
+  document.body.classList.add('chatvia-scroll-locked');
+}
+
+/**
+ * Unlock body scroll
+ */
+export function unlockBodyScroll(widget) {
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  
+  document.body.classList.remove('chatvia-scroll-locked');
+  
+  if (widget._scrollPosition !== undefined) {
+    window.scrollTo(0, widget._scrollPosition);
+    widget._scrollPosition = undefined;
+  }
+}
+
+/**
+ * Stop message bubbles
+ */
+export function stopMessageBubbles(widget) {
+  if (widget.messageBubblesContainer) {
+    widget.messageBubblesContainer.innerHTML = '';
+  }
+}
+
+/**
+ * Hide starters
+ */
+export function hideStarters(widget) {
+  widget.startersVisible = false;
+  widget._updateStartersContainer();
+  autoResizeInput(widget);
+}
+
+/**
+ * Show starters
+ */
+export function showStarters(widget) {
+  widget.startersVisible = true;
+  widget._updateStartersContainer();
+  autoResizeInput(widget);
+}
+
+/**
+ * Disable chat
+ */
+export async function disabledChat(widget, message = 'Chat disabled') {
+  if (widget.sendButton) {
+    widget.sendButton.disabled = true;
+  }
+  if (widget.chatInput) {
+    widget.chatInput.disabled = true;
+    widget.chatInput.placeholder = message;
+  }
+  clearMessages(widget);
+  await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, message, false);
+}
+
