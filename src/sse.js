@@ -2,7 +2,6 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
   const sseCallbacks = {
     onOpen: () => {},
     onClose: () => {},
-    onError: () => {},
     onMessage: () => {},
     ...callbacks
   };
@@ -104,12 +103,16 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
                 const data = JSON.parse(dataMatch[1]);
                 console.log('✅ Received SSE message:', data);
                 
+                // Handle [DONE] marker
                 if (data.content === '[DONE]') {
                   isDone = true;
                   isStreaming = false;
                   sseCallbacks.onClose();
-                  return Promise.resolve(); // Stop processing after [DONE]
-                } else if (data.content) {
+                  return Promise.resolve();
+                }
+                
+                // Handle regular content messages
+                if (data.content) {
                   sseCallbacks.onMessage(data);
                 }
               } catch (e) {
@@ -130,9 +133,9 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
           console.log('Fetch aborted');
         } else {
           console.error('❌ SSE error:', error);
-          sseCallbacks.onError(error);
         }
         isStreaming = false;
+        sseCallbacks.onClose();
       });
 
       return Promise.resolve(true); // Return immediately since we're streaming
