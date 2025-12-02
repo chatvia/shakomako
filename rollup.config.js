@@ -19,6 +19,14 @@ const appVersion = process.env.VITE_APP_VERSION || '1.0.0';
 const apiUrl = process.env.VITE_API_URL;
 const scriptUrl = process.env.VITE_SCRIPT_URL;
 
+// Warn if critical env vars are missing
+if (!scriptUrl) {
+  console.warn('⚠️  VITE_SCRIPT_URL is not set! The embed script will not work correctly.');
+}
+if (!apiUrl) {
+  console.warn('⚠️  VITE_API_URL is not set! API calls will fail.');
+}
+
 const sharedEnv = {
   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   __APP_VERSION__: JSON.stringify(appVersion),

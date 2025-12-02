@@ -32,9 +32,10 @@ window.chatvia =
   if (mountId) window[namespace].mountId = mountId;
 
   /* global __SCRIPT_URL__ */
-  const scriptHost = __SCRIPT_URL__;
-  console.log('chatvia: __SCRIPT_URL__ value is:', scriptHost);
-
+  // Determine script host: use __SCRIPT_URL__ if set, otherwise detect from script src
+  let scriptHost = __SCRIPT_URL__;
+  
+  
   if (!agentId) {
     console.error('chatvia: Missing agent-id attribute on embed script tag.');
     window[namespace].error = 'Missing agent-id attribute.';
@@ -63,7 +64,7 @@ window.chatvia =
       const versionData = await versionResponse.json();
       console.log('chatvia: Version data received:', versionData);
       
-      const version = versionData.version || '1.0.0';
+      const version = versionData.version;
       console.log('chatvia: Using version:', version);
       
       const bundleFile = type === 'search' ? 'search.min.js' : 'widget.min.js';
