@@ -23,6 +23,7 @@ import { ChatWidget } from './widget.js';
     const api = {
       // Properties
       agentId: clientId,
+      _eventListeners: eventListeners, // Expose for internal event emission
       
       /**
        * Initialize the widget
@@ -101,8 +102,48 @@ import { ChatWidget } from './widget.js';
       },
 
       /**
+       * Check if currently in human agent mode (handoff active)
+       * @returns {boolean}
+       */
+      isHumanMode: () => {
+        return widgetInstance.isInHumanMode();
+      },
+
+      /**
+       * Check if currently waiting for human agent (pending)
+       * @returns {boolean}
+       */
+      isPending: () => {
+        return widgetInstance.isInPendingMode();
+      },
+
+      /**
+       * Get current handoff mode ('ai', 'pending', 'human')
+       * @returns {string}
+       */
+      getHandoffMode: () => {
+        return widgetInstance.getHandoffMode();
+      },
+
+      /**
+       * Get admin name when in human mode
+       * @returns {string|null}
+       */
+      getAdminName: () => {
+        return widgetInstance.getAdminName();
+      },
+
+      /**
+       * Request human assistance (triggers handoff flow)
+       * @returns {Promise<object>}
+       */
+      requestHuman: async () => {
+        return widgetInstance.requestHumanAssistance();
+      },
+
+      /**
        * Subscribe to widget events
-       * @param {string} event - Event name ('open', 'close', 'message', 'ready')
+       * @param {string} event - Event name ('open', 'close', 'message', 'ready', 'handoff')
        * @param {Function} callback - Callback function
        * @returns {Function} - Unsubscribe function
        */

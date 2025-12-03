@@ -23,6 +23,8 @@ import * as sse from './state/sse.js';
 import * as events from './state/events.js';
 import * as controls from './state/controls.js';
 import * as config from './state/config.js';
+import * as handoff from './state/handoff.js';
+import { startHeartbeat } from './state/handoff.js';
 
 export class ChatWidget {
   constructor(agentId, options = {}) {
@@ -72,6 +74,9 @@ export class ChatWidget {
     this._finalizeTimeout = null;
     this._loadingSafetyTimeout = null;
     this._wsMessageLoadingTimeout = null;
+
+    // Initialize handoff state
+    handoff.initHandoff(this);
   }
 
   _detectMobile() {
@@ -115,6 +120,9 @@ export class ChatWidget {
       this._setupEventListeners();
       this.setupSSE();
       await this.loadActiveThread();
+
+      // Start heartbeat to track online status
+      startHeartbeat(this);
 
       if (this.settings.show_on_load) {
         console.log('Setting up show_on_load timer');
@@ -596,10 +604,21 @@ export class ChatWidget {
       role: 'menu'
     });
 
-    this.newChatOption = this._createMenuOption('Start new chat', 'new-chat', () => this.startNewThread());
-    this.historyOption = this._createMenuOption('Chat history', 'history', () => this.loadChatHistory());
-    this.clearCurrentOption = this._createMenuOption('Clear current chat', 'delete', () => this.confirmDeleteThread());
-    this.clearAllOption = this._createMenuOption('Clear all', 'clear-all', () => this.confirmClearAllThreads());
+    // Wrap actions to check if in human mode
+    const guardedAction = (action) => {
+      return () => {
+        if (this.isInHumanMode()) {
+          // Don't allow navigation during live chat
+          return;
+        }
+        action();
+      };
+    };
+
+    this.newChatOption = this._createMenuOption('Start new chat', 'new-chat', guardedAction(() => this.startNewThread()));
+    this.historyOption = this._createMenuOption('Chat history', 'history', guardedAction(() => this.loadChatHistory()));
+    this.clearCurrentOption = this._createMenuOption('Clear current chat', 'delete', guardedAction(() => this.confirmDeleteThread()));
+    this.clearAllOption = this._createMenuOption('Clear all', 'clear-all', guardedAction(() => this.confirmClearAllThreads()));
 
     dropdown.appendChild(this.newChatOption);
     dropdown.appendChild(this.historyOption);
@@ -610,6 +629,22 @@ export class ChatWidget {
     dropdown.appendChild(this.clearAllOption);
     dropdown.style.display = 'none';
     return dropdown;
+  }
+
+  // Update menu options based on handoff state
+  _updateMenuForHandoffState() {
+    const inHumanMode = this.isInHumanMode();
+    const options = [this.newChatOption, this.historyOption, this.clearCurrentOption, this.clearAllOption];
+    
+    options.forEach(option => {
+      if (!option) return;
+      
+      if (inHumanMode) {
+        option.classList.add('chatvia-widget-menu-disabled');
+      } else {
+        option.classList.remove('chatvia-widget-menu-disabled');
+      }
+    });
   }
 
   _createMenuOption(text, iconName, action) {
@@ -866,6 +901,42 @@ export class ChatWidget {
   }
 
   // ========================================
+  // Handoff (delegated)
+  // ========================================
+
+  isInHumanMode() {
+    return handoff.isInHumanMode(this);
+  }
+
+  isInPendingMode() {
+    return handoff.isInPendingMode(this);
+  }
+
+  getHandoffMode() {
+    return handoff.getHandoffMode(this);
+  }
+
+  getAdminName() {
+    return handoff.getAdminName(this);
+  }
+
+  async requestHumanAssistance() {
+    return handoff.requestHumanAssistance(this);
+  }
+
+  async checkHandoffStatus() {
+    return handoff.checkHandoffStatus(this);
+  }
+
+  sendTypingIndicator(isTyping) {
+    return handoff.sendTypingIndicator(this, isTyping);
+  }
+
+  createTalkToHumanButton(onClick) {
+    return handoff.createTalkToHumanButton(this, onClick);
+  }
+
+  // ========================================
   // Cleanup
   // ========================================
 
@@ -896,6 +967,9 @@ export class ChatWidget {
       this.sseClient.close();
       this.sseClient = null;
     }
+
+    // Cleanup handoff/Pusher resources
+    handoff.cleanupHandoff(this);
 
     controls.unlockBodyScroll(this);
 

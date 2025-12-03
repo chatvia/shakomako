@@ -5,6 +5,7 @@
 
 import { CSS_CLASSES } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
+import { cleanupHandoff, subscribeToConversation } from './handoff.js';
 
 /**
  * Initialize threads from storage
@@ -47,6 +48,9 @@ export async function initThreads(widget) {
 export async function createNewThread(widget) {
   console.log('Requesting new thread from API...');
   try {
+    // Clean up any existing handoff state from previous thread
+    cleanupHandoff(widget);
+    
     const newThread = await widget.storageManager.createNewThread();
     if (newThread) {
       widget.threads.unshift(newThread);
@@ -161,6 +165,20 @@ export async function loadActiveThread(widget) {
     }
 
     widget._updateThreadActionButtons();
+    
+    // Clean up previous thread's handoff state and reset to AI mode
+    cleanupHandoff(widget);
+    
+    // Re-setup SSE with the new thread ID (default mode)
+    if (widget.setupSSE) {
+      widget.setupSSE();
+    }
+    
+    // Only subscribe to WebSocket if the conversation exists on the server
+    // (indicated by having messages - conversations are created on first message)
+    if (widget.messageHistory && widget.messageHistory.length > 0) {
+      await subscribeToConversation(widget);
+    }
   } catch (error) {
     console.error(`Error loading messages for thread ${activeThread.id}:`, error);
     await widget.addMessage(

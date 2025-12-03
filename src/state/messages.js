@@ -5,6 +5,7 @@
 
 import { CSS_CLASSES, DEFAULT_AVATAR_SVG, STREAMING_FINALIZE_TIMEOUT } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
+import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
 
 // Create a namespace for our libraries
 export const MarkdownLibs = {
@@ -112,11 +113,19 @@ export async function addMessage(widget, type, text, addToHistory = true, option
     return null;
   }
 
-  const message = createElement('div', { className: `${CSS_CLASSES.MESSAGE} ${type}` });
+  const isHumanAgentMessage = options.isHuman === true;
+  
+  // Build class list - add human agent class if from human agent
+  let messageClass = `${CSS_CLASSES.MESSAGE} ${type}`;
+  if (isHumanAgentMessage) {
+    messageClass += ` ${CSS_CLASSES.MESSAGE_HUMAN_AGENT}`;
+  }
+
+  const message = createElement('div', { className: messageClass });
   const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
 
   if (type === CSS_CLASSES.MESSAGE_AGENT) {
-    contentWrapper.appendChild(createAvatar(widget));
+    contentWrapper.appendChild(createAvatar(widget, isHumanAgentMessage));
   }
 
   const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
@@ -124,10 +133,32 @@ export async function addMessage(widget, type, text, addToHistory = true, option
   contentWrapper.appendChild(bubble);
   message.appendChild(contentWrapper);
 
-  // Add action buttons for agent messages
-  if (type === CSS_CLASSES.MESSAGE_AGENT && text && !options.hideActions) {
-    const actionsContainer = createMessageActions(widget, text, options.messageId, options.feedback);
+  // Add action buttons for AI assistant messages only (not human agent messages)
+  // Timestamp goes inside actions for AI messages, standalone otherwise
+  const hasActions = type === CSS_CLASSES.MESSAGE_AGENT && text && !options.hideActions && !isHumanAgentMessage;
+  
+  if (hasActions) {
+    const actionsContainer = createMessageActions(widget, text, options.messageId, options.feedback, options.timestamp);
     message.appendChild(actionsContainer);
+  } else if (options.timestamp || options.isHuman) {
+    // Standalone timestamp for user messages and human agent messages
+    const timeElement = createElement('div', { 
+      className: CSS_CLASSES.MESSAGE_TIME,
+      title: options.timestamp ? formatFullDate(options.timestamp) : ''
+    });
+    
+    // Add read status for user messages in human mode
+    if (type === CSS_CLASSES.MESSAGE_USER && widget.handoffMode === 'human') {
+      const readStatus = createReadStatusIndicator(options.readAt);
+      timeElement.appendChild(readStatus);
+    }
+    
+    if (options.timestamp) {
+      const timeText = document.createTextNode(formatMessageTime(options.timestamp));
+      timeElement.appendChild(timeText);
+    }
+    
+    message.appendChild(timeElement);
   }
 
   if (addToHistory) {
@@ -140,10 +171,120 @@ export async function addMessage(widget, type, text, addToHistory = true, option
 }
 
 /**
+ * Format timestamp for display
+ */
+function formatMessageTime(timestamp) {
+  if (!timestamp) return '';
+  
+  let date;
+  
+  // Handle Unix timestamp (seconds) - if it's a number less than year 3000 in seconds
+  if (typeof timestamp === 'number' && timestamp < 32503680000) {
+    date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+  } else {
+    date = new Date(timestamp);
+  }
+  
+  // Check if date is valid and reasonable (not before year 2000)
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+    return '';
+  }
+  
+  const now = new Date();
+  const diffMs = now - date;
+  
+  // If negative or very small, it's "just now"
+  if (diffMs < 0) return 'Just now';
+  
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  
+  const diffYears = Math.floor(diffDays / 365);
+  return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
+}
+
+/**
+ * Format full date for tooltip
+ */
+function formatFullDate(timestamp) {
+  if (!timestamp) return '';
+  
+  let date;
+  
+  // Handle Unix timestamp (seconds) - if it's a number less than year 3000 in seconds
+  if (typeof timestamp === 'number' && timestamp < 32503680000) {
+    date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+  } else {
+    date = new Date(timestamp);
+  }
+  
+  // Check if date is valid and reasonable
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+    return '';
+  }
+  
+  return date.toLocaleString(undefined, { 
+    weekday: 'short',
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+/**
+ * Create read status indicator (checkmarks for sent/read)
+ */
+function createReadStatusIndicator(readAt) {
+  const container = createElement('span', { 
+    className: `chatvia-widget-read-status ${readAt ? 'read' : ''}`
+  });
+  
+  // Double checkmark SVG
+  const checkSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 6L7 17l-5-5"/>
+      <path d="M22 6L11 17"/>
+    </svg>
+  `;
+  
+  container.innerHTML = checkSvg;
+  container.title = readAt ? 'Read' : 'Sent';
+  
+  return container;
+}
+
+/**
  * Create avatar element
  */
-export function createAvatar(widget) {
+// Human agent icon SVG
+const HUMAN_AGENT_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+`;
+
+export function createAvatar(widget, isHumanAgent = false) {
   const avatar = createElement('div', { className: CSS_CLASSES.MESSAGE_AVATAR });
+  
+  // Human agents always show person icon
+  if (isHumanAgent) {
+    avatar.innerHTML = HUMAN_AGENT_SVG;
+    return avatar;
+  }
+  
+  // AI assistant shows brand logo or default bot icon
   const brandLogoUrl = widget.settings.branding?.logo_url;
   if (brandLogoUrl) {
     const avatarImg = createElement('img', {
@@ -160,12 +301,12 @@ export function createAvatar(widget) {
 /**
  * Create message action buttons
  */
-export function createMessageActions(widget, messageText, messageId, feedback) {
+export function createMessageActions(widget, messageText, messageId, feedback, timestamp) {
   const actionsContainer = createElement('div', { 
     className: CSS_CLASSES.MESSAGE_ACTIONS 
   });
 
-  // Copy button - always show
+  // Copy button - always show (left side)
   const copyButton = createElement('button', {
     className: 'chatvia-widget-action-btn chatvia-widget-copy-btn',
     'aria-label': 'Copy message',
@@ -205,6 +346,16 @@ export function createMessageActions(widget, messageText, messageId, feedback) {
 
     actionsContainer.appendChild(thumbsUpButton);
     actionsContainer.appendChild(thumbsDownButton);
+  }
+
+  // Add timestamp after feedback buttons (with divider)
+  if (timestamp) {
+    const timeElement = createElement('div', { 
+      className: CSS_CLASSES.MESSAGE_TIME,
+      title: formatFullDate(timestamp) // Full date on hover
+    });
+    timeElement.textContent = formatMessageTime(timestamp);
+    actionsContainer.appendChild(timeElement);
   }
 
   return actionsContainer;
@@ -326,6 +477,23 @@ export async function sendUserMessage(widget, customText) {
     widget._updateThreadActionButtons();
   }
 
+  // Check if we're in human mode (handoff active)
+  if (isInHumanMode(widget)) {
+    // In human mode, send via HTTP POST (WebSocket receives response)
+    console.log('Sending message in human mode');
+    const success = await sendMessageInHumanMode(widget, text);
+    
+    if (!success) {
+      await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
+        retryText: text
+      });
+    }
+    
+    widget.scrollToBottom();
+    return;
+  }
+
+  // AI mode - use SSE
   // Clear any previous loading timeout
   if (widget._loadingTimeout) {
     clearTimeout(widget._loadingTimeout);
@@ -373,6 +541,12 @@ export async function sendUserMessage(widget, customText) {
   } else {
     widget.chatInput.disabled = true;
     widget.sendButton.disabled = true;
+    
+    // Subscribe to WebSocket now that we have a conversation on the server
+    // This enables receiving admin takeover events
+    if (!widget.pusherChannel) {
+      subscribeToConversation(widget);
+    }
   }
 
   widget.scrollToBottom();
@@ -391,10 +565,14 @@ export async function displayHistoryMessages(widget) {
         : message.type;
       const isWelcomeMessage = widget.settings.welcome_message && 
         message.content === widget.settings.welcome_message;
+      const isHumanAgent = message.role === 'agent';
       await addMessage(widget, messageType, message.content, false, {
         messageId: message.id,
         feedback: message.feedback,
-        hideActions: isWelcomeMessage
+        hideActions: isWelcomeMessage,
+        isHuman: isHumanAgent,
+        timestamp: message.created_at || message.timestamp,
+        readAt: message.read_at
       });
     }
   } else if (widget.settings.welcome_message) {

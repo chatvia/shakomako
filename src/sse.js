@@ -111,6 +111,17 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
                   return Promise.resolve();
                 }
                 
+                // Handle handoff events (status: human/returned/ai)
+                if (data.status && ['human', 'returned', 'ai'].includes(data.status)) {
+                  console.log('🔄 Handoff event detected in SSE client:', data);
+                  sseCallbacks.onMessage(data);
+                  // Close stream after handoff - human mode will use WebSocket
+                  isDone = true;
+                  isStreaming = false;
+                  sseCallbacks.onClose();
+                  return Promise.resolve();
+                }
+                
                 // Handle regular content messages
                 if (data.content) {
                   sseCallbacks.onMessage(data);

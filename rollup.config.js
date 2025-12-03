@@ -13,11 +13,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
-const appVersion = process.env.VITE_APP_VERSION || '1.0.0';
+const appVersion = process.env.VITE_APP_VERSION;
 
 // Use VITE_API_URL directly
 const apiUrl = process.env.VITE_API_URL;
 const scriptUrl = process.env.VITE_SCRIPT_URL;
+
+// Pusher/Reverb configuration for handoff feature
+// Dev fallbacks for local development with Laravel Herd
+const reverbAppKey = process.env.VITE_REVERB_APP_KEY || (isProduction ? '' : 'laravel-herd');
+const reverbHost = process.env.VITE_REVERB_HOST || (isProduction ? '' : 'reverb.herd.test');
+const reverbPort = process.env.VITE_REVERB_PORT || '443';
+const reverbScheme = process.env.VITE_REVERB_SCHEME || 'https';
 
 // Warn if critical env vars are missing
 if (!scriptUrl) {
@@ -32,7 +39,12 @@ const sharedEnv = {
   __APP_VERSION__: JSON.stringify(appVersion),
   __API_URL__: JSON.stringify(apiUrl),
   __SCRIPT_URL__: JSON.stringify(scriptUrl),
-  __DEV__: JSON.stringify(!isProduction)
+  __DEV__: JSON.stringify(!isProduction),
+  // Pusher/Reverb config for handoff
+  __REVERB_APP_KEY__: JSON.stringify(reverbAppKey),
+  __REVERB_HOST__: JSON.stringify(reverbHost),
+  __REVERB_PORT__: JSON.stringify(reverbPort),
+  __REVERB_SCHEME__: JSON.stringify(reverbScheme)
 };
 
 // Custom plugin to generate version.json

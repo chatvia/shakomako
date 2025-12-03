@@ -129,7 +129,15 @@ export function setupInputListeners(widget) {
       await widget.sendUserMessage();
     }
   });
-  widget.chatInput?.addEventListener('input', () => widget.autoResizeInput());
+  widget.chatInput?.addEventListener('input', () => {
+    widget.autoResizeInput();
+    
+    // Send typing indicator in human mode
+    if (widget.isInHumanMode && widget.isInHumanMode()) {
+      const hasText = widget.chatInput.value.trim().length > 0;
+      widget.sendTypingIndicator(hasText);
+    }
+  });
 }
 
 /**

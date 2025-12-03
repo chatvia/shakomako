@@ -5,6 +5,7 @@
 
 import { CSS_CLASSES } from '../utils.js';
 import { createIcon } from '../ui.js';
+import { markMessagesAsRead, HANDOFF_MODE } from './handoff.js';
 
 /**
  * Toggle chat open/close
@@ -44,7 +45,15 @@ export function toggleChat(widget, open) {
       lockBodyScroll(widget);
     }
 
-    setTimeout(() => widget.chatInput?.focus(), 300);
+    setTimeout(() => {
+      widget.chatInput?.focus();
+      // Scroll to bottom when opening chat
+      widget.scrollToBottom();
+      // Mark messages as read if in human mode
+      if (widget.handoffMode === HANDOFF_MODE.HUMAN) {
+        markMessagesAsRead(widget);
+      }
+    }, 300);
   } else {
     widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
     
@@ -164,6 +173,11 @@ export function toggleMenuDropdown(widget) {
       widget.menuDropdown.style.display = 'none';
     }
   } else if (widget.menuDropdown) {
+    // Update menu items state based on handoff mode before showing
+    if (widget._updateMenuForHandoffState) {
+      widget._updateMenuForHandoffState();
+    }
+    
     widget.menuDropdown.style.display = 'block';
     void widget.menuDropdown.offsetWidth;
     widget.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
@@ -207,7 +221,14 @@ export function scrollToBottom(widget) {
   if (!widget.messagesContainer) return;
   if (widget._scrollRAF) cancelAnimationFrame(widget._scrollRAF);
   widget._scrollRAF = requestAnimationFrame(() => {
+    // Try scrollTop approach
     widget.messagesContainer.scrollTop = widget.messagesContainer.scrollHeight;
+    
+    // Also try scrollIntoView on the last child as backup
+    const lastMessage = widget.messagesContainer.lastElementChild;
+    if (lastMessage) {
+      lastMessage.scrollIntoView({ behavior: 'instant', block: 'end' });
+    }
   });
 }
 

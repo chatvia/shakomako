@@ -97,7 +97,11 @@ export const CSS_CLASSES = {
   FLAT_MODE: 'chatvia-widget-flat-mode',
   WINDOW_FLAT: 'chatvia-widget-flat',
   POSITION_BOTTOM_RIGHT: 'chatvia-widget-bottom-right',
-  POSITION_BOTTOM_LEFT: 'chatvia-widget-bottom-left'
+  POSITION_BOTTOM_LEFT: 'chatvia-widget-bottom-left',
+  // Handoff mode
+  HUMAN_MODE: 'chatvia-widget-human-mode',
+  MESSAGE_HUMAN_AGENT: 'chatvia-widget-human-agent',
+  MESSAGE_TIME: 'chatvia-widget-message-time'
 };
 export const STREAMING_DONE_MARKER = '[DONE]';
 export const STREAMING_FINALIZE_TIMEOUT = 5000; // ms

@@ -13,6 +13,7 @@ import {
   resetFinalizeTimeout,
   enableStreamingMessageActions
 } from './messages.js';
+import { handleHandoffEvent, HANDOFF_STATUS } from './handoff.js';
 
 /**
  * Setup SSE connection
@@ -101,7 +102,40 @@ export async function handleStreamChunk(widget, content) {
  */
 export async function handleReceivedMessage(widget, message) {
   const messageContent = message.content || '';
-  console.log('Received message with content:', messageContent);
+  const messageType = message.type;
+  console.log('Received message with content:', messageContent, 'type:', messageType);
+
+  // Handle handoff acknowledgment - message was sent during human mode
+  // Just silently acknowledge, the message is already displayed and saved
+  if (messageType === 'handoff_ack') {
+    console.log('✅ Handoff message acknowledged');
+    // Re-enable input
+    if (widget.chatInput) widget.chatInput.disabled = false;
+    if (widget.sendButton) widget.sendButton.disabled = false;
+    return;
+  }
+
+  // Check for handoff event - can come in different formats:
+  // 1. { type: 'handoff', status: 'human', ... }
+  // 2. { handoff: { status: 'human', ... } }
+  // 3. { status: 'human', conversation_id: '...', message: '...' }
+  const isHandoffEvent = 
+    messageType === 'handoff' || 
+    message.handoff || 
+    (message.status && ['human', 'returned', 'ai'].includes(message.status));
+
+  if (isHandoffEvent) {
+    const handoffData = message.handoff || message;
+    console.log('🔄 Handoff event detected:', handoffData);
+    
+    // Finalize any streaming message before handling handoff
+    if (widget.isStreaming) {
+      finalizeStreamingMessage(widget);
+    }
+    
+    await handleHandoffEvent(widget, handoffData);
+    return;
+  }
 
   const messageId = message.id || message.message_id;
   if (messageId) {

@@ -567,6 +567,76 @@
   letter-spacing: -0.01em;
 }
 
+/* Human agent message styling - Subtle difference using primary color */
+.chatvia-widget .chatvia-widget-message.chatvia-widget-human-agent .chatvia-widget-bubble-content {
+  background-color: color-mix(in srgb, var(--chat-primary) 8%, #f3f4f6) !important;
+  color: #1e293b !important;
+  border-left: 3px solid var(--chat-primary) !important;
+}
+
+/* Human agent avatar - uses primary color */
+.chatvia-widget .chatvia-widget-message.chatvia-widget-human-agent .chatvia-widget-avatar {
+  background: linear-gradient(135deg, var(--chat-primary) 0%, color-mix(in srgb, var(--chat-primary) 80%, black) 100%);
+}
+
+/* Human icon for human agent avatar */
+.chatvia-widget .chatvia-widget-message.chatvia-widget-human-agent .chatvia-widget-avatar svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Message timestamp styling - inline with actions (after buttons with divider) */
+.chatvia-widget .chatvia-widget-actions .chatvia-widget-message-time {
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+  padding-left: 8px;
+  margin-left: 4px;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: default;
+}
+
+/* Standalone timestamp (for messages without actions like user/human messages) */
+.chatvia-widget .chatvia-widget-message > .chatvia-widget-message-time {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.chatvia-widget .chatvia-widget-message.chatvia-widget-user > .chatvia-widget-message-time {
+  text-align: right;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* Read status indicator */
+.chatvia-widget .chatvia-widget-read-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.chatvia-widget .chatvia-widget-read-status.read {
+  color: var(--chat-primary);
+}
+
+.chatvia-widget .chatvia-widget-read-status svg {
+  width: 12px;
+  height: 12px;
+}
+
+.chatvia-widget .chatvia-widget-message.chatvia-widget-assistant > .chatvia-widget-message-time,
+.chatvia-widget .chatvia-widget-message.chatvia-widget-human-agent > .chatvia-widget-message-time {
+  text-align: left;
+  margin-left: 36px; /* Account for avatar width */
+}
+
 /* User message styling - Refined */
 .chatvia-widget .chatvia-widget-message.chatvia-widget-user {
   align-self: flex-end;
@@ -682,9 +752,10 @@
 /* Message action buttons */
 .chatvia-widget .chatvia-widget-actions {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
   margin-top: 6px;
-  margin-left: 28px; /* Align with message bubble (avatar width 20px + gap 8px) */
+  margin-left: 36px; /* Align with message bubble (avatar width) */
 }
 
 /* Hide action buttons during streaming */
@@ -1160,6 +1231,18 @@
   width: 16px;
   height: 16px;
   color: var(--chat-text-secondary);
+}
+
+/* Disabled menu option (during handoff) */
+.chatvia-widget .chatvia-widget-menu-option.chatvia-widget-menu-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+.chatvia-widget .chatvia-widget-menu-option.chatvia-widget-menu-disabled svg {
+  color: #9ca3af;
 }
 
 /* Thread list styling - Clean design */
@@ -2086,4 +2169,220 @@ body.chatvia-scroll-locked {
   .chatvia-widget .chatvia-widget-window.chatvia-widget-slider-mode.chatvia-widget-expanded {
     width: 600px;
   }
+}
+
+/* ============================================
+   HANDOFF / HUMAN MODE Styles
+   ============================================ */
+
+/* "Talk to Human" button */
+.chatvia-widget .chatvia-widget-talk-to-human {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  margin: 8px auto;
+  background: transparent;
+  border: 1px solid var(--chat-border);
+  border-radius: var(--chat-radius-full);
+  color: var(--chat-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chatvia-widget .chatvia-widget-talk-to-human:hover {
+  background: var(--chat-hover-bg);
+  border-color: var(--chat-primary);
+  color: var(--chat-primary);
+}
+
+.chatvia-widget .chatvia-widget-talk-to-human svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Pending mode - waiting for agent */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-pending-mode .chatvia-widget-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-pending-mode .chatvia-widget-header::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 60px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: #fef3c7;
+  border-radius: 50%;
+  animation: pendingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pendingPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
+/* Human mode indicator - green header */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-human-mode .chatvia-widget-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+/* End Chat button */
+.chatvia-widget .chatvia-widget-end-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  margin-right: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.chatvia-widget .chatvia-widget-end-chat-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.chatvia-widget .chatvia-widget-end-chat-btn:active {
+  transform: scale(0.98);
+}
+
+.chatvia-widget .chatvia-widget-end-chat-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* System message for handoff notifications */
+.chatvia-widget .chatvia-widget-message.chatvia-widget-system {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+  width: 100%;
+}
+
+.chatvia-widget .chatvia-widget-message.chatvia-widget-system .chatvia-widget-bubble-content {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-message.chatvia-widget-system .chatvia-widget-bubble-content {
+  background-color: #052e16;
+  border-color: #14532d;
+  color: #86efac;
+}
+
+/* Pending state system message - amber */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-pending-mode .chatvia-widget-message.chatvia-widget-system .chatvia-widget-bubble-content {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-pending-mode.chatvia-widget-dark .chatvia-widget-message.chatvia-widget-system .chatvia-widget-bubble-content {
+  background-color: #451a03;
+  border-color: #78350f;
+  color: #fcd34d;
+}
+
+/* Human typing indicator - "is typing..." */
+.chatvia-widget .chatvia-widget-human-typing {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 0;
+  margin: 4px 0 4px 28px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+  animation: fadeInTyping 0.15s ease-out;
+}
+
+@keyframes fadeInTyping {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.chatvia-widget .chatvia-widget-typing-text {
+  color: #94a3b8;
+}
+
+.chatvia-widget .chatvia-widget-typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 1px;
+}
+
+.chatvia-widget .chatvia-widget-typing-dot {
+  width: 3px;
+  height: 3px;
+  background-color: #94a3b8;
+  border-radius: 50%;
+  animation: typingDotBounce 1.4s ease-in-out infinite;
+}
+
+.chatvia-widget .chatvia-widget-typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.chatvia-widget .chatvia-widget-typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.chatvia-widget .chatvia-widget-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingDotBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+/* Dark mode for human typing indicator */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-human-typing,
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-typing-text {
+  color: #64748b;
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-typing-dot {
+  background-color: #64748b;
 }
