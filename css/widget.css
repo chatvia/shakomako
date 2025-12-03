@@ -440,7 +440,7 @@
 
 /* Custom scrollbar for messages */
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar-track {
@@ -449,7 +449,7 @@
 
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.12);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar-thumb:hover {
@@ -477,10 +477,8 @@
 .chatvia-widget .chatvia-widget-header-logo {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
   margin-right: 12px;
   object-fit: cover;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .chatvia-widget .chatvia-widget-header-title {
@@ -573,6 +571,7 @@
 .chatvia-widget .chatvia-widget-message.chatvia-widget-user {
   align-self: flex-end;
   margin-left: 10px;
+  padding-right: 8px; /* Space for scrollbar */
   width: 100%;
   box-sizing: border-box;
   margin-bottom: 12px;
