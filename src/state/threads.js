@@ -50,7 +50,7 @@ export async function createNewThread(widget) {
   try {
     // Clean up any existing handoff state from previous thread
     cleanupHandoff(widget);
-    
+
     const newThread = await widget.storageManager.createNewThread();
     if (newThread) {
       widget.threads.unshift(newThread);
@@ -83,8 +83,8 @@ export async function createNewThread(widget) {
  * Get the active thread
  */
 export function getActiveThread(widget) {
-  const storedActiveThreadId = widget.storageManager 
-    ? widget.storageManager.getActiveThreadId() 
+  const storedActiveThreadId = widget.storageManager
+    ? widget.storageManager.getActiveThreadId()
     : widget.activeThreadId;
   return widget.threads.find(t => t.id === storedActiveThreadId);
 }
@@ -93,8 +93,8 @@ export function getActiveThread(widget) {
  * Get current active thread ID
  */
 export function getCurrentActiveThreadId(widget) {
-  return widget.storageManager 
-    ? widget.storageManager.getActiveThreadId() 
+  return widget.storageManager
+    ? widget.storageManager.getActiveThreadId()
     : widget.activeThreadId;
 }
 
@@ -144,8 +144,8 @@ export async function loadActiveThread(widget) {
 
     // Check if there are any user messages in the thread
     const hasUserMessages = widget.messageHistory.some(message => {
-      const messageType = message.role 
-        ? widget._mapRoleToMessageType(message.role) 
+      const messageType = message.role
+        ? widget._mapRoleToMessageType(message.role)
         : message.type;
       return messageType === CSS_CLASSES.MESSAGE_USER;
     });
@@ -155,8 +155,8 @@ export async function loadActiveThread(widget) {
     } else if (
       !widget.messageHistory.length ||
       (widget.messageHistory.length === 1 &&
-        (widget.messageHistory[0].role 
-          ? widget._mapRoleToMessageType(widget.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT 
+        (widget.messageHistory[0].role
+          ? widget._mapRoleToMessageType(widget.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT
           : widget.messageHistory[0].type === CSS_CLASSES.MESSAGE_AGENT))
     ) {
       widget.showStarters();
@@ -165,15 +165,15 @@ export async function loadActiveThread(widget) {
     }
 
     widget._updateThreadActionButtons();
-    
+
     // Clean up previous thread's handoff state and reset to AI mode
     cleanupHandoff(widget);
-    
+
     // Re-setup SSE with the new thread ID (default mode)
     if (widget.setupSSE) {
       widget.setupSSE();
     }
-    
+
     // Only subscribe to WebSocket if the conversation exists on the server
     // (indicated by having messages - conversations are created on first message)
     if (widget.messageHistory && widget.messageHistory.length > 0) {
@@ -320,7 +320,7 @@ export async function showDeleteSuccess(widget, deletedThreadId) {
     console.log('Setting next active thread to:', nextActiveThreadId);
     widget.storageManager.setActiveThreadId(nextActiveThreadId);
     widget.activeThreadId = nextActiveThreadId;
-    
+
     widget.setupSSE();
     await loadActiveThread(widget);
   } else {
@@ -402,7 +402,7 @@ function createThreadItem(widget, thread) {
   }
 
   const contentContainer = createElement('div', { className: CSS_CLASSES.THREAD_CONTENT });
-  
+
   const titleEl = createElement('div', { className: CSS_CLASSES.THREAD_TITLE });
   titleEl.textContent = thread.title || getFirstUserMessage(widget, thread) || "New conversation";
   contentContainer.appendChild(titleEl);
@@ -412,7 +412,7 @@ function createThreadItem(widget, thread) {
   contentContainer.appendChild(subtitleEl);
 
   if (thread.timestamp) {
-    const timestampEl = createElement('span', { 
+    const timestampEl = createElement('span', {
       className: CSS_CLASSES.THREAD_DATE,
       textContent: ` • ${formatTimestamp(thread.timestamp)}`
     });
@@ -440,14 +440,14 @@ function createThreadItem(widget, thread) {
  */
 function getFirstUserMessage(widget, thread) {
   if (!thread.messages || !Array.isArray(thread.messages)) return null;
-  
+
   const firstUserMessage = thread.messages.find(msg => {
     const messageType = msg.role ? widget._mapRoleToMessageType(msg.role) : msg.type;
     return messageType === CSS_CLASSES.MESSAGE_USER;
   });
-  
-  return firstUserMessage 
-    ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '') 
+
+  return firstUserMessage
+    ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
     : null;
 }
 
@@ -460,18 +460,18 @@ export function formatTimestamp(timestamp) {
   const date = new Date(timestamp * 1000);
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
-  
+
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
-  
+
   if (isToday) {
     return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   } else if (isYesterday) {
     return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   } else {
-    return date.toLocaleDateString([], { 
-      month: 'short', 
+    return date.toLocaleDateString([], {
+      month: 'short',
       day: 'numeric',
       year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });

@@ -114,7 +114,7 @@ export async function addMessage(widget, type, text, addToHistory = true, option
   }
 
   const isHumanAgentMessage = options.isHuman === true;
-  
+
   // Build class list - add human agent class if from human agent
   let messageClass = `${CSS_CLASSES.MESSAGE} ${type}`;
   if (isHumanAgentMessage) {
@@ -136,28 +136,28 @@ export async function addMessage(widget, type, text, addToHistory = true, option
   // Add action buttons for AI assistant messages only (not human agent messages)
   // Timestamp goes inside actions for AI messages, standalone otherwise
   const hasActions = type === CSS_CLASSES.MESSAGE_AGENT && text && !options.hideActions && !isHumanAgentMessage;
-  
+
   if (hasActions) {
     const actionsContainer = createMessageActions(widget, text, options.messageId, options.feedback, options.timestamp);
     message.appendChild(actionsContainer);
   } else if (options.timestamp || options.isHuman) {
     // Standalone timestamp for user messages and human agent messages
-    const timeElement = createElement('div', { 
+    const timeElement = createElement('div', {
       className: CSS_CLASSES.MESSAGE_TIME,
       title: options.timestamp ? formatFullDate(options.timestamp) : ''
     });
-    
+
     // Add read status for user messages in human mode
     if (type === CSS_CLASSES.MESSAGE_USER && widget.handoffMode === 'human') {
       const readStatus = createReadStatusIndicator(options.readAt);
       timeElement.appendChild(readStatus);
     }
-    
+
     if (options.timestamp) {
       const timeText = document.createTextNode(formatMessageTime(options.timestamp));
       timeElement.appendChild(timeText);
     }
-    
+
     message.appendChild(timeElement);
   }
 
@@ -175,24 +175,24 @@ export async function addMessage(widget, type, text, addToHistory = true, option
  */
 function formatMessageTime(timestamp) {
   if (!timestamp) return '';
-  
+
   let date;
-  
+
   // Handle Unix timestamp (seconds) - if it's a number less than year 3000 in seconds
   if (typeof timestamp === 'number' && timestamp < 32503680000) {
     date = new Date(timestamp * 1000); // Convert seconds to milliseconds
   } else {
     date = new Date(timestamp);
   }
-  
+
   // Check if date is valid and reasonable (not before year 2000)
   if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
     return '';
   }
-  
+
   const now = new Date();
   const diffMs = now - date;
-  
+
   // If negative or very small, it's "just now"
   if (diffMs < 0) return 'Just now';
   
@@ -207,7 +207,7 @@ function formatMessageTime(timestamp) {
   
   const diffMonths = Math.floor(diffDays / 30);
   if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
-  
+
   const diffYears = Math.floor(diffDays / 365);
   return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
 }
@@ -217,25 +217,25 @@ function formatMessageTime(timestamp) {
  */
 function formatFullDate(timestamp) {
   if (!timestamp) return '';
-  
+
   let date;
-  
+
   // Handle Unix timestamp (seconds) - if it's a number less than year 3000 in seconds
   if (typeof timestamp === 'number' && timestamp < 32503680000) {
     date = new Date(timestamp * 1000); // Convert seconds to milliseconds
   } else {
     date = new Date(timestamp);
   }
-  
+
   // Check if date is valid and reasonable
   if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
     return '';
   }
-  
-  return date.toLocaleString(undefined, { 
+
+  return date.toLocaleString(undefined, {
     weekday: 'short',
-    year: 'numeric', 
-    month: 'short', 
+    year: 'numeric',
+    month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
@@ -246,10 +246,10 @@ function formatFullDate(timestamp) {
  * Create read status indicator (checkmarks for sent/read)
  */
 function createReadStatusIndicator(readAt) {
-  const container = createElement('span', { 
+  const container = createElement('span', {
     className: `chatvia-widget-read-status ${readAt ? 'read' : ''}`
   });
-  
+
   // Double checkmark SVG
   const checkSvg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -257,10 +257,10 @@ function createReadStatusIndicator(readAt) {
       <path d="M22 6L11 17"/>
     </svg>
   `;
-  
+
   container.innerHTML = checkSvg;
   container.title = readAt ? 'Read' : 'Sent';
-  
+
   return container;
 }
 
@@ -277,13 +277,13 @@ const HUMAN_AGENT_SVG = `
 
 export function createAvatar(widget, isHumanAgent = false) {
   const avatar = createElement('div', { className: CSS_CLASSES.MESSAGE_AVATAR });
-  
+
   // Human agents always show person icon
   if (isHumanAgent) {
     avatar.innerHTML = HUMAN_AGENT_SVG;
     return avatar;
   }
-  
+
   // AI assistant shows brand logo or default bot icon
   const brandLogoUrl = widget.settings.branding?.logo_url;
   if (brandLogoUrl) {
@@ -302,8 +302,8 @@ export function createAvatar(widget, isHumanAgent = false) {
  * Create message action buttons
  */
 export function createMessageActions(widget, messageText, messageId, feedback, timestamp) {
-  const actionsContainer = createElement('div', { 
-    className: CSS_CLASSES.MESSAGE_ACTIONS 
+  const actionsContainer = createElement('div', {
+    className: CSS_CLASSES.MESSAGE_ACTIONS
   });
 
   // Copy button - always show (left side)
@@ -337,10 +337,10 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
     thumbsDownButton.appendChild(createIcon('thumbs-down'));
 
     // Add event listeners
-    thumbsUpButton.addEventListener('click', () => 
+    thumbsUpButton.addEventListener('click', () =>
       handleFeedback(widget, messageId, true, thumbsUpButton, thumbsDownButton)
     );
-    thumbsDownButton.addEventListener('click', () => 
+    thumbsDownButton.addEventListener('click', () =>
       handleFeedback(widget, messageId, false, thumbsDownButton, thumbsUpButton)
     );
 
@@ -350,7 +350,7 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
 
   // Add timestamp after feedback buttons (with divider)
   if (timestamp) {
-    const timeElement = createElement('div', { 
+    const timeElement = createElement('div', {
       className: CSS_CLASSES.MESSAGE_TIME,
       title: formatFullDate(timestamp) // Full date on hover
     });
@@ -369,14 +369,14 @@ export async function handleCopyMessage(text, button) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = text;
     const plainText = tempDiv.textContent || tempDiv.innerText || text;
-    
+
     await navigator.clipboard.writeText(plainText);
-    
+
     const originalIcon = button.innerHTML;
     button.innerHTML = '';
     button.appendChild(createIcon('check'));
     button.classList.add('chatvia-widget-copied');
-    
+
     setTimeout(() => {
       button.innerHTML = originalIcon;
       button.classList.remove('chatvia-widget-copied');
@@ -393,10 +393,10 @@ export async function handleFeedback(widget, messageId, isPositive, clickedButto
   if (!messageId) return;
 
   const isAlreadyActive = clickedButton.classList.contains('chatvia-widget-active');
-  
+
   try {
     const api = (await import('../api.js')).default;
-    
+
     const response = await api({
       endpoint: 'feedback',
       method: 'POST',
@@ -482,13 +482,13 @@ export async function sendUserMessage(widget, customText) {
     // In human mode, send via HTTP POST (WebSocket receives response)
     console.log('Sending message in human mode');
     const success = await sendMessageInHumanMode(widget, text);
-    
+
     if (!success) {
       await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
         retryText: text
       });
     }
-    
+
     widget.scrollToBottom();
     return;
   }
@@ -541,7 +541,7 @@ export async function sendUserMessage(widget, customText) {
   } else {
     widget.chatInput.disabled = true;
     widget.sendButton.disabled = true;
-    
+
     // Subscribe to WebSocket now that we have a conversation on the server
     // This enables receiving admin takeover events
     if (!widget.pusherChannel) {
@@ -560,10 +560,10 @@ export async function displayHistoryMessages(widget) {
 
   if (widget.messageHistory && widget.messageHistory.length > 0) {
     for (const message of widget.messageHistory) {
-      const messageType = message.role 
-        ? widget._mapRoleToMessageType(message.role) 
+      const messageType = message.role
+        ? widget._mapRoleToMessageType(message.role)
         : message.type;
-      const isWelcomeMessage = widget.settings.welcome_message && 
+      const isWelcomeMessage = widget.settings.welcome_message &&
         message.content === widget.settings.welcome_message;
       const isHumanAgent = message.role === 'agent';
       await addMessage(widget, messageType, message.content, false, {
@@ -583,7 +583,7 @@ export async function displayHistoryMessages(widget) {
     if (activeThread && !activeThread.welcomeShown) {
       console.log('Showing welcome message');
       activeThread.welcomeShown = true;
-      
+
       setTimeout(async () => {
         console.log('Welcome message timeout fired, calling addMessage');
         const result = await addMessage(widget, CSS_CLASSES.MESSAGE_AGENT, widget.settings.welcome_message, false, {
@@ -611,12 +611,12 @@ export function startStreamingMessage(widget) {
     className: `${CSS_CLASSES.MESSAGE} ${CSS_CLASSES.MESSAGE_AGENT}`,
     id: CSS_CLASSES.STREAMING_MESSAGE
   });
-  
+
   const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
   contentWrapper.appendChild(createAvatar(widget));
   const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
   contentWrapper.appendChild(messageBubble);
-  
+
   streamingMsgElement.appendChild(contentWrapper);
   widget.messagesContainer.appendChild(streamingMsgElement);
   widget.scrollToBottom();
@@ -634,13 +634,13 @@ export async function updateStreamingMessage(widget) {
     }
 
     // Create action buttons early
-    if (!streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`) && 
-        widget.currentStreamedMessage && 
-        widget.currentStreamedMessage.trim().length > 0) {
+    if (!streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`) &&
+      widget.currentStreamedMessage &&
+      widget.currentStreamedMessage.trim().length > 0) {
       const actionsContainer = createMessageActions(
-        widget, 
-        widget.currentStreamedMessage, 
-        widget.currentStreamedMessageId, 
+        widget,
+        widget.currentStreamedMessage,
+        widget.currentStreamedMessageId,
         null
       );
       streamingMsgElement.appendChild(actionsContainer);
@@ -658,7 +658,7 @@ export async function updateMessageBubbleContent(messageBubble, content) {
     if (!MarkdownLibs.marked || !MarkdownLibs.DOMPurify) {
       await loadLibraries();
     }
-    
+
     if (MarkdownLibs.marked && MarkdownLibs.DOMPurify) {
       MarkdownLibs.marked.setOptions({
         gfm: true,
@@ -710,7 +710,7 @@ export async function finalizeStreamingMessage(widget) {
     }
 
     let actionsContainer = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
-    
+
     if (!actionsContainer) {
       actionsContainer = createMessageActions(widget, finalMessage, widget.currentStreamedMessageId);
       streamingMsgElement.appendChild(actionsContainer);
@@ -753,14 +753,14 @@ export async function finalizeStreamingMessage(widget) {
 export function enableStreamingMessageActions(widget, messageId) {
   const streamingElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
   if (!streamingElement || !messageId) return;
-  
+
   let actionsContainer = streamingElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
-  
+
   if (actionsContainer) {
     // Check if feedback buttons already exist
     let thumbsUpBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_UP}`);
     let thumbsDownBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_DOWN}`);
-    
+
     // If no feedback buttons exist yet, add them now that we have a messageId
     if (!thumbsUpBtn && !thumbsDownBtn) {
       // Thumbs up button
@@ -771,7 +771,7 @@ export function enableStreamingMessageActions(widget, messageId) {
         'data-message-id': messageId
       });
       thumbsUpBtn.appendChild(createIcon('thumbs-up'));
-      
+
       // Thumbs down button
       thumbsDownBtn = createElement('button', {
         className: `chatvia-widget-action-btn chatvia-widget-thumbs-down`,
@@ -780,15 +780,15 @@ export function enableStreamingMessageActions(widget, messageId) {
         'data-message-id': messageId
       });
       thumbsDownBtn.appendChild(createIcon('thumbs-down'));
-      
+
       // Add event listeners
-      thumbsUpBtn.addEventListener('click', () => 
+      thumbsUpBtn.addEventListener('click', () =>
         handleFeedback(widget, messageId, true, thumbsUpBtn, thumbsDownBtn)
       );
-      thumbsDownBtn.addEventListener('click', () => 
+      thumbsDownBtn.addEventListener('click', () =>
         handleFeedback(widget, messageId, false, thumbsDownBtn, thumbsUpBtn)
       );
-      
+
       actionsContainer.appendChild(thumbsUpBtn);
       actionsContainer.appendChild(thumbsDownBtn);
     }

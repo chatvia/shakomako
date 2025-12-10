@@ -5,9 +5,9 @@
 
 import { createSSEClient } from '../sse.js';
 import { CSS_CLASSES, STREAMING_DONE_MARKER } from '../utils.js';
-import { 
-  startStreamingMessage, 
-  updateStreamingMessage, 
+import {
+  startStreamingMessage,
+  updateStreamingMessage,
   finalizeStreamingMessage,
   clearSSETimeouts,
   resetFinalizeTimeout,
@@ -47,7 +47,7 @@ export function setupSSE(widget) {
  */
 export function handleSSEMessage(widget, data) {
   console.log('Received raw SSE data:', data);
-  
+
   // Clear the loading timeout to prevent it from firing after we've received a message
   if (widget._loadingTimeout) {
     clearTimeout(widget._loadingTimeout);
@@ -119,20 +119,20 @@ export async function handleReceivedMessage(widget, message) {
   // 1. { type: 'handoff', status: 'human', ... }
   // 2. { handoff: { status: 'human', ... } }
   // 3. { status: 'human', conversation_id: '...', message: '...' }
-  const isHandoffEvent = 
-    messageType === 'handoff' || 
-    message.handoff || 
+  const isHandoffEvent =
+    messageType === 'handoff' ||
+    message.handoff ||
     (message.status && ['human', 'returned', 'ai'].includes(message.status));
 
   if (isHandoffEvent) {
     const handoffData = message.handoff || message;
     console.log('🔄 Handoff event detected:', handoffData);
-    
+
     // Finalize any streaming message before handling handoff
     if (widget.isStreaming) {
       finalizeStreamingMessage(widget);
     }
-    
+
     await handleHandoffEvent(widget, handoffData);
     return;
   }

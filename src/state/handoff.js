@@ -156,15 +156,15 @@ export async function checkHandoffStatus(widget) {
     }
 
     const data = await response.json();
-    
+
     // Normalize status - 'returned' and 'ai' both mean AI mode
     const serverStatus = data.handoff_status === 'returned' ? 'ai' : data.handoff_status;
-    
+
     // If status returned is different from current, sync it
     if (serverStatus && serverStatus !== widget.handoffMode) {
       await syncHandoffState(widget, { ...data, handoff_status: serverStatus });
     }
-    
+
     return data;
   } catch (error) {
     console.error('Error checking handoff status:', error);
@@ -177,27 +177,27 @@ export async function checkHandoffStatus(widget) {
  */
 async function syncHandoffState(widget, data) {
   const { handoff_status, admin_name, is_human_controlled } = data;
-  
+
   if (handoff_status === 'human' && is_human_controlled) {
     widget.handoffMode = HANDOFF_MODE.HUMAN;
     widget.adminName = admin_name;
     widget.conversationId = data.conversation_id || widget.getCurrentActiveThreadId();
-    
+
     // Connect to WebSocket if not already connected
     if (!widget.pusherClient) {
       await connectPusher(widget);
     }
-    
+
     updateHandoffUI(widget, 'human');
   } else if (handoff_status === 'pending') {
     widget.handoffMode = HANDOFF_MODE.PENDING;
     widget.conversationId = data.conversation_id || widget.getCurrentActiveThreadId();
-    
+
     // Connect to WebSocket to listen for handoff acceptance
     if (!widget.pusherClient) {
       await connectPusher(widget);
     }
-    
+
     updateHandoffUI(widget, 'pending');
   } else {
     // AI mode
@@ -217,13 +217,13 @@ export async function subscribeToConversation(widget) {
   if (!conversationId) return;
 
   widget.conversationId = conversationId;
-  
+
   // Check current handoff status from server (in case page was reloaded during handoff)
   await checkHandoffStatus(widget);
-  
+
   // Connect WebSocket if not already connected
   await connectPusher(widget);
-  
+
   // Subscribe to channel
   if (widget.pusherClient) {
     if (widget.pusherClient.connection.state === 'connected') {
@@ -280,12 +280,12 @@ export async function handleHandoffEvent(widget, data) {
         await switchToPendingMode(widget, message);
       }
       break;
-    
+
     case HANDOFF_STATUS.HUMAN:
       widget.adminName = admin_name;
       await switchToHumanMode(widget, admin_name, admin_id, message);
       break;
-    
+
     case HANDOFF_STATUS.RETURNED:
     case HANDOFF_STATUS.AI:
       widget.adminName = null;
@@ -327,19 +327,19 @@ export async function switchToHumanMode(widget, adminName, adminId, serverMessag
 
   // Update UI to indicate human mode
   updateHandoffUI(widget, 'human');
-  
+
   // Disable menu options during live chat
   if (widget._updateMenuForHandoffState) {
     widget._updateMenuForHandoffState();
   }
-  
+
   // Re-enable input for human chat
   if (widget.chatInput) widget.chatInput.disabled = false;
   if (widget.sendButton) widget.sendButton.disabled = false;
 
   // Scroll to bottom to show the notification
   widget.scrollToBottom();
-  
+
   // Mark any existing messages as read if widget is open
   if (widget.isOpen) {
     markMessagesAsRead(widget);
@@ -370,7 +370,7 @@ export async function switchToAIMode(widget, serverMessage) {
 
   // Update UI to indicate AI mode
   updateHandoffUI(widget, 'ai');
-  
+
   // Re-enable menu options
   if (widget._updateMenuForHandoffState) {
     widget._updateMenuForHandoffState();
@@ -378,7 +378,7 @@ export async function switchToAIMode(widget, serverMessage) {
 
   // Re-enable input
   if (widget.chatInput) widget.chatInput.disabled = false;
-  
+
   // Scroll to bottom to show the notification
   widget.scrollToBottom();
   if (widget.sendButton) widget.sendButton.disabled = false;
@@ -401,7 +401,7 @@ export async function endLiveChat(widget) {
   try {
     /* global __API_URL__ */
     const conversationId = widget.conversationId || widget.getCurrentActiveThreadId();
-    
+
     // Notify backend that user ended the chat
     const response = await fetch(`${__API_URL__}/handoff/end`, {
       method: 'POST',
@@ -421,7 +421,7 @@ export async function endLiveChat(widget) {
 
     // Switch back to AI mode
     await switchToAIMode(widget, 'You ended the live chat. You\'re now back with our AI assistant.');
-    
+
   } catch (error) {
     console.error('Error ending live chat:', error);
     // Still switch to AI mode even if the request failed
@@ -465,7 +465,7 @@ export async function connectPusher(widget) {
     const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : true;
     const devAppKey = 'laravel-herd';
     const devHost = 'reverb.herd.test';
-    
+
     const appKey = typeof __REVERB_APP_KEY__ !== 'undefined' && __REVERB_APP_KEY__ ? __REVERB_APP_KEY__ : (isDev ? devAppKey : null);
     const wsHost = typeof __REVERB_HOST__ !== 'undefined' && __REVERB_HOST__ ? __REVERB_HOST__ : (isDev ? devHost : null);
     const wsPort = parseInt(typeof __REVERB_PORT__ !== 'undefined' && __REVERB_PORT__ ? __REVERB_PORT__ : 443, 10);
@@ -486,12 +486,12 @@ export async function connectPusher(widget) {
     // Create Pusher client if not exists
     if (!widget.pusherClient) {
       console.log('[Handoff] Creating Pusher client...');
-      
+
       // Enable Pusher logging in dev mode
       if (isDev) {
         Pusher.logToConsole = true;
       }
-      
+
       widget.pusherClient = new Pusher(appKey, {
         wsHost: wsHost,
         wsPort: wsPort,
@@ -538,14 +538,14 @@ function subscribeToChannel(widget) {
   }
 
   const channelName = `presence-chat.${conversationId}`;
-  
+
   // Unsubscribe from previous channel if different
   if (widget.pusherChannel && widget.pusherChannel.name !== channelName) {
     console.log('[Handoff] Unsubscribing from previous channel:', widget.pusherChannel.name);
     widget.pusherClient.unsubscribe(widget.pusherChannel.name);
     widget.pusherChannel = null;
   }
-  
+
   // Don't resubscribe if already on the same channel
   if (widget.pusherChannel && widget.pusherChannel.name === channelName) {
     console.log('[Handoff] Already subscribed to channel:', channelName);
@@ -574,7 +574,7 @@ function subscribeToChannel(widget) {
     console.log('[Handoff] Received typing event:', data);
     handleTypingEvent(widget, data);
   });
-  
+
   // Also listen for client-side typing (whispers from admin)
   widget.pusherChannel.bind('client-typing', (data) => {
     console.log('[Handoff] Received client-typing whisper:', data);
@@ -623,13 +623,13 @@ async function handleWebSocketMessage(widget, data) {
   // Only show messages from admin/agent
   const isFromAgent = role === 'agent' || role === 'admin' || role === 'assistant';
   const isOurOwnMessage = sender_id === widget.sessionId || role === 'user';
-  
+
   if (isOurOwnMessage && !isFromAgent) return;
   if (!content || content.trim() === '') return;
 
   // Track if we need to open the widget
   const wasWidgetClosed = !widget.isOpen;
-  
+
   // Open widget for incoming human message
   if (wasWidgetClosed && isFromAgent) {
     widget.toggleChat(true);
@@ -649,7 +649,7 @@ async function handleWebSocketMessage(widget, data) {
   widget.scrollToBottom();
   setTimeout(() => widget.scrollToBottom(), 100);
   setTimeout(() => widget.scrollToBottom(), 300);
-  
+
   // Mark messages as read - always call in human mode when receiving messages
   // Use a small delay if widget just opened to ensure it's fully open
   if (wasWidgetClosed) {
@@ -702,7 +702,7 @@ function showAdminTyping(widget, agentName) {
       <span class="chatvia-widget-typing-dot"></span>
     </span>
   `;
-  
+
   if (widget.messagesContainer) {
     widget.messagesContainer.appendChild(typingIndicator);
     widget.scrollToBottom();
@@ -752,7 +752,7 @@ export function sendTypingIndicator(widget, isTyping) {
     clearTimeout(widget._typingTimeout);
     widget._typingTimeout = null;
   }
-  
+
   // Clear existing interval
   if (widget._typingInterval) {
     clearInterval(widget._typingInterval);
@@ -763,14 +763,14 @@ export function sendTypingIndicator(widget, isTyping) {
     // Send typing immediately
     whisperTyping(widget, true);
     widget._isTypingSent = true;
-    
+
     // Keep sending typing every 2 seconds while user is active
     widget._typingInterval = setInterval(() => {
       if (widget._isTypingSent) {
         whisperTyping(widget, true);
       }
     }, 2000);
-    
+
     // Auto-stop after 3 seconds of no keystroke
     widget._typingTimeout = setTimeout(() => {
       widget._isTypingSent = false;
@@ -878,7 +878,7 @@ function updateHandoffUI(widget, mode) {
 
   // Remove all mode classes
   chatWindow.classList.remove(CSS_CLASSES.HUMAN_MODE, 'chatvia-widget-pending-mode');
-  
+
   // Get header title element
   const headerTitle = chatWindow.querySelector('.chatvia-widget-header-title');
   const originalTitle = widget.settings?.title || 'Chat';
@@ -894,7 +894,7 @@ function updateHandoffUI(widget, mode) {
       }
       removeEndChatButton(widget);
       break;
-    
+
     case 'human':
       chatWindow.classList.add(CSS_CLASSES.HUMAN_MODE);
       if (widget.chatInput) {
@@ -907,7 +907,7 @@ function updateHandoffUI(widget, mode) {
       addEndChatButton(widget);
       hideMenuButton(widget);
       break;
-    
+
     case 'ai':
     default:
       if (widget.chatInput) {
@@ -931,7 +931,7 @@ function updateHandoffUI(widget, mode) {
 function addEndChatButton(widget) {
   // Remove existing button if any
   removeEndChatButton(widget);
-  
+
   const header = widget.chatWindow?.querySelector('.chatvia-widget-header');
   if (!header) return;
 
@@ -946,11 +946,11 @@ function addEndChatButton(widget) {
     <span>End Chat</span>
   `;
   endChatBtn.title = 'End live chat';
-  
+
   endChatBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Show confirmation dialog
     widget._showConfirmationDialog(
       'End Live Chat',
@@ -1058,7 +1058,7 @@ export function createTalkToHumanButton(widget, onClick) {
   `;
   button.title = 'Request human assistance';
   button.type = 'button';
-  
+
   button.addEventListener('click', async (e) => {
     e.preventDefault();
     if (onClick) {
@@ -1081,13 +1081,13 @@ export function cleanupHandoff(widget) {
     widget.pusherClient.unsubscribe(widget.pusherChannel.name);
     widget.pusherChannel = null;
   }
-  
+
   // Reset handoff state
   widget.handoffMode = HANDOFF_MODE.AI;
   widget.conversationId = null;
   widget.adminName = null;
   widget._adminTyping = false;
-  
+
   // Clear typing timeout and interval
   if (widget._typingTimeout) {
     clearTimeout(widget._typingTimeout);

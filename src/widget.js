@@ -29,7 +29,7 @@ import { startHeartbeat } from './state/handoff.js';
 export class ChatWidget {
   constructor(agentId, options = {}) {
     this.agentId = agentId;
-    
+
     // Handle null/undefined options, or legacy mountId parameter (string)
     if (!options) {
       this.mountId = null;
@@ -41,7 +41,7 @@ export class ChatWidget {
       this.mountId = options.mountId || null;
       this.options = options;
     }
-    
+
     // Mode: 'bubble' (default chat bubble) or 'search' (search bar with slider)
     this.mode = this.options.mode || 'bubble';
     this.searchPosition = this.options.position || 'bottom';
@@ -91,7 +91,7 @@ export class ChatWidget {
   // ========================================
   // Initialization
   // ========================================
-  
+
   async init() {
     return await this._initialize();
   }
@@ -132,7 +132,7 @@ export class ChatWidget {
         }, this.settings.show_on_load_delay);
       }
       console.log('Widget initialization complete.');
-      
+
       this._initializeMessageBubbles();
 
       setTimeout(() => {
@@ -364,7 +364,7 @@ export class ChatWidget {
       const isSearchMode = this.mode === 'search';
 
       this.container = createElement('div', { className: CSS_CLASSES.WIDGET });
-      
+
       if (isSearchMode) {
         this.container.classList.add('chatvia-widget-search-mode');
       }
@@ -376,18 +376,18 @@ export class ChatWidget {
         } else {
           this.chatBubble = this._createChatBubble();
           this.container.appendChild(this.chatBubble);
-          
+
           this.messageBubblesContainer = this._createMessageBubblesContainer();
           this.container.appendChild(this.messageBubblesContainer);
         }
       }
 
       this.chatWindow = this._createChatWindow();
-      
+
       if (isSearchMode) {
         this.chatWindow.classList.add('chatvia-widget-slider-mode');
       }
-      
+
       this.container.appendChild(this.chatWindow);
 
       if (isFlat) {
@@ -429,8 +429,8 @@ export class ChatWidget {
   }
 
   _createSearchBar() {
-    const positionClass = this.searchPosition === 'top' 
-      ? CSS_CLASSES.SEARCH_POSITION_TOP 
+    const positionClass = this.searchPosition === 'top'
+      ? CSS_CLASSES.SEARCH_POSITION_TOP
       : CSS_CLASSES.SEARCH_POSITION_BOTTOM;
     const searchContainer = createElement('div', {
       className: `${CSS_CLASSES.SEARCH_CONTAINER} ${positionClass}`
@@ -501,7 +501,7 @@ export class ChatWidget {
     }
 
     const bubbleText = this.settings.bubbles[this.currentBubbleIndex];
-    
+
     const bubble = createElement('div', {
       className: CSS_CLASSES.FLOATING_BUBBLE,
       textContent: bubbleText
@@ -523,7 +523,7 @@ export class ChatWidget {
     }, 100);
 
     this.currentBubbleIndex++;
-    
+
     if (this.currentBubbleIndex < this.settings.bubbles.length) {
       setTimeout(() => this._showNextBubble(), 2000);
     }
@@ -635,10 +635,10 @@ export class ChatWidget {
   _updateMenuForHandoffState() {
     const inHumanMode = this.isInHumanMode();
     const options = [this.newChatOption, this.historyOption, this.clearCurrentOption, this.clearAllOption];
-    
+
     options.forEach(option => {
       if (!option) return;
-      
+
       if (inHumanMode) {
         option.classList.add('chatvia-widget-menu-disabled');
       } else {
@@ -736,35 +736,35 @@ export class ChatWidget {
 
   _showConfirmationDialog(title, message, confirmText, onConfirm) {
     const dialog = createElement('div', { className: CSS_CLASSES.CONFIRM_DIALOG });
-    
+
     const content = createElement('div', { className: CSS_CLASSES.CONFIRM_CONTENT });
-    
+
     const titleEl = createElement('h3');
     titleEl.textContent = title;
-    
+
     const messageEl = createElement('p');
     messageEl.textContent = message;
-    
+
     const buttonsContainer = createElement('div', { className: CSS_CLASSES.CONFIRM_BUTTONS });
-    
-    const cancelButton = createElement('button', { 
+
+    const cancelButton = createElement('button', {
       className: CSS_CLASSES.CONFIRM_CANCEL,
       textContent: 'Cancel'
     });
-    
-    const deleteButton = createElement('button', { 
+
+    const deleteButton = createElement('button', {
       className: CSS_CLASSES.CONFIRM_DELETE,
       textContent: confirmText
     });
-    
+
     buttonsContainer.appendChild(cancelButton);
     buttonsContainer.appendChild(deleteButton);
-    
+
     content.appendChild(titleEl);
     content.appendChild(messageEl);
     content.appendChild(buttonsContainer);
     dialog.appendChild(content);
-    
+
     document.body.appendChild(dialog);
 
     cancelButton.addEventListener('click', () => dialog.remove());
@@ -780,7 +780,7 @@ export class ChatWidget {
 
   async _showLeadForm() {
     console.log('_showLeadForm called - creating and displaying lead form');
-    
+
     const leadForm = await createLeadForm((leadData) => {
       this._handleLeadFormSubmission(leadData);
     }, this.agentId);
@@ -797,7 +797,7 @@ export class ChatWidget {
 
   async _handleLeadFormSubmission(leadData) {
     console.log('Submitting lead form data:', leadData);
-    
+
     try {
       /* global __API_URL__ */
       const response = await fetch(`${__API_URL__}/leads/form`, {
@@ -839,34 +839,34 @@ export class ChatWidget {
       } else {
         result = { success: true, message: 'Form submitted successfully' };
       }
-      
+
       console.log('Lead form submitted successfully:', result);
 
       const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
       if (leadFormContainer) {
         leadFormContainer.innerHTML = '';
-        
+
         let successTitle = 'Thank you!';
         let successMessage = 'Your information has been received and someone will get back to you soon.';
-        
+
         if (result && result.success) {
           if (result.success.title) successTitle = result.success.title;
           if (result.success.message) successMessage = result.success.message;
         }
-        
+
         const successTitleElement = createElement('h3', {
           className: CSS_CLASSES.LEAD_FORM_TITLE,
           textContent: successTitle
         });
-        
+
         const successMessageElement = createElement('div', {
           className: CSS_CLASSES.LEAD_FORM_SUCCESS,
           textContent: successMessage
         });
-        
+
         leadFormContainer.appendChild(successTitleElement);
         leadFormContainer.appendChild(successMessageElement);
-        
+
         setTimeout(() => {
           if (leadFormContainer.parentNode) {
             leadFormContainer.remove();
@@ -876,19 +876,19 @@ export class ChatWidget {
 
     } catch (error) {
       console.error('Error submitting lead form:', error);
-      
+
       const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
       if (leadFormContainer) {
         const existingError = leadFormContainer.querySelector(`.${CSS_CLASSES.LEAD_FORM_ERROR}`);
         if (existingError) existingError.remove();
-        
+
         const errorMessage = createElement('div', {
           className: CSS_CLASSES.LEAD_FORM_ERROR,
           textContent: 'Failed to submit form. Please try again.'
         });
-        
+
         leadFormContainer.appendChild(errorMessage);
-        
+
         const submitButton = leadFormContainer.querySelector(`.${CSS_CLASSES.LEAD_FORM_SUBMIT}`);
         if (submitButton) {
           submitButton.disabled = false;

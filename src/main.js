@@ -24,7 +24,7 @@ import { ChatWidget } from './widget.js';
       // Properties
       agentId: clientId,
       _eventListeners: eventListeners, // Expose for internal event emission
-      
+
       /**
        * Initialize the widget
        * @returns {Promise<void>}
@@ -150,14 +150,14 @@ import { ChatWidget } from './widget.js';
       on: (event, callback) => {
         if (typeof callback !== 'function') {
           console.warn(`chatvia: 'on' requires a function callback`);
-          return () => {};
+          return () => { };
         }
-        
+
         if (!eventListeners[event]) {
           eventListeners[event] = [];
         }
         eventListeners[event].push(callback);
-        
+
         // Return unsubscribe function
         return () => {
           const idx = eventListeners[event].indexOf(callback);
@@ -201,7 +201,7 @@ import { ChatWidget } from './widget.js';
     document.addEventListener('chat:opened', () => {
       (eventListeners['open'] || []).forEach(cb => cb());
     });
-    
+
     document.addEventListener('chat:closed', () => {
       (eventListeners['close'] || []).forEach(cb => cb());
     });
@@ -211,7 +211,7 @@ import { ChatWidget } from './widget.js';
       apply: (target, thisArg, args) => target.__call(...args),
       get: (target, prop) => target[prop]
     };
-    
+
     window[namespace] = new Proxy(api, proxyHandler);
 
     // Process queued commands

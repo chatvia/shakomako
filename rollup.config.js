@@ -40,7 +40,7 @@ const sharedEnv = {
   __API_URL__: JSON.stringify(apiUrl),
   __SCRIPT_URL__: JSON.stringify(scriptUrl),
   __DEV__: JSON.stringify(!isProduction),
-  // Pusher/Reverb config for handoff
+  // Pusher/Reverb config for handoff 
   __REVERB_APP_KEY__: JSON.stringify(reverbAppKey),
   __REVERB_HOST__: JSON.stringify(reverbHost),
   __REVERB_PORT__: JSON.stringify(reverbPort),
@@ -54,7 +54,7 @@ function generateVersionFile() {
     generateBundle() {
       // Create version.json content
       const versionContent = JSON.stringify({ version: appVersion });
-      
+
       // Emit the version.json file
       this.emitFile({
         type: 'asset',
@@ -70,18 +70,18 @@ const commonPlugins = [
   commonjs(),
   replace({ ...sharedEnv, preventAssignment: true }),
   isProduction &&
-    strip({
-      include: ['**/*.js'],
-      functions: [
-        'console.log',
-        'console.debug',
-        'console.info',
-        'console.warn',
-        'console.error',
-        'assert.*'
-      ],
-      debugger: true
-    }),
+  strip({
+    include: ['**/*.js'],
+    functions: [
+      'console.log',
+      'console.debug',
+      'console.info',
+      'console.warn',
+      'console.error',
+      'assert.*'
+    ],
+    debugger: true
+  }),
   isProduction && terser({
     format: {
       comments: false
@@ -118,16 +118,16 @@ const mainBundleConfig = {
     generateVersionFile(), // Generate version.json
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
-      gzipPlugin({
-        fileName: '.br',
-        customCompression: content => brotliCompressSync(Buffer.from(content)),
-        additionalFiles: []
-      }),
+    gzipPlugin({
+      fileName: '.br',
+      customCompression: content => brotliCompressSync(Buffer.from(content)),
+      additionalFiles: []
+    }),
     !isProduction &&
-      visualizer({
-        filename: 'bundle-analysis.html',
-        open: false
-      })
+    visualizer({
+      filename: 'bundle-analysis.html',
+      open: false
+    })
   ].filter(Boolean)
 };
 
@@ -152,11 +152,11 @@ const searchBundleConfig = {
     ...commonPlugins,
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
-      gzipPlugin({
-        fileName: '.br',
-        customCompression: content => brotliCompressSync(Buffer.from(content)),
-        additionalFiles: []
-      })
+    gzipPlugin({
+      fileName: '.br',
+      customCompression: content => brotliCompressSync(Buffer.from(content)),
+      additionalFiles: []
+    })
   ].filter(Boolean)
 };
 
@@ -175,11 +175,11 @@ const embedScriptConfig = {
     generateVersionFile(), // Generate version.json for embed script too
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
-      gzipPlugin({
-        fileName: '.br',
-        customCompression: content => brotliCompressSync(Buffer.from(content)),
-        additionalFiles: []
-      })
+    gzipPlugin({
+      fileName: '.br',
+      customCompression: content => brotliCompressSync(Buffer.from(content)),
+      additionalFiles: []
+    })
   ].filter(Boolean)
 };
 

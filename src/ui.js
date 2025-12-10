@@ -126,14 +126,14 @@ export async function createLeadForm(onSubmit, agentId) {
       title: 'Get in touch',
       fields: { name: 'Name', email: 'Email' }
     }; // Default fallback
-    
+
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const text = await response.text();
       if (text) {
         try {
           const responseData = JSON.parse(text);
-          
+
           // Handle new object format with title and fields
           if (responseData && typeof responseData === 'object') {
             // New nested format: { title: '', fields: { fields: { name: { title: 'Name', required: true }, ... } } }
@@ -174,9 +174,9 @@ export async function createLeadForm(onSubmit, agentId) {
     } else {
       console.warn('Form config response is not JSON, using default fields');
     }
-    
+
     console.log('Received form configuration:', formConfig);
-    
+
     // Update form title
     if (formConfig.title) {
       formTitle.textContent = formConfig.title;
@@ -204,15 +204,15 @@ export async function createLeadForm(onSubmit, agentId) {
     // Create fields based on configuration
     const fieldNames = Object.keys(formConfig.fields);
     const enabledFields = []; // Track which fields are actually enabled and rendered
-    
+
     fieldNames.forEach(fieldName => {
       // Get field type configuration
       const fieldTypeConfig = fieldTypes[fieldName] || { type: 'text' };
-      
+
       // Handle both new format (with title/required/enabled) and legacy format (simple string)
       const fieldData = formConfig.fields[fieldName];
       let fieldLabel, isRequired, isEnabled;
-      
+
       if (fieldData && typeof fieldData === 'object' && fieldData.title !== undefined) {
         // New format: { title: 'Name', required: true, enabled: true }
         fieldLabel = fieldData.title;
@@ -224,32 +224,32 @@ export async function createLeadForm(onSubmit, agentId) {
         isRequired = fieldName === 'name' || fieldName === 'email'; // Fallback for legacy
         isEnabled = true; // Legacy fields are always enabled
       }
-      
+
       // Skip field if not enabled
       if (!isEnabled) {
         return;
       }
-      
+
       // Track enabled fields for form submission
       enabledFields.push(fieldName);
-      
+
       const fieldConfig = {
         type: fieldTypeConfig.type,
         label: fieldLabel,
         placeholder: fieldTypeConfig.placeholder || `Enter your ${fieldLabel.toLowerCase()}`,
         required: isRequired
       };
-      
+
       const fieldDiv = createElement('div', {
         className: CSS_CLASSES.LEAD_FORM_FIELD
       });
-      
+
       const label = createElement('label', {
         className: CSS_CLASSES.LEAD_FORM_LABEL,
         textContent: fieldConfig.label + (fieldConfig.required ? ' *' : ''),
         for: `lead-${fieldName}`
       });
-      
+
       let input;
       if (fieldConfig.type === 'textarea') {
         input = createElement('textarea', {
@@ -286,14 +286,14 @@ export async function createLeadForm(onSubmit, agentId) {
     // Form submission handling
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       // Disable submit button and show loading
       submitButton.disabled = true;
       submitButton.textContent = 'Submitting...';
       
       const formData = new FormData(form);
       const leadData = {};
-      
+
       // Collect form data only from enabled fields
       enabledFields.forEach(fieldName => {
         const value = formData.get(fieldName);
@@ -301,7 +301,7 @@ export async function createLeadForm(onSubmit, agentId) {
           leadData[fieldName] = value;
         }
       });
-      
+
       if (onSubmit) {
         await onSubmit(leadData);
       }
@@ -312,16 +312,16 @@ export async function createLeadForm(onSubmit, agentId) {
 
   } catch (error) {
     console.error('❌ Error fetching form configuration:', error);
-    
+
     // Remove loading message
     loadingMessage.remove();
-    
+
     // Show error message
     const errorMessage = createElement('div', {
       className: CSS_CLASSES.LEAD_FORM_ERROR,
       textContent: 'Unable to load form. Please try again later.'
     });
-    
+
     formContainer.appendChild(errorMessage);
   }
 

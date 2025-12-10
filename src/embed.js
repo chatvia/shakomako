@@ -34,8 +34,8 @@ window.chatvia =
   /* global __SCRIPT_URL__ */
   // Determine script host: use __SCRIPT_URL__ if set, otherwise detect from script src
   let scriptHost = __SCRIPT_URL__;
-  
-  
+
+
   if (!agentId) {
     console.error('chatvia: Missing agent-id attribute on embed script tag.');
     window[namespace].error = 'Missing agent-id attribute.';
@@ -52,21 +52,21 @@ window.chatvia =
     try {
       const versionUrl = `${scriptHost}/version.json?t=${Date.now()}`;
       console.log('chatvia: Fetching version from:', versionUrl);
-      
+
       // Fetch current version from version.json with cache busting
       const versionResponse = await fetch(versionUrl);
       console.log('chatvia: Version response status:', versionResponse.status, versionResponse.statusText);
-      
+
       if (!versionResponse.ok) {
         throw new Error(`Failed to fetch version.json: ${versionResponse.status} ${versionResponse.statusText}`);
       }
-      
+
       const versionData = await versionResponse.json();
       console.log('chatvia: Version data received:', versionData);
-      
+
       const version = versionData.version;
       console.log('chatvia: Using version:', version);
-      
+
       const bundleFile = type === 'search' ? 'search.min.js' : 'widget.min.js';
       const scriptId = 'chatvia-embed-script-' + type + '-' + version.replace(/\./g, '-');
       const fullScriptUrl = `${scriptHost}/${version}/${bundleFile}`;
