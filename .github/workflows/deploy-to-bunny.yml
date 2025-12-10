@@ -37,7 +37,9 @@ jobs:
           echo "NODE_ENV=production" >> .env
           echo "VITE_API_URL=${{ vars.API_URL }}" >> .env
           echo "VITE_SCRIPT_URL=${{ vars.BUNNY_CDN_BASE_URL }}/widget" >> .env
-          echo "VITE_SSE_URL=${{ vars.SSE_URL }}" >> .env
+          echo "VITE_REVERB_HOST=${{ vars.REVERB_HOST }}" >> .env
+          echo "VITE_REVERB_PORT=${{ vars.REVERB_PORT }}" >> .env
+          echo "VITE_REVERB_APP_KEY=${{ vars.REVERB_APP_KEY }}" >> .env
           cat .env
           npm run build:prod
 
