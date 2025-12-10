@@ -15,6 +15,7 @@ import {
   DEFAULT_LOGO_SVG
 } from './utils.js';
 import { createElement, createIcon, createLeadForm } from './ui.js';
+import { initI18n, t } from './i18n.js';
 
 // Import state modules
 import * as threads from './state/threads.js';
@@ -45,7 +46,8 @@ export class ChatWidget {
     // Mode: 'bubble' (default chat bubble) or 'search' (search bar with slider)
     this.mode = this.options.mode || 'bubble';
     this.searchPosition = this.options.position || 'bottom';
-    
+    this.language = this.options.language || 'auto';
+
     this.sessionId = null;
     this.isFlat = !!this.mountId;
 
@@ -98,6 +100,9 @@ export class ChatWidget {
 
   async _initialize() {
     try {
+      // Initialize i18n system first
+      await initI18n({ language: this.language });
+
       await this._verifyClient();
 
       this.settings = await getSettings(this.agentId);
@@ -141,7 +146,7 @@ export class ChatWidget {
       }, 300);
     } catch (error) {
       console.error('Error during async initialization:', error);
-      await this.disabledChat('Initialization error. Please try again later.');
+      await this.disabledChat(t('errors.initialization_failed'));
       throw error;
     }
   }
@@ -150,7 +155,7 @@ export class ChatWidget {
     const isVerified = await this.agentManager.verifyClient();
     if (!isVerified) {
       console.error('Client verification failed. Disabling chat.');
-      await this.disabledChat('Client verification failed.');
+      await this.disabledChat(t('errors.verification_failed'));
       throw new Error('Client verification failed');
     }
     console.log('Client verified.');
@@ -162,7 +167,7 @@ export class ChatWidget {
 
     if (!sessionId) {
       console.error('Failed to initialize session. Disabling chat.');
-      await this.disabledChat('Session initialization failed.');
+      await this.disabledChat(t('errors.session_failed'));
       throw new Error('Session initialization failed');
     }
 
@@ -413,7 +418,7 @@ export class ChatWidget {
     const bubble = createElement('div', {
       className: `${CSS_CLASSES.BUBBLE} ${CSS_CLASSES.BUBBLE_PULSE}`,
       role: 'button',
-      'aria-label': 'Open chat',
+      'aria-label': t('widget.open_chat'),
       tabIndex: 0
     });
     const logoUrl = this.settings.logo_url || DEFAULT_LOGO_SVG;
@@ -564,14 +569,14 @@ export class ChatWidget {
       className: CSS_CLASSES.HEADER_TITLE,
       id: 'chatvia-widget-header-title'
     });
-    this.menuButton = this._createHeaderButton('menu', 'Menu', CSS_CLASSES.MENU_BUTTON, {
+    this.menuButton = this._createHeaderButton('menu', t('widget.menu'), CSS_CLASSES.MENU_BUTTON, {
       'aria-haspopup': 'true',
       'aria-expanded': 'false'
     });
-    this.deleteThreadButton = this._createHeaderButton('delete', 'Clear current chat', CSS_CLASSES.DELETE_BUTTON);
+    this.deleteThreadButton = this._createHeaderButton('delete', t('widget.clear_current_chat'), CSS_CLASSES.DELETE_BUTTON);
     this.deleteThreadButton.style.display = 'none';
-    this.expandButton = this._createHeaderButton('expand', 'Expand chat', CSS_CLASSES.EXPAND_BUTTON);
-    this.closeButton = this._createHeaderButton('close', 'Close chat', CSS_CLASSES.CLOSE_BUTTON);
+    this.expandButton = this._createHeaderButton('expand', t('widget.expand_chat'), CSS_CLASSES.EXPAND_BUTTON);
+    this.closeButton = this._createHeaderButton('close', t('widget.close_chat'), CSS_CLASSES.CLOSE_BUTTON);
     this.menuDropdown = this._createMenuDropdown();
 
     header.appendChild(this.headerLogo);
@@ -615,10 +620,10 @@ export class ChatWidget {
       };
     };
 
-    this.newChatOption = this._createMenuOption('Start new chat', 'new-chat', guardedAction(() => this.startNewThread()));
-    this.historyOption = this._createMenuOption('Chat history', 'history', guardedAction(() => this.loadChatHistory()));
-    this.clearCurrentOption = this._createMenuOption('Clear current chat', 'delete', guardedAction(() => this.confirmDeleteThread()));
-    this.clearAllOption = this._createMenuOption('Clear all', 'clear-all', guardedAction(() => this.confirmClearAllThreads()));
+    this.newChatOption = this._createMenuOption(t('menu.new_chat'), 'new-chat', guardedAction(() => this.startNewThread()));
+    this.historyOption = this._createMenuOption(t('menu.chat_history'), 'history', guardedAction(() => this.loadChatHistory()));
+    this.clearCurrentOption = this._createMenuOption(t('menu.clear_current'), 'delete', guardedAction(() => this.confirmDeleteThread()));
+    this.clearAllOption = this._createMenuOption(t('menu.clear_all'), 'clear-all', guardedAction(() => this.confirmClearAllThreads()));
 
     dropdown.appendChild(this.newChatOption);
     dropdown.appendChild(this.historyOption);
@@ -677,7 +682,7 @@ export class ChatWidget {
   _createLoadingIndicator() {
     const indicator = createElement('div', {
       className: CSS_CLASSES.LOADING,
-      'aria-label': 'Loading'
+      'aria-label': t('widget.loading')
     });
     const dotsContainer = createElement('div', { className: CSS_CLASSES.LOADING_DOTS });
     for (let i = 0; i < 3; i++) {
@@ -696,9 +701,9 @@ export class ChatWidget {
 
   _createInputContainer() {
     const container = createElement('div', { className: CSS_CLASSES.INPUT_CONTAINER });
-    
-    const placeholder = this.settings?.welcome_message || this.options?.placeholder || 'Type a message...';
-    
+
+    const placeholder = this.settings?.welcome_message || this.options?.placeholder || t('widget.type_message');
+
     this.chatInput = createElement('textarea', {
       className: CSS_CLASSES.INPUT,
       placeholder: placeholder,
@@ -711,7 +716,7 @@ export class ChatWidget {
     this.sendButton = createElement('div', {
       className: CSS_CLASSES.SEND_BUTTON,
       role: 'button',
-      'aria-label': 'Send message',
+      'aria-label': t('widget.send_message'),
       tabIndex: 0
     });
     this.sendButton.appendChild(createIcon('send'));

@@ -17,7 +17,11 @@ import { ChatWidget } from './widget.js';
   console.log(`chatvia: Instantiating ChatWidget from main.js for client ${clientId}`);
 
   try {
-    const widgetInstance = new ChatWidget(clientId, window[namespace].mountId);
+    const options = {
+      mountId: window[namespace].mountId,
+      language: window[namespace].language
+    };
+    const widgetInstance = new ChatWidget(clientId, options);
 
     // Create the public API object
     const api = {

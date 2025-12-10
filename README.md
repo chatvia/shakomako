@@ -108,11 +108,27 @@ Use the embed script with `type="search"`:
   data-search-position="top"
   data-search-placeholder="Ask a question..."
 ></script>
+
+<!-- Chat Widget in Arabic -->
+<script 
+  src="dist/embed.js" 
+  agent-id="YOUR_AGENT_ID"
+  data-language="ar"
+></script>
+
+<!-- Search Widget with Auto-detect Language -->
+<script 
+  src="dist/embed.js" 
+  agent-id="YOUR_AGENT_ID"
+  type="search"
+  data-language="auto"
+></script>
 ```
 
 #### Configuration Options
 
 - `type`: `'widget'` (default) or `'search'` - Which component to load
+- `data-language`: `'en'`, `'ar'`, or `'auto'` (default) - Language for the widget interface
 - `data-search-position`: `'top'` or `'bottom'` - Where to display the search bar (default: `'top'`)
 - `data-search-placeholder`: String - Placeholder text for the search input (default: `'Ask a question...'`)
 

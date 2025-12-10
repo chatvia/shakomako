@@ -26,9 +26,11 @@ window.chatvia =
   const agentId = embedScriptTag.getAttribute('agent-id');
   const mountId = embedScriptTag.getAttribute('mount-id');
   const type = embedScriptTag.getAttribute('type') || 'widget'; // 'widget' or 'search'
+  const language = embedScriptTag.getAttribute('data-language') || 'auto';
 
   window[namespace].agentId = agentId;
   window[namespace].type = type;
+  window[namespace].language = language;
   if (mountId) window[namespace].mountId = mountId;
 
   /* global __SCRIPT_URL__ */

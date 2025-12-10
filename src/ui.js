@@ -1,4 +1,5 @@
 import { CSS_CLASSES } from './utils.js';
+import { t } from './i18n.js';
 
 // Define a shared icon map once at module load time to avoid
 // repeatedly creating the object on every createIcon call.
@@ -94,13 +95,13 @@ export async function createLeadForm(onSubmit, agentId) {
   // Will be updated with dynamic title from API
   const formTitle = createElement('h3', {
     className: CSS_CLASSES.LEAD_FORM_TITLE,
-    textContent: 'Get in touch' // Default fallback
+    textContent: t('lead_form.title') // Default fallback
   });
 
   // Show loading while fetching form fields
   const loadingMessage = createElement('div', {
     className: CSS_CLASSES.LEAD_FORM_LOADING,
-    textContent: 'Loading form...'
+    textContent: t('lead_form.loading')
   });
 
   formContainer.appendChild(formTitle);
@@ -192,13 +193,13 @@ export async function createLeadForm(onSubmit, agentId) {
 
     // Field configuration mapping
     const fieldTypes = {
-      name: { type: 'text', label: 'Name', placeholder: 'Enter your name' },
-      email: { type: 'email', label: 'Email', placeholder: 'Enter your email' },
-      phone: { type: 'tel', label: 'Phone', placeholder: 'Enter your phone number' },
-      job_title: { type: 'text', label: 'Job Title', placeholder: 'Enter your job title' },
-      company: { type: 'text', label: 'Company', placeholder: 'Enter your company name' },
-      location: { type: 'text', label: 'Location', placeholder: 'Enter your location' },
-      message: { type: 'textarea', label: 'Message', placeholder: 'Enter your message' }
+      name: { type: 'text', label: t('lead_form.fields.name'), placeholder: t('lead_form.fields.enter_name') },
+      email: { type: 'email', label: t('lead_form.fields.email'), placeholder: t('lead_form.fields.enter_email') },
+      phone: { type: 'tel', label: t('lead_form.fields.phone'), placeholder: t('lead_form.fields.enter_phone') },
+      job_title: { type: 'text', label: t('lead_form.fields.job_title'), placeholder: t('lead_form.fields.enter_job_title') },
+      company: { type: 'text', label: t('lead_form.fields.company'), placeholder: t('lead_form.fields.enter_company') },
+      location: { type: 'text', label: t('lead_form.fields.location'), placeholder: t('lead_form.fields.enter_location') },
+      message: { type: 'textarea', label: t('lead_form.fields.message'), placeholder: t('lead_form.fields.enter_message') }
     };
 
     // Create fields based on configuration
@@ -280,7 +281,7 @@ export async function createLeadForm(onSubmit, agentId) {
     const submitButton = createElement('button', {
       className: CSS_CLASSES.LEAD_FORM_SUBMIT,
       type: 'submit',
-      textContent: 'Submit'
+      textContent: t('lead_form.submit')
     });
 
     // Form submission handling
@@ -289,8 +290,8 @@ export async function createLeadForm(onSubmit, agentId) {
 
       // Disable submit button and show loading
       submitButton.disabled = true;
-      submitButton.textContent = 'Submitting...';
-      
+      submitButton.textContent = t('lead_form.submitting');
+
       const formData = new FormData(form);
       const leadData = {};
 
@@ -319,7 +320,7 @@ export async function createLeadForm(onSubmit, agentId) {
     // Show error message
     const errorMessage = createElement('div', {
       className: CSS_CLASSES.LEAD_FORM_ERROR,
-      textContent: 'Unable to load form. Please try again later.'
+      textContent: t('lead_form.error_load')
     });
 
     formContainer.appendChild(errorMessage);

@@ -6,6 +6,7 @@
 import { CSS_CLASSES } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 import { cleanupHandoff, subscribeToConversation } from './handoff.js';
+import { t } from '../i18n.js';
 
 /**
  * Initialize threads from storage
@@ -346,9 +347,9 @@ export function confirmDeleteThread(widget) {
   }
   widget.closeMenuDropdown();
   widget._showConfirmationDialog(
-    'Delete Chat',
-    `Are you sure you want to delete "${threadToDelete.title || 'Untitled Chat'}"? This action cannot be undone.`,
-    'Delete',
+    t('confirm.delete_chat_title'),
+    t('confirm.delete_chat_message'),
+    t('confirm.delete_button'),
     () => deleteCurrentThread(widget, threadIdToDelete)
   );
 }
@@ -359,9 +360,9 @@ export function confirmDeleteThread(widget) {
 export function confirmClearAllThreads(widget) {
   widget.closeMenuDropdown();
   widget._showConfirmationDialog(
-    'Delete All Chats',
-    'Are you sure you want to delete ALL your chat history? This action cannot be undone.',
-    'Delete All',
+    t('confirm.delete_all_title'),
+    t('confirm.delete_all_message'),
+    t('confirm.delete_all_button'),
     () => deleteAllThreads(widget)
   );
 }
@@ -376,7 +377,7 @@ function createThreadsContainer(widget, threads) {
 
   if (!threads || threads.length === 0) {
     const noThreadsMsg = createElement('p', {
-      textContent: 'No chat history available.',
+      textContent: t('threads.no_history'),
       className: CSS_CLASSES.NO_THREADS_MESSAGE
     });
     container.appendChild(noThreadsMsg);
@@ -404,7 +405,7 @@ function createThreadItem(widget, thread) {
   const contentContainer = createElement('div', { className: CSS_CLASSES.THREAD_CONTENT });
 
   const titleEl = createElement('div', { className: CSS_CLASSES.THREAD_TITLE });
-  titleEl.textContent = thread.title || getFirstUserMessage(widget, thread) || "New conversation";
+  titleEl.textContent = thread.title || getFirstUserMessage(widget, thread) || t('threads.new_conversation');
   contentContainer.appendChild(titleEl);
 
   const subtitleEl = createElement('div', { className: CSS_CLASSES.THREAD_SUBTITLE });
@@ -455,8 +456,8 @@ function getFirstUserMessage(widget, thread) {
  * Format timestamp for display
  */
 export function formatTimestamp(timestamp) {
-  if (!timestamp) return 'Unknown date';
-  
+  if (!timestamp) return t('threads.unknown_date');
+
   const date = new Date(timestamp * 1000);
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();

@@ -6,6 +6,7 @@
 import { CSS_CLASSES, DEFAULT_AVATAR_SVG, STREAMING_FINALIZE_TIMEOUT } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
+import { t } from '../i18n.js';
 
 // Create a namespace for our libraries
 export const MarkdownLibs = {
@@ -194,17 +195,20 @@ function formatMessageTime(timestamp) {
   const diffMs = now - date;
 
   // If negative or very small, it's "just now"
-  if (diffMs < 0) return 'Just now';
-  
+  if (diffMs < 0) return t('threads.just_now');
+
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
-  
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  
+
+  if (diffMins < 1) return t('threads.just_now');
+  if (diffMins === 1) return t('threads.minute_ago');
+  if (diffMins < 60) return t('threads.minutes_ago', { count: diffMins });
+  if (diffHours === 1) return t('threads.hour_ago');
+  if (diffHours < 24) return t('threads.hours_ago', { count: diffHours });
+  if (diffDays === 1) return t('threads.yesterday');
+  if (diffDays < 30) return t('threads.days_ago', { count: diffDays });
+
   const diffMonths = Math.floor(diffDays / 30);
   if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
 
@@ -309,8 +313,8 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
   // Copy button - always show (left side)
   const copyButton = createElement('button', {
     className: 'chatvia-widget-action-btn chatvia-widget-copy-btn',
-    'aria-label': 'Copy message',
-    title: 'Copy'
+    'aria-label': t('messages.copy_message'),
+    title: t('messages.copy')
   });
   copyButton.appendChild(createIcon('copy'));
   copyButton.addEventListener('click', () => handleCopyMessage(messageText, copyButton));
@@ -321,8 +325,8 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
     // Thumbs up button
     const thumbsUpButton = createElement('button', {
       className: `chatvia-widget-action-btn chatvia-widget-thumbs-up${feedback === true ? ' chatvia-widget-active' : ''}`,
-      'aria-label': 'Good response',
-      title: 'Good response',
+      'aria-label': t('messages.good_response'),
+      title: t('messages.good_response'),
       'data-message-id': messageId
     });
     thumbsUpButton.appendChild(createIcon('thumbs-up'));
@@ -330,8 +334,8 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
     // Thumbs down button
     const thumbsDownButton = createElement('button', {
       className: `chatvia-widget-action-btn chatvia-widget-thumbs-down${feedback === false ? ' chatvia-widget-active' : ''}`,
-      'aria-label': 'Bad response',
-      title: 'Bad response',
+      'aria-label': t('messages.bad_response'),
+      title: t('messages.bad_response'),
       'data-message-id': messageId
     });
     thumbsDownButton.appendChild(createIcon('thumbs-down'));
@@ -766,8 +770,8 @@ export function enableStreamingMessageActions(widget, messageId) {
       // Thumbs up button
       thumbsUpBtn = createElement('button', {
         className: `chatvia-widget-action-btn chatvia-widget-thumbs-up`,
-        'aria-label': 'Good response',
-        title: 'Good response',
+        'aria-label': t('messages.good_response'),
+        title: t('messages.good_response'),
         'data-message-id': messageId
       });
       thumbsUpBtn.appendChild(createIcon('thumbs-up'));
@@ -775,8 +779,8 @@ export function enableStreamingMessageActions(widget, messageId) {
       // Thumbs down button
       thumbsDownBtn = createElement('button', {
         className: `chatvia-widget-action-btn chatvia-widget-thumbs-down`,
-        'aria-label': 'Bad response',
-        title: 'Bad response',
+        'aria-label': t('messages.bad_response'),
+        title: t('messages.bad_response'),
         'data-message-id': messageId
       });
       thumbsDownBtn.appendChild(createIcon('thumbs-down'));

@@ -4,6 +4,7 @@
  */
 
 import { CSS_CLASSES } from '../utils.js';
+import { t } from '../i18n.js';
 
 // Handoff modes
 export const HANDOFF_MODE = {
@@ -693,9 +694,11 @@ function showAdminTyping(widget, agentName) {
   const typingIndicator = document.createElement('div');
   typingIndicator.className = 'chatvia-widget-human-typing';
   typingIndicator.id = 'chatvia-human-typing-indicator';
-  
+
+  const typingText = widget.adminName ? t('handoff.agent_typing', { name: widget.adminName }) : t('handoff.connecting');
+
   typingIndicator.innerHTML = `
-    <span class="chatvia-widget-typing-text">is typing</span>
+    <span class="chatvia-widget-typing-text">${typingText}</span>
     <span class="chatvia-widget-typing-dots">
       <span class="chatvia-widget-typing-dot"></span>
       <span class="chatvia-widget-typing-dot"></span>
@@ -887,7 +890,7 @@ function updateHandoffUI(widget, mode) {
     case 'pending':
       chatWindow.classList.add('chatvia-widget-pending-mode');
       if (widget.chatInput) {
-        widget.chatInput.placeholder = 'Waiting for agent...';
+        widget.chatInput.placeholder = t('handoff.waiting_for_agent');
       }
       if (headerTitle) {
         headerTitle.textContent = originalTitle;

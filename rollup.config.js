@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
 import strip from '@rollup/plugin-strip';
+import json from '@rollup/plugin-json';
 import { visualizer } from 'rollup-plugin-visualizer';
 import gzipPlugin from 'rollup-plugin-gzip';
 import postcss from 'rollup-plugin-postcss';
@@ -66,6 +67,7 @@ function generateVersionFile() {
 }
 
 const commonPlugins = [
+  json(), // Add JSON plugin to handle .json imports
   nodeResolve({ browser: true, preferBuiltins: false }),
   commonjs(),
   replace({ ...sharedEnv, preventAssignment: true }),
