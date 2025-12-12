@@ -15,10 +15,24 @@ window.chatvia =
 
   window[namespace].initialized = true;
 
-  const embedScriptTag = document.currentScript;
+  // Safari-compatible script tag detection
+  // document.currentScript doesn't work in Safari with async scripts
+  let embedScriptTag = document.currentScript;
+
+  // Fallback for Safari and other browsers where currentScript is null
+  if (!embedScriptTag) {
+    // Try to find by ID first (recommended approach)
+    embedScriptTag = document.getElementById('chatbot-embed-script');
+
+    // If not found by ID, search for script with agent-id attribute
+    if (!embedScriptTag) {
+      const scripts = document.querySelectorAll('script[agent-id]');
+      embedScriptTag = scripts[scripts.length - 1]; // Get the last one (most recently added)
+    }
+  }
 
   if (!embedScriptTag) {
-    console.error('chatvia: Could not find embed script tag.');
+    console.error('chatvia: Could not find embed script tag. Make sure the script has id="chatbot-embed-script" or agent-id attribute.');
     window[namespace].error = 'Could not find embed script tag.';
     return;
   }
