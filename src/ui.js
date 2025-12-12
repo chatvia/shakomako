@@ -222,7 +222,7 @@ export async function createLeadForm(onSubmit, agentId) {
       } else {
         // Legacy format: simple string value
         fieldLabel = fieldData || fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
-        isRequired = fieldName === 'name' || fieldName === 'email'; // Fallback for legacy
+        isRequired = false; // Don't force any fields as required unless explicitly set
         isEnabled = true; // Legacy fields are always enabled
       }
 
