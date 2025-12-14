@@ -1627,6 +1627,23 @@
   cursor: not-allowed;
 }
 
+/* Dialog Animations */
+@keyframes dialogFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialogSlideIn {
+  from {
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
 /* Confirmation dialog - Modern floating card */
 .chatvia-widget-confirm-dialog {
   position: fixed;
@@ -1640,7 +1657,8 @@
   justify-content: center;
   z-index: 100000 !important;
   backdrop-filter: blur(4px);
-  animation: dialogFadeIn 0.2s ease;
+  opacity: 0;
+  animation: dialogFadeIn 0.2s ease forwards;
 }
 
 .chatvia-widget-confirm-content {
@@ -1651,7 +1669,9 @@
   max-width: 400px;
   width: 90%;
   z-index: 100001 !important;
-  animation: dialogSlideIn 0.3s var(--chat-transition-normal);
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  animation: dialogSlideIn 0.3s ease forwards;
   border: 1px solid var(--chat-border-subtle);
 }
 
