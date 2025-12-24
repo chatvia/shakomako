@@ -162,6 +162,30 @@ const searchBundleConfig = {
   ].filter(Boolean)
 };
 
+// Bootstrap script (versioned, loads the widget/search bundles)
+const bootstrapScriptConfig = {
+  input: 'src/bootstrap.js',
+  output: {
+    dir: `dist/${appVersion}`,
+    format: 'es',
+    sourcemap: false,
+    compact: true,
+    entryFileNames: 'bootstrap.js',
+    chunkFileNames: '[name]-[hash].js'
+  },
+  plugins: [
+    ...commonPlugins,
+    isProduction && gzipPlugin({ fileName: '.gz' }),
+    isProduction &&
+    gzipPlugin({
+      fileName: '.br',
+      customCompression: content => brotliCompressSync(Buffer.from(content)),
+      additionalFiles: []
+    })
+  ].filter(Boolean)
+};
+
+// Embed script (minimal, unversioned - users embed this)
 const embedScriptConfig = {
   input: 'src/embed.js',
   output: {
@@ -174,7 +198,7 @@ const embedScriptConfig = {
   },
   plugins: [
     ...commonPlugins,
-    generateVersionFile(), // Generate version.json for embed script too
+    generateVersionFile(), // Generate version.json in root dist
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
     gzipPlugin({
@@ -185,4 +209,4 @@ const embedScriptConfig = {
   ].filter(Boolean)
 };
 
-export default [mainBundleConfig, searchBundleConfig, embedScriptConfig];
+export default [mainBundleConfig, searchBundleConfig, bootstrapScriptConfig, embedScriptConfig];

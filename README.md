@@ -31,15 +31,29 @@ npm run dev
 
 The project uses environment variables for configuration, managed via `.env` files.
 
-1.  **Create a `.env` file:** Copy the example file:
+1.  **Create a `.env` file:**
     ```bash
-    cp .env.example .env
+    touch .env
     ```
-2.  **Edit `.env`:** Update the variables as needed. The project uses `VITE_API_URL` as the base API URL.
+2.  **Edit `.env`:** Add the following required variables:
     ```dotenv
-    # Example .env content
-    VITE_API_URL=https://chatvia.test/api/widget
+    # Required: Application version for cache-busting
     VITE_APP_VERSION=1.0.0
+    
+    # Required: Backend API URL
+    VITE_API_URL=https://chatvia.test/api/widget
+    
+    # Required: CDN/Script URL where the widget files are hosted
+    VITE_SCRIPT_URL=https://chatvia.test
+    
+    # Optional: Reverb/Pusher configuration for live handoff feature
+    VITE_REVERB_APP_KEY=laravel-herd
+    VITE_REVERB_HOST=reverb.herd.test
+    VITE_REVERB_PORT=443
+    VITE_REVERB_SCHEME=https
+    
+    # Build environment
+    NODE_ENV=production
     
     # API endpoints will be appended to VITE_API_URL:
     # - Sessions: https://chatvia.test/api/widget/sessions
@@ -47,6 +61,8 @@ The project uses environment variables for configuration, managed via `.env` fil
     # - Agent verification: https://chatvia.test/api/widget/agents/verify
     # - SSE Stream: https://chatvia.test/api/widget/stream
     ```
+
+⚠️ **Important:** Make sure to set `VITE_APP_VERSION` before building. This version determines the directory structure in `dist/` for cache-busting.
 
 ## Running Locally
 
@@ -68,16 +84,40 @@ To run the project locally, you'll typically need to run both the frontend devel
 
 ## Building for Production
 
+⚠️ **Before building, ensure you have configured the `.env` file with `VITE_APP_VERSION`!**
+
 To create optimized static assets for deployment:
 
 ```bash
-npm run build
+# Set the version in .env first
+# VITE_APP_VERSION=1.0.5
+
+# Build for production
+npm run build:prod
 ```
 
-This will generate the following bundles:
+This will generate the following structure:
+
+```
+dist/
+  ├── embed.js               # Minimal embed script (users embed this)
+  ├── version.json           # Current version info (cache-busted)
+  └── {VERSION}/             # Version-specific directory (e.g., 1.0.5/)
+      ├── bootstrap.js       # Versioned bootstrap script
+      ├── widget.min.js      # Main chat widget bundle
+      ├── search.min.js      # Search widget bundle
+      └── version.json       # Version info (for this specific version)
+```
+
+### Build Output Files:
+- `dist/embed.js` - Minimal embed script (what users embed on their sites)
+- `dist/{VERSION}/bootstrap.js` - Versioned bootstrap script for loading either widget or search
 - `dist/{VERSION}/widget.min.js` - Main chat widget
 - `dist/{VERSION}/search.min.js` - Search widget
-- `dist/embed.js` - Embed script for loading either widget or search
+- `dist/version.json` - Version information for cache-busting
+
+### Versioning Strategy
+See [VERSIONING.md](./VERSIONING.md) for detailed information about the three-layer versioning architecture.
 
 ## Search Widget
 
@@ -98,11 +138,11 @@ Use the embed script with `type="search"`:
 
 ```html
 <!-- For Chat Widget (default) -->
-<script src="dist/embed.js" agent-id="YOUR_AGENT_ID"></script>
+<script src="https://your-cdn.com/embed.js" agent-id="YOUR_AGENT_ID"></script>
 
 <!-- For Search Widget -->
 <script 
-  src="dist/embed.js" 
+  src="https://your-cdn.com/embed.js" 
   agent-id="YOUR_AGENT_ID"
   type="search"
   data-search-position="top"
@@ -111,14 +151,14 @@ Use the embed script with `type="search"`:
 
 <!-- Chat Widget in Arabic -->
 <script 
-  src="dist/embed.js" 
+  src="https://your-cdn.com/embed.js" 
   agent-id="YOUR_AGENT_ID"
   data-language="ar"
 ></script>
 
 <!-- Search Widget with Auto-detect Language -->
 <script 
-  src="dist/embed.js" 
+  src="https://your-cdn.com/embed.js" 
   agent-id="YOUR_AGENT_ID"
   type="search"
   data-language="auto"
