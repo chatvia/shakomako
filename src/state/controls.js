@@ -26,7 +26,7 @@ export function toggleChat(widget, open) {
 
   if (widget.isOpen) {
     widget.chatWindow?.classList.add(CSS_CLASSES.WINDOW_OPEN);
-    
+
     if (isSearchMode) {
       widget.searchBar?.classList.add('chatvia-widget-hidden');
     } else {
@@ -56,7 +56,7 @@ export function toggleChat(widget, open) {
     }, 300);
   } else {
     widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
-    
+
     if (isSearchMode) {
       widget.searchBar?.classList.remove('chatvia-widget-hidden', 'chatvia-widget-expanded');
     } else {
@@ -177,7 +177,7 @@ export function toggleMenuDropdown(widget) {
     if (widget._updateMenuForHandoffState) {
       widget._updateMenuForHandoffState();
     }
-    
+
     widget.menuDropdown.style.display = 'block';
     void widget.menuDropdown.offsetWidth;
     widget.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
@@ -223,7 +223,7 @@ export function scrollToBottom(widget) {
   widget._scrollRAF = requestAnimationFrame(() => {
     // Try scrollTop approach
     widget.messagesContainer.scrollTop = widget.messagesContainer.scrollHeight;
-    
+
     // Also try scrollIntoView on the last child as backup
     const lastMessage = widget.messagesContainer.lastElementChild;
     if (lastMessage) {
@@ -289,9 +289,9 @@ export function autoResizeInput(widget) {
 
     const startersHeight =
       widget.startersContainer &&
-      widget.startersVisible &&
-      widget.settings.starters &&
-      widget.settings.starters.length > 0
+        widget.startersVisible &&
+        widget.settings.starters &&
+        widget.settings.starters.length > 0
         ? widget.startersContainer.offsetHeight
         : 0;
 
@@ -304,12 +304,12 @@ export function autoResizeInput(widget) {
  */
 export function lockBodyScroll(widget) {
   widget._scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-  
+
   document.body.style.overflow = 'hidden';
   document.body.style.position = 'fixed';
   document.body.style.top = `-${widget._scrollPosition}px`;
   document.body.style.width = '100%';
-  
+
   document.body.classList.add('chatvia-scroll-locked');
 }
 
@@ -321,9 +321,9 @@ export function unlockBodyScroll(widget) {
   document.body.style.position = '';
   document.body.style.top = '';
   document.body.style.width = '';
-  
+
   document.body.classList.remove('chatvia-scroll-locked');
-  
+
   if (widget._scrollPosition !== undefined) {
     window.scrollTo(0, widget._scrollPosition);
     widget._scrollPosition = undefined;
@@ -335,7 +335,26 @@ export function unlockBodyScroll(widget) {
  */
 export function stopMessageBubbles(widget) {
   if (widget.messageBubblesContainer) {
-    widget.messageBubblesContainer.innerHTML = '';
+    // Fade out all bubbles with animation
+    const bubbles = widget.messageBubblesContainer.querySelectorAll('.chatvia-widget-floating-bubble');
+    bubbles.forEach((bubble, index) => {
+      bubble.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      bubble.style.opacity = '0';
+      bubble.style.transform = 'scale(0.9) translateY(10px)';
+
+      // Remove after animation completes
+      setTimeout(() => {
+        if (bubble.parentNode) {
+          bubble.parentNode.removeChild(bubble);
+        }
+      }, 300 + (index * 50)); // Stagger the removal
+    });
+
+    // Also stop any pending bubble timeouts
+    if (widget._nextBubbleTimeout) {
+      clearTimeout(widget._nextBubbleTimeout);
+      widget._nextBubbleTimeout = null;
+    }
   }
 }
 

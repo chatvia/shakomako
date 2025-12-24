@@ -76,6 +76,7 @@ export class ChatWidget {
     this._finalizeTimeout = null;
     this._loadingSafetyTimeout = null;
     this._wsMessageLoadingTimeout = null;
+    this._nextBubbleTimeout = null;
 
     // Initialize handoff state
     handoff.initHandoff(this);
@@ -493,7 +494,7 @@ export class ChatWidget {
     }
 
     this.currentBubbleIndex = 0;
-    setTimeout(() => this._showNextBubble(), 1000);
+    this._nextBubbleTimeout = setTimeout(() => this._showNextBubble(), 1000);
   }
 
   _showNextBubble() {
@@ -513,6 +514,10 @@ export class ChatWidget {
     });
 
     bubble.addEventListener('click', () => {
+      // Open the chat widget when bubble is clicked
+      this.open();
+      
+      // Fade out the clicked bubble
       bubble.classList.remove(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
       setTimeout(() => {
         if (bubble.parentNode) {
@@ -530,7 +535,7 @@ export class ChatWidget {
     this.currentBubbleIndex++;
 
     if (this.currentBubbleIndex < this.settings.bubbles.length) {
-      setTimeout(() => this._showNextBubble(), 2000);
+      this._nextBubbleTimeout = setTimeout(() => this._showNextBubble(), 2000);
     }
   }
 
