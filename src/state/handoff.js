@@ -145,9 +145,9 @@ export async function checkHandoffStatus(widget) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'x-session-id': widget.sessionId,
-        'x-agent-id': widget.agentId,
-        'x-thread-id': conversationId
+        'X-SESSION-ID': widget.sessionId,
+        'X-AGENT-ID': widget.agentId,
+        'X-THREAD-ID': conversationId
       }
     });
 
@@ -408,8 +408,8 @@ export async function endLiveChat(widget) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-session-id': widget.sessionId,
-        'x-agent-id': widget.agentId
+        'X-SESSION-ID': widget.sessionId,
+        'X-AGENT-ID': widget.agentId
       },
       body: JSON.stringify({
         conversation_id: conversationId
@@ -504,8 +504,8 @@ export async function connectPusher(widget) {
         authEndpoint: `${apiUrl}/broadcasting/auth`,
         auth: {
           headers: {
-            'x-session-id': widget.sessionId,
-            'x-agent-id': widget.agentId
+            'X-SESSION-ID': widget.sessionId,
+            'X-AGENT-ID': widget.agentId
           }
         }
       });
@@ -821,8 +821,8 @@ async function postTypingStatus(widget, isTyping) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-session-id': widget.sessionId,
-        'x-agent-id': widget.agentId
+        'X-SESSION-ID': widget.sessionId,
+        'X-AGENT-ID': widget.agentId
       },
       body: JSON.stringify({
         conversation_id: widget.conversationId || widget.getCurrentActiveThreadId(),

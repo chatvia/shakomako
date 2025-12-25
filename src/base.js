@@ -307,10 +307,10 @@ export class BaseWidget {
         endpoint: 'feedback',
         method: 'POST',
         headers: {
-          'x-agent-id': this.agentId,
-          'x-session-id': this.sessionId,
-          'x-thread-id': this.threadId,
-          'x-message-id': messageId
+          'X-AGENT-ID': this.agentId,
+          'X-SESSION-ID': this.sessionId,
+          'X-THREAD-ID': this.threadId,
+          'X-MESSAGE-ID': messageId
         },
         body: JSON.stringify({
           feedback: isPositive

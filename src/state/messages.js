@@ -405,10 +405,10 @@ export async function handleFeedback(widget, messageId, isPositive, clickedButto
       endpoint: 'feedback',
       method: 'POST',
       headers: {
-        'x-agent-id': widget.agentId,
-        'x-session-id': widget.sessionId,
-        'x-thread-id': widget.getCurrentActiveThreadId(),
-        'x-message-id': messageId
+        'X-AGENT-ID': widget.agentId,
+        'X-SESSION-ID': widget.sessionId,
+        'X-THREAD-ID': widget.getCurrentActiveThreadId(),
+        'X-MESSAGE-ID': messageId
       },
       body: JSON.stringify({ feedback: isPositive })
     });
