@@ -314,8 +314,7 @@ export async function showDeleteSuccess(widget, deletedThreadId) {
 
   if (widget.threads.length > 0) {
     const sortedThreads = [...widget.threads].sort(
-      (a, b) =>
-        new Date(b.updatedAt || b.created_at || 0) - new Date(a.updatedAt || a.created_at || 0)
+      (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
     );
     const nextActiveThreadId = sortedThreads[0].id;
     console.log('Setting next active thread to:', nextActiveThreadId);

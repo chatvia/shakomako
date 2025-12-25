@@ -450,7 +450,6 @@ function addMessageToHistory(widget, type, text, options) {
   if (activeThread) {
     if (!Array.isArray(activeThread.messages)) activeThread.messages = [];
     activeThread.messages.push(messageData);
-    activeThread.updatedAt = new Date().toISOString();
 
     if (type === CSS_CLASSES.MESSAGE_USER) {
       activeThread.hasUserInteraction = true;
