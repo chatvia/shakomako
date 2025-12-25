@@ -43,11 +43,11 @@ export class BaseWidget {
     this.threadId = null;
     this.threads = [];
     this.settings = {};
-    
+
     this.agentManager = new AgentManager(agentId);
     this.sessionManager = null;
     this.storageManager = null;
-    
+
     this.messageHistory = [];
     this.sseClient = null;
     this.currentStreamedMessage = '';
@@ -81,12 +81,12 @@ export class BaseWidget {
   async _initializeSession() {
     console.log('Initializing session...');
     const sessionId = await this.sessionManager.startSession();
-    
+
     if (!sessionId) {
       console.error('Failed to initialize session.');
       throw new Error('Session initialization failed');
     }
-    
+
     this.sessionId = sessionId;
     console.log('Session initialized:', sessionId);
   }
@@ -223,7 +223,7 @@ export class BaseWidget {
 
   // Shared feedback button methods
   _createMessageActions(messageText, messageId, feedback) {
-    const actionsContainer = createElement('div', { 
+    const actionsContainer = createElement('div', {
       className: CSS_CLASSES.MESSAGE_ACTIONS
     });
 
@@ -274,15 +274,15 @@ export class BaseWidget {
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = text;
       const plainText = tempDiv.textContent || tempDiv.innerText || text;
-      
+
       await navigator.clipboard.writeText(plainText);
-      
+
       // Visual feedback
       const originalIcon = button.innerHTML;
       button.innerHTML = '';
       button.appendChild(createIcon('check'));
       button.classList.add(CSS_CLASSES.MESSAGE_COPY_BTN + '-copied');
-      
+
       setTimeout(() => {
         button.innerHTML = originalIcon;
         button.classList.remove(CSS_CLASSES.MESSAGE_COPY_BTN + '-copied');
@@ -297,11 +297,11 @@ export class BaseWidget {
 
     // Check if the same button was clicked (toggle off)
     const isAlreadyActive = clickedButton.classList.contains(CSS_CLASSES.MESSAGE_ACTION_ACTIVE);
-    
+
     try {
       // Import api function
       const api = (await import('./api.js')).default;
-      
+
       // Send feedback to API
       const response = await api({
         endpoint: 'feedback',

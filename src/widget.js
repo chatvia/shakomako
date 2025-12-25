@@ -9,11 +9,7 @@ import StorageManager from './storage.js';
 import { AgentManager } from './agent.js';
 import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
-import {
-  CSS_CLASSES,
-  DEFAULT_AVATAR_SVG,
-  DEFAULT_LOGO_SVG
-} from './utils.js';
+import { CSS_CLASSES, DEFAULT_LOGO_SVG } from './utils.js';
 import { createElement, createIcon, createLeadForm } from './ui.js';
 import { initI18n, t } from './i18n.js';
 
@@ -435,9 +431,10 @@ export class ChatWidget {
   }
 
   _createSearchBar() {
-    const positionClass = this.searchPosition === 'top'
-      ? CSS_CLASSES.SEARCH_POSITION_TOP
-      : CSS_CLASSES.SEARCH_POSITION_BOTTOM;
+    const positionClass =
+      this.searchPosition === 'top'
+        ? CSS_CLASSES.SEARCH_POSITION_TOP
+        : CSS_CLASSES.SEARCH_POSITION_BOTTOM;
     const searchContainer = createElement('div', {
       className: `${CSS_CLASSES.SEARCH_CONTAINER} ${positionClass}`
     });
@@ -446,7 +443,8 @@ export class ChatWidget {
       className: CSS_CLASSES.SEARCH_INPUT_WRAPPER
     });
 
-    const placeholder = this.settings.welcome_message || this.options.placeholder || 'Ask a question...';
+    const placeholder =
+      this.settings.welcome_message || this.options.placeholder || 'Ask a question...';
 
     this.searchInput = createElement('input', {
       className: CSS_CLASSES.SEARCH_INPUT,
@@ -489,7 +487,12 @@ export class ChatWidget {
   }
 
   _initializeMessageBubbles() {
-    if (this.isFlat || !this.settings.bubbles || !Array.isArray(this.settings.bubbles) || this.settings.bubbles.length === 0) {
+    if (
+      this.isFlat ||
+      !this.settings.bubbles ||
+      !Array.isArray(this.settings.bubbles) ||
+      this.settings.bubbles.length === 0
+    ) {
       return;
     }
 
@@ -498,7 +501,11 @@ export class ChatWidget {
   }
 
   _showNextBubble() {
-    if (!this.settings.bubbles || this.settings.bubbles.length === 0 || !this.messageBubblesContainer) {
+    if (
+      !this.settings.bubbles ||
+      this.settings.bubbles.length === 0 ||
+      !this.messageBubblesContainer
+    ) {
       return;
     }
 
@@ -516,7 +523,7 @@ export class ChatWidget {
     bubble.addEventListener('click', () => {
       // Open the chat widget when bubble is clicked
       this.open();
-      
+
       // Fade out the clicked bubble
       bubble.classList.remove(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
       setTimeout(() => {
@@ -578,10 +585,22 @@ export class ChatWidget {
       'aria-haspopup': 'true',
       'aria-expanded': 'false'
     });
-    this.deleteThreadButton = this._createHeaderButton('delete', t('widget.clear_current_chat'), CSS_CLASSES.DELETE_BUTTON);
+    this.deleteThreadButton = this._createHeaderButton(
+      'delete',
+      t('widget.clear_current_chat'),
+      CSS_CLASSES.DELETE_BUTTON
+    );
     this.deleteThreadButton.style.display = 'none';
-    this.expandButton = this._createHeaderButton('expand', t('widget.expand_chat'), CSS_CLASSES.EXPAND_BUTTON);
-    this.closeButton = this._createHeaderButton('close', t('widget.close_chat'), CSS_CLASSES.CLOSE_BUTTON);
+    this.expandButton = this._createHeaderButton(
+      'expand',
+      t('widget.expand_chat'),
+      CSS_CLASSES.EXPAND_BUTTON
+    );
+    this.closeButton = this._createHeaderButton(
+      'close',
+      t('widget.close_chat'),
+      CSS_CLASSES.CLOSE_BUTTON
+    );
     this.menuDropdown = this._createMenuDropdown();
 
     header.appendChild(this.headerLogo);
@@ -615,7 +634,7 @@ export class ChatWidget {
     });
 
     // Wrap actions to check if in human mode
-    const guardedAction = (action) => {
+    const guardedAction = action => {
       return () => {
         if (this.isInHumanMode()) {
           // Don't allow navigation during live chat
@@ -625,16 +644,34 @@ export class ChatWidget {
       };
     };
 
-    this.newChatOption = this._createMenuOption(t('menu.new_chat'), 'new-chat', guardedAction(() => this.startNewThread()));
-    this.historyOption = this._createMenuOption(t('menu.chat_history'), 'history', guardedAction(() => this.loadChatHistory()));
-    this.clearCurrentOption = this._createMenuOption(t('menu.clear_current'), 'delete', guardedAction(() => this.confirmDeleteThread()));
-    this.clearAllOption = this._createMenuOption(t('menu.clear_all'), 'clear-all', guardedAction(() => this.confirmClearAllThreads()));
+    this.newChatOption = this._createMenuOption(
+      t('menu.new_chat'),
+      'new-chat',
+      guardedAction(() => this.startNewThread())
+    );
+    this.historyOption = this._createMenuOption(
+      t('menu.chat_history'),
+      'history',
+      guardedAction(() => this.loadChatHistory())
+    );
+    this.clearCurrentOption = this._createMenuOption(
+      t('menu.clear_current'),
+      'delete',
+      guardedAction(() => this.confirmDeleteThread())
+    );
+    this.clearAllOption = this._createMenuOption(
+      t('menu.clear_all'),
+      'clear-all',
+      guardedAction(() => this.confirmClearAllThreads())
+    );
 
     dropdown.appendChild(this.newChatOption);
     dropdown.appendChild(this.historyOption);
-    dropdown.appendChild(createElement('hr', {
-      style: 'border:none;border-top:1px solid var(--chat-border);margin:4px 0;'
-    }));
+    dropdown.appendChild(
+      createElement('hr', {
+        style: 'border:none;border-top:1px solid var(--chat-border);margin:4px 0;'
+      })
+    );
     dropdown.appendChild(this.clearCurrentOption);
     dropdown.appendChild(this.clearAllOption);
     dropdown.style.display = 'none';
@@ -644,7 +681,12 @@ export class ChatWidget {
   // Update menu options based on handoff state
   _updateMenuForHandoffState() {
     const inHumanMode = this.isInHumanMode();
-    const options = [this.newChatOption, this.historyOption, this.clearCurrentOption, this.clearAllOption];
+    const options = [
+      this.newChatOption,
+      this.historyOption,
+      this.clearCurrentOption,
+      this.clearAllOption
+    ];
 
     options.forEach(option => {
       if (!option) return;
@@ -658,19 +700,23 @@ export class ChatWidget {
   }
 
   _createMenuOption(text, iconName, action) {
-    const option = createElement('div', {
-      className: CSS_CLASSES.MENU_OPTION,
-      role: 'menuitem',
-      tabIndex: 0
-    }, {
-      click: action,
-      keydown: e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          action();
+    const option = createElement(
+      'div',
+      {
+        className: CSS_CLASSES.MENU_OPTION,
+        role: 'menuitem',
+        tabIndex: 0
+      },
+      {
+        click: action,
+        keydown: e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            action();
+          }
         }
       }
-    });
+    );
     option.appendChild(createIcon(iconName));
     option.appendChild(createElement('span', { textContent: text }));
     return option;
@@ -707,7 +753,8 @@ export class ChatWidget {
   _createInputContainer() {
     const container = createElement('div', { className: CSS_CLASSES.INPUT_CONTAINER });
 
-    const placeholder = this.settings?.welcome_message || this.options?.placeholder || t('widget.type_message');
+    const placeholder =
+      this.settings?.welcome_message || this.options?.placeholder || t('widget.type_message');
 
     this.chatInput = createElement('textarea', {
       className: CSS_CLASSES.INPUT,
@@ -791,7 +838,7 @@ export class ChatWidget {
   async _showLeadForm() {
     console.log('_showLeadForm called - creating and displaying lead form');
 
-    const leadForm = await createLeadForm((leadData) => {
+    const leadForm = await createLeadForm(leadData => {
       this._handleLeadFormSubmission(leadData);
     }, this.agentId);
 
@@ -852,12 +899,15 @@ export class ChatWidget {
 
       console.log('Lead form submitted successfully:', result);
 
-      const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
+      const leadFormContainer = this.chatWindow.querySelector(
+        `.${CSS_CLASSES.LEAD_FORM_CONTAINER}`
+      );
       if (leadFormContainer) {
         leadFormContainer.innerHTML = '';
 
         let successTitle = 'Thank you!';
-        let successMessage = 'Your information has been received and someone will get back to you soon.';
+        let successMessage =
+          'Your information has been received and someone will get back to you soon.';
 
         if (result && result.success) {
           if (result.success.title) successTitle = result.success.title;
@@ -883,11 +933,12 @@ export class ChatWidget {
           }
         }, 3000);
       }
-
     } catch (error) {
       console.error('Error submitting lead form:', error);
 
-      const leadFormContainer = this.chatWindow.querySelector(`.${CSS_CLASSES.LEAD_FORM_CONTAINER}`);
+      const leadFormContainer = this.chatWindow.querySelector(
+        `.${CSS_CLASSES.LEAD_FORM_CONTAINER}`
+      );
       if (leadFormContainer) {
         const existingError = leadFormContainer.querySelector(`.${CSS_CLASSES.LEAD_FORM_ERROR}`);
         if (existingError) existingError.remove();
