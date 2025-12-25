@@ -40,7 +40,7 @@ window.chatvia =
   const agentId = loaderScriptTag.getAttribute('agent-id');
   const mountId = loaderScriptTag.getAttribute('mount-id');
   const type = loaderScriptTag.getAttribute('type') || 'widget';
-  const language = loaderScriptTag.getAttribute('data-language') || 'auto';
+  const language = loaderScriptTag.getAttribute('language') || 'auto';
 
   window[namespace].agentId = agentId;
   window[namespace].type = type;

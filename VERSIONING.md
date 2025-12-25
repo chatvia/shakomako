@@ -40,7 +40,7 @@ widget.min.js / search.min.js (versioned bundles)
   id="chatbot-embed-script"
   agent-id="YOUR_AGENT_ID"
   type="widget"
-  data-language="auto"
+  language="auto"
 ></script>
 ```
 
