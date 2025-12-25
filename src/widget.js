@@ -159,17 +159,32 @@ export class ChatWidget {
   }
 
   async _initializeSession() {
-    console.log('Initializing session...');
-    const sessionId = await this.sessionManager.startSession();
+    console.log('Initializing session and thread...');
+    const initData = await this.sessionManager.startSession();
 
-    if (!sessionId) {
+    if (!initData || !initData.sessionId) {
       console.error('Failed to initialize session. Disabling chat.');
       await this.disabledChat(t('errors.session_failed'));
       throw new Error('Session initialization failed');
     }
 
-    this.sessionId = sessionId;
-    console.log('Session initialized:', sessionId);
+    this.sessionId = initData.sessionId;
+    this.initialThreadId = initData.threadId; // Store for later use
+    
+    console.log('Session initialized:', initData.sessionId);
+    console.log('Thread initialized:', initData.threadId);
+    
+    if (initData.isNewSession) {
+      console.log('✨ New session created');
+    } else {
+      console.log('✅ Session validated and restored');
+    }
+    
+    if (initData.isNewThread) {
+      console.log('✨ New thread created');
+    } else {
+      console.log('✅ Thread validated and restored');
+    }
   }
 
   // ========================================

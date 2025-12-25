@@ -18,24 +18,30 @@ export async function initThreads(widget) {
     console.log('Loaded threads from API:', threads, 'Active ID:', activeThreadId);
 
     widget.threads = threads || [];
-    widget.activeThreadId = activeThreadId || null;
+    
+    // Use thread ID from session init if available, otherwise use stored activeThreadId
+    if (widget.initialThreadId) {
+      console.log('Using thread ID from session init:', widget.initialThreadId);
+      widget.activeThreadId = widget.initialThreadId;
+      widget.storageManager.setActiveThreadId(widget.initialThreadId);
+    } else {
+      widget.activeThreadId = activeThreadId || null;
+    }
 
     // Check if the stored active thread ID actually exists in the threads list
     if (widget.activeThreadId && widget.threads.length > 0) {
       const activeThreadExists = widget.threads.find(t => t.id === widget.activeThreadId);
       if (!activeThreadExists) {
-        console.log('Stored active thread no longer exists, selecting first available thread');
-        const firstThread = widget.threads[0];
-        widget.storageManager.setActiveThreadId(firstThread.id);
-        widget.activeThreadId = firstThread.id;
+        console.log('Active thread no longer exists on server, will create new one');
+        widget.activeThreadId = null;
       }
     }
 
-    if (widget.threads.length === 0) {
-      console.log('No threads found, creating a new one...');
+    if (widget.threads.length === 0 || !widget.activeThreadId) {
+      console.log('No valid thread found, creating a new one...');
       await createNewThread(widget);
     }
-    console.log(`Active thread ID (most recent): ${widget.activeThreadId}`);
+    console.log(`Active thread ID: ${widget.activeThreadId}`);
   } catch (error) {
     console.error('Error initializing threads:', error);
     await widget.disabledChat('Could not load chat threads.');
