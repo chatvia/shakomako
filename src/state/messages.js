@@ -12,7 +12,8 @@ import { t } from '../i18n.js';
 export const MarkdownLibs = {
   marked: null,
   DOMPurify: null,
-  _loadingPromise: null
+  _loadingPromise: null,
+  _loaded: false
 };
 
 // Shared DOMPurify configuration
@@ -34,24 +35,40 @@ export const DOMPURIFY_CONFIG = {
 
 /**
  * Load markdown libraries dynamically
+ * Returns true if libraries loaded successfully, false otherwise
  */
 export async function loadLibraries() {
-  if (!MarkdownLibs._loadingPromise) {
-    MarkdownLibs._loadingPromise = (async () => {
-      try {
-        const [markedModule, DOMPurifyModule] = await Promise.all([
-          import('marked'),
-          import('dompurify')
-        ]);
-        MarkdownLibs.marked = markedModule.marked;
-        MarkdownLibs.DOMPurify = DOMPurifyModule.default;
-        console.log('Libraries loaded successfully.');
-      } catch (error) {
-        console.error('Failed to load markdown libraries:', error);
-        MarkdownLibs._loadingPromise = null;
-      }
-    })();
+  // Already loaded successfully
+  if (MarkdownLibs._loaded && MarkdownLibs.marked && MarkdownLibs.DOMPurify) {
+    return true;
   }
+
+  // Loading in progress, wait for it
+  if (MarkdownLibs._loadingPromise) {
+    await MarkdownLibs._loadingPromise;
+    return MarkdownLibs._loaded;
+  }
+
+  // Start loading
+  MarkdownLibs._loadingPromise = (async () => {
+    try {
+      const [markedModule, DOMPurifyModule] = await Promise.all([
+        import('marked'),
+        import('dompurify')
+      ]);
+      MarkdownLibs.marked = markedModule.marked;
+      MarkdownLibs.DOMPurify = DOMPurifyModule.default;
+      MarkdownLibs._loaded = true;
+      console.log('Markdown libraries loaded successfully.');
+      return true;
+    } catch (error) {
+      console.error('Failed to load markdown libraries:', error);
+      MarkdownLibs._loadingPromise = null;
+      MarkdownLibs._loaded = false;
+      return false;
+    }
+  })();
+
   return MarkdownLibs._loadingPromise;
 }
 
@@ -62,12 +79,11 @@ export async function parseMarkdown(text) {
   if (!text) return '';
 
   try {
-    if (!MarkdownLibs.marked || !MarkdownLibs.DOMPurify) {
-      await loadLibraries();
-    }
+    // Ensure libraries are loaded
+    const loaded = await loadLibraries();
 
-    if (!MarkdownLibs.marked || !MarkdownLibs.DOMPurify) {
-      console.warn('Markdown libraries failed to load, falling back to plain text');
+    if (!loaded || !MarkdownLibs.marked || !MarkdownLibs.DOMPurify) {
+      console.warn('Markdown libraries not available, falling back to plain text');
       return escapeHtml(text);
     }
 
@@ -658,11 +674,10 @@ export async function updateStreamingMessage(widget) {
  */
 export async function updateMessageBubbleContent(messageBubble, content) {
   try {
-    if (!MarkdownLibs.marked || !MarkdownLibs.DOMPurify) {
-      await loadLibraries();
-    }
+    // Ensure libraries are loaded
+    const loaded = await loadLibraries();
 
-    if (MarkdownLibs.marked && MarkdownLibs.DOMPurify) {
+    if (loaded && MarkdownLibs.marked && MarkdownLibs.DOMPurify) {
       MarkdownLibs.marked.setOptions({
         gfm: true,
         breaks: true,
@@ -678,6 +693,7 @@ export async function updateMessageBubbleContent(messageBubble, content) {
       html = MarkdownLibs.DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
       messageBubble.innerHTML = html;
     } else {
+      console.warn('Markdown libraries not available, using plain text');
       messageBubble.textContent = content;
     }
   } catch (error) {

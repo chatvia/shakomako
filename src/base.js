@@ -10,27 +10,44 @@ import { CSS_CLASSES } from './utils.js';
 const WidgetLibs = {
   marked: null,
   DOMPurify: null,
-  _loadingPromise: null
+  _loadingPromise: null,
+  _loaded: false
 };
 
 // Load libraries dynamically
+// Returns true if libraries loaded successfully, false otherwise
 const loadLibraries = async () => {
-  if (!WidgetLibs._loadingPromise) {
-    WidgetLibs._loadingPromise = (async () => {
-      try {
-        const [markedModule, DOMPurifyModule] = await Promise.all([
-          import('marked'),
-          import('dompurify')
-        ]);
-        WidgetLibs.marked = markedModule.marked;
-        WidgetLibs.DOMPurify = DOMPurifyModule.default;
-        console.log('Libraries loaded successfully.');
-      } catch (error) {
-        console.error('Failed to load markdown libraries:', error);
-        WidgetLibs._loadingPromise = null;
-      }
-    })();
+  // Already loaded successfully
+  if (WidgetLibs._loaded && WidgetLibs.marked && WidgetLibs.DOMPurify) {
+    return true;
   }
+  
+  // Loading in progress, wait for it
+  if (WidgetLibs._loadingPromise) {
+    await WidgetLibs._loadingPromise;
+    return WidgetLibs._loaded;
+  }
+  
+  // Start loading
+  WidgetLibs._loadingPromise = (async () => {
+    try {
+      const [markedModule, DOMPurifyModule] = await Promise.all([
+        import('marked'),
+        import('dompurify')
+      ]);
+      WidgetLibs.marked = markedModule.marked;
+      WidgetLibs.DOMPurify = DOMPurifyModule.default;
+      WidgetLibs._loaded = true;
+      console.log('Markdown libraries loaded successfully.');
+      return true;
+    } catch (error) {
+      console.error('Failed to load markdown libraries:', error);
+      WidgetLibs._loadingPromise = null;
+      WidgetLibs._loaded = false;
+      return false;
+    }
+  })();
+  
   return WidgetLibs._loadingPromise;
 };
 
