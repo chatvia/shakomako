@@ -98,6 +98,10 @@ export function toggleExpand(widget) {
     widget.expandButton.title = 'Collapse chat';
     widget.expandButton.innerHTML = '';
     widget.expandButton.appendChild(createIcon('collapse'));
+
+    // Apply viewport-constrained max height
+    constrainToViewport(widget);
+
     console.log('Expanded chat window to large from ' + widget._previousWindowSize);
   } else {
     widget.settings.window_size = widget._previousWindowSize || CSS_CLASSES.WINDOW_MEDIUM;
@@ -106,6 +110,10 @@ export function toggleExpand(widget) {
     widget.expandButton.title = 'Expand chat';
     widget.expandButton.innerHTML = '';
     widget.expandButton.appendChild(createIcon('expand'));
+
+    // Clear viewport constraint and cleanup
+    removeViewportConstraint(widget);
+
     console.log('Collapsed chat window to ' + widget.settings.window_size);
   }
 
@@ -116,6 +124,50 @@ export function toggleExpand(widget) {
   }, 600);
 
   setTimeout(() => widget.scrollToBottom(), 300);
+}
+
+/**
+ * Constrain widget to viewport bounds
+ * Calculates available height based on viewport and bottom offset
+ */
+function constrainToViewport(widget) {
+  if (!widget.chatWindow) return;
+
+  const viewportHeight = window.innerHeight;
+  const bottomOffset = 100; // Standard bottom position for the chat bubble
+  const topMargin = 20; // Minimum margin from top of viewport
+
+  // Calculate maximum safe height
+  const maxSafeHeight = viewportHeight - bottomOffset - topMargin;
+
+  // Apply constraint
+  widget.chatWindow.style.maxHeight = `${maxSafeHeight}px`;
+
+  // Set up resize listener if not already set
+  if (!widget._viewportResizeHandler) {
+    widget._viewportResizeHandler = () => {
+      if (widget.isWidthExpanded && widget.chatWindow) {
+        const vh = window.innerHeight;
+        const maxHeight = vh - bottomOffset - topMargin;
+        widget.chatWindow.style.maxHeight = `${maxHeight}px`;
+      }
+    };
+    window.addEventListener('resize', widget._viewportResizeHandler);
+  }
+}
+
+/**
+ * Remove viewport constraint and cleanup resize listener
+ */
+function removeViewportConstraint(widget) {
+  if (widget.chatWindow) {
+    widget.chatWindow.style.maxHeight = '';
+  }
+
+  if (widget._viewportResizeHandler) {
+    window.removeEventListener('resize', widget._viewportResizeHandler);
+    widget._viewportResizeHandler = null;
+  }
 }
 
 /**

@@ -15,9 +15,9 @@
   --chat-medium-width: clamp(380px, 25vw, 420px);
   --chat-medium-height: clamp(700px, 80vh, 800px);
 
-  /* Large: expanded */
+  /* Large: expanded - constrained to viewport */
   --chat-large-width: clamp(420px, 28vw, 480px);
-  --chat-large-height: clamp(800px, 85vh, 850px);
+  --chat-large-height: clamp(600px, calc(100vh - 120px), 850px);
 }
 
 @media (max-width: 768px) {
@@ -314,6 +314,10 @@
   position: absolute;
   z-index: 10001;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* Position the bubble properly for each position */
@@ -473,6 +477,10 @@
 .chatvia-widget .chatvia-widget-window.chatvia-widget-large {
   width: var(--chat-large-width);
   height: var(--chat-large-height);
+  max-height: calc(100vh - 120px);
+  /* Prevent overflow above viewport */
+  max-height: calc(100dvh - 120px);
+  /* Use dynamic viewport height for mobile */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
