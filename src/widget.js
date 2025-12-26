@@ -798,7 +798,7 @@ export class ChatWidget {
   }
 
   async _loadExternalLibrariesIfNeeded() {
-    await messages.loadLibraries();
+    // Libraries are now bundled statically, just refresh streaming messages
     await this.refreshStreamingMessages();
   }
 

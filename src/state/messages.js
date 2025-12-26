@@ -7,99 +7,32 @@ import { CSS_CLASSES, DEFAULT_AVATAR_SVG, STREAMING_FINALIZE_TIMEOUT } from '../
 import { createElement, createIcon } from '../ui.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
 import { t } from '../i18n.js';
+import { parseMarkdown as parseMarkdownRaw } from '../markdown.js';
+import DOMPurify from 'dompurify';
 
-// Create a namespace for our libraries
-export const MarkdownLibs = {
-  marked: null,
-  DOMPurify: null,
-  _loadingPromise: null,
-  _loaded: false
-};
-
-// Shared DOMPurify configuration
-export const DOMPURIFY_CONFIG = {
+// DOMPurify configuration for sanitizing HTML
+const DOMPURIFY_CONFIG = {
   ALLOWED_TAGS: [
-    'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3',
-    'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre',
+    'a', 'b', 'br', 'code', 'del', 'div', 'em', 'h1', 'h2', 'h3',
+    'h4', 'h5', 'h6', 'hr', 'i', 'img', 'li', 'ol', 'p', 'pre',
     'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
-    'ul', 'span', 'math', 'mi', 'mo', 'mn', 'mtext'
+    'ul', 'span', 'blockquote'
   ],
-  ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style'],
-  USE_PROFILES: { html: true },
-  KEEP_CONTENT: true,
-  ADD_ATTR: [
-    ['target', '_blank'],
-    ['rel', 'noopener noreferrer']
-  ]
+  ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style', 'src', 'alt'],
+  ADD_ATTR: ['target', 'rel']
 };
 
 /**
- * Load markdown libraries dynamically
- * Returns true if libraries loaded successfully, false otherwise
+ * Parse markdown text to HTML (synchronous, no dynamic imports)
  */
-export async function loadLibraries() {
-  // Already loaded successfully
-  if (MarkdownLibs._loaded && MarkdownLibs.marked && MarkdownLibs.DOMPurify) {
-    return true;
-  }
-
-  // Loading in progress, wait for it
-  if (MarkdownLibs._loadingPromise) {
-    await MarkdownLibs._loadingPromise;
-    return MarkdownLibs._loaded;
-  }
-
-  // Start loading
-  MarkdownLibs._loadingPromise = (async () => {
-    try {
-      const [markedModule, DOMPurifyModule] = await Promise.all([
-        import('marked'),
-        import('dompurify')
-      ]);
-      MarkdownLibs.marked = markedModule.marked;
-      MarkdownLibs.DOMPurify = DOMPurifyModule.default;
-      MarkdownLibs._loaded = true;
-      console.log('Markdown libraries loaded successfully.');
-      return true;
-    } catch (error) {
-      console.error('Failed to load markdown libraries:', error);
-      MarkdownLibs._loadingPromise = null;
-      MarkdownLibs._loaded = false;
-      return false;
-    }
-  })();
-
-  return MarkdownLibs._loadingPromise;
-}
-
-/**
- * Parse markdown text to HTML
- */
-export async function parseMarkdown(text) {
+export function parseMarkdown(text) {
   if (!text) return '';
 
   try {
-    // Ensure libraries are loaded
-    const loaded = await loadLibraries();
-
-    if (!loaded || !MarkdownLibs.marked || !MarkdownLibs.DOMPurify) {
-      console.warn('Markdown libraries not available, falling back to plain text');
-      return escapeHtml(text);
-    }
-
-    MarkdownLibs.marked.setOptions({
-      gfm: true,
-      breaks: true,
-      headerIds: false,
-      mangle: false,
-      smartLists: true,
-      smartypants: true,
-      xhtml: false,
-      tables: true
-    });
-
-    let html = MarkdownLibs.marked.parse(text);
-    html = MarkdownLibs.DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
+    // Parse markdown to HTML
+    let html = parseMarkdownRaw(text);
+    // Sanitize the HTML for security
+    html = DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
     return html;
   } catch (error) {
     console.error('Error parsing markdown:', error);
@@ -108,7 +41,7 @@ export async function parseMarkdown(text) {
 }
 
 /**
- * Escape HTML entities
+ * Escape HTML entities (fallback)
  */
 export function escapeHtml(text) {
   return text
@@ -447,9 +380,9 @@ export async function handleFeedback(widget, messageId, isPositive, clickedButto
 /**
  * Set message bubble content
  */
-async function setMessageBubbleContent(bubble, type, text) {
+function setMessageBubbleContent(bubble, type, text) {
   if (type === CSS_CLASSES.MESSAGE_AGENT) {
-    bubble.innerHTML = await parseMarkdown(text);
+    bubble.innerHTML = parseMarkdown(text);
   } else {
     bubble.textContent = text;
   }
@@ -672,30 +605,9 @@ export async function updateStreamingMessage(widget) {
 /**
  * Update message bubble content
  */
-export async function updateMessageBubbleContent(messageBubble, content) {
+export function updateMessageBubbleContent(messageBubble, content) {
   try {
-    // Ensure libraries are loaded
-    const loaded = await loadLibraries();
-
-    if (loaded && MarkdownLibs.marked && MarkdownLibs.DOMPurify) {
-      MarkdownLibs.marked.setOptions({
-        gfm: true,
-        breaks: true,
-        headerIds: false,
-        mangle: false,
-        smartLists: true,
-        smartypants: true,
-        xhtml: false,
-        tables: true
-      });
-
-      let html = MarkdownLibs.marked.parse(content);
-      html = MarkdownLibs.DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
-      messageBubble.innerHTML = html;
-    } else {
-      console.warn('Markdown libraries not available, using plain text');
-      messageBubble.textContent = content;
-    }
+    messageBubble.innerHTML = parseMarkdown(content);
   } catch (error) {
     console.error('Error processing markdown:', error);
     messageBubble.textContent = content;

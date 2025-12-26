@@ -5,12 +5,11 @@
 
 import { CSS_CLASSES, DEFAULT_LOGO_SVG } from '../utils.js';
 import { createElement } from '../ui.js';
-import { loadLibraries } from './messages.js';
 
 /**
  * Apply all configuration
  */
-export async function applyConfiguration(widget) {
+export function applyConfiguration(widget) {
   if (!widget.container) return;
 
   const positionClass = widget.settings.position === 'bottom-left' 
@@ -28,7 +27,6 @@ export async function applyConfiguration(widget) {
   applyTitle(widget);
   applyBranding(widget);
   applyInputPlaceholder(widget);
-  await loadLibraries();
   widget._updateStartersContainer();
 }
 

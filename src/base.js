@@ -5,53 +5,36 @@ import { AgentManager } from './agent.js';
 import StorageManager from './storage.js';
 import { createElement, createIcon } from './ui.js';
 import { CSS_CLASSES } from './utils.js';
+import { parseMarkdown } from './markdown.js';
+import DOMPurify from 'dompurify';
 
-// Create a namespace for our libraries
-const WidgetLibs = {
-  marked: null,
-  DOMPurify: null,
-  _loadingPromise: null,
-  _loaded: false
+// DOMPurify configuration
+const DOMPURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'a', 'b', 'br', 'code', 'del', 'div', 'em', 'h1', 'h2', 'h3',
+    'h4', 'h5', 'h6', 'hr', 'i', 'img', 'li', 'ol', 'p', 'pre',
+    'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
+    'ul', 'span', 'blockquote'
+  ],
+  ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style', 'src', 'alt'],
+  ADD_ATTR: ['target', 'rel']
 };
 
-// Load libraries dynamically
-// Returns true if libraries loaded successfully, false otherwise
-const loadLibraries = async () => {
-  // Already loaded successfully
-  if (WidgetLibs._loaded && WidgetLibs.marked && WidgetLibs.DOMPurify) {
-    return true;
+/**
+ * Parse and sanitize markdown
+ */
+function renderMarkdown(text) {
+  if (!text) return '';
+  try {
+    const html = parseMarkdown(text);
+    return DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
+  } catch (error) {
+    console.error('Error parsing markdown:', error);
+    return text;
   }
-  
-  // Loading in progress, wait for it
-  if (WidgetLibs._loadingPromise) {
-    await WidgetLibs._loadingPromise;
-    return WidgetLibs._loaded;
-  }
-  
-  // Start loading
-  WidgetLibs._loadingPromise = (async () => {
-    try {
-      const [markedModule, DOMPurifyModule] = await Promise.all([
-        import('marked'),
-        import('dompurify')
-      ]);
-      WidgetLibs.marked = markedModule.marked;
-      WidgetLibs.DOMPurify = DOMPurifyModule.default;
-      WidgetLibs._loaded = true;
-      console.log('Markdown libraries loaded successfully.');
-      return true;
-    } catch (error) {
-      console.error('Failed to load markdown libraries:', error);
-      WidgetLibs._loadingPromise = null;
-      WidgetLibs._loaded = false;
-      return false;
-    }
-  })();
-  
-  return WidgetLibs._loadingPromise;
-};
+}
 
-export { WidgetLibs, loadLibraries };
+export { renderMarkdown };
 
 export class BaseWidget {
   constructor(agentId) {
@@ -83,7 +66,6 @@ export class BaseWidget {
     await this.initThreads();
 
     this.setupSSE();
-    await loadLibraries();
   }
 
   async _verifyClient() {
