@@ -813,22 +813,87 @@
   padding: 0;
 }
 
-/* Table container to prevent horizontal scroll */
+/* Table styling for markdown tables */
 .chatvia-widget .chatvia-widget-bubble-content table {
   border-collapse: collapse;
   width: 100%;
-  margin: 8px 0;
-  font-size: 0.9em;
-  table-layout: fixed;
-  /* Force table to respect container width */
+  margin: 12px 0;
+  font-size: 0.875em;
+  table-layout: auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
 }
 
-.chatvia-widget .chatvia-widget-bubble-content td,
+.chatvia-widget .chatvia-widget-bubble-content thead {
+  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+}
+
 .chatvia-widget .chatvia-widget-bubble-content th {
-  border: 1px solid #ddd;
-  padding: 4px 8px;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.chatvia-widget .chatvia-widget-bubble-content td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #4b5563;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+.chatvia-widget .chatvia-widget-bubble-content tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.chatvia-widget .chatvia-widget-bubble-content tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Zebra striping for better readability */
+.chatvia-widget .chatvia-widget-bubble-content tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.chatvia-widget .chatvia-widget-bubble-content tbody tr:nth-child(even):hover {
+  background-color: #f5f5f5;
+}
+
+/* Dark mode table styling */
+.chatvia-widget-dark .chatvia-widget-bubble-content table {
+  border-color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.chatvia-widget-dark .chatvia-widget-bubble-content thead {
+  background: linear-gradient(to bottom, #374151, #1f2937);
+}
+
+.chatvia-widget-dark .chatvia-widget-bubble-content th {
+  color: #f3f4f6;
+  border-bottom-color: #4b5563;
+}
+
+.chatvia-widget-dark .chatvia-widget-bubble-content td {
+  color: #d1d5db;
+  border-bottom-color: #374151;
+}
+
+.chatvia-widget-dark .chatvia-widget-bubble-content tbody tr:hover {
+  background-color: #374151;
+}
+
+.chatvia-widget-dark .chatvia-widget-bubble-content tbody tr:nth-child(even) {
+  background-color: #1f2937;
+}
+
+.chatvia-widget-dark .chatvia-widget-bubble-content tbody tr:nth-child(even):hover {
+  background-color: #374151;
 }
 
 /* Ensure images don't overflow */
