@@ -78,8 +78,7 @@ const commonPlugins = [
         'console.log',
         'console.debug',
         'console.info',
-        'console.warn',
-        'console.error',
+        // Keep console.warn and console.error for debugging production issues
         'assert.*'
       ],
       debugger: true
@@ -94,7 +93,10 @@ const commonPlugins = [
         pure_getters: true,
         unsafe: true,
         unsafe_comps: true,
-        passes: 2
+        passes: 1
+      },
+      mangle: {
+        safari10: true
       }
     })
 ];
