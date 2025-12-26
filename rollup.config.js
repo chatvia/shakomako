@@ -41,7 +41,7 @@ const sharedEnv = {
   __API_URL__: JSON.stringify(apiUrl),
   __SCRIPT_URL__: JSON.stringify(scriptUrl),
   __DEV__: JSON.stringify(!isProduction),
-  // Pusher/Reverb config for handoff 
+  // Pusher/Reverb config for handoff
   __REVERB_APP_KEY__: JSON.stringify(reverbAppKey),
   __REVERB_HOST__: JSON.stringify(reverbHost),
   __REVERB_PORT__: JSON.stringify(reverbPort),
@@ -72,30 +72,31 @@ const commonPlugins = [
   commonjs(),
   replace({ ...sharedEnv, preventAssignment: true }),
   isProduction &&
-  strip({
-    include: ['**/*.js'],
-    functions: [
-      'console.log',
-      'console.debug',
-      'console.info',
-      'console.warn',
-      'console.error',
-      'assert.*'
-    ],
-    debugger: true
-  }),
-  isProduction && terser({
-    format: {
-      comments: false
-    },
-    compress: {
-      drop_console: true,
-      pure_getters: true,
-      unsafe: true,
-      unsafe_comps: true,
-      passes: 2
-    }
-  })
+    strip({
+      include: ['**/*.js'],
+      functions: [
+        'console.log',
+        'console.debug',
+        'console.info',
+        'console.warn',
+        'console.error',
+        'assert.*'
+      ],
+      debugger: true
+    }),
+  isProduction &&
+    terser({
+      format: {
+        comments: false
+      },
+      compress: {
+        drop_console: true,
+        pure_getters: true,
+        unsafe: true,
+        unsafe_comps: true,
+        passes: 2
+      }
+    })
 ];
 
 const mainBundleConfig = {
@@ -120,16 +121,16 @@ const mainBundleConfig = {
     generateVersionFile(), // Generate version.json
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
-    gzipPlugin({
-      fileName: '.br',
-      customCompression: content => brotliCompressSync(Buffer.from(content)),
-      additionalFiles: []
-    }),
+      gzipPlugin({
+        fileName: '.br',
+        customCompression: content => brotliCompressSync(Buffer.from(content)),
+        additionalFiles: []
+      }),
     !isProduction &&
-    visualizer({
-      filename: 'bundle-analysis.html',
-      open: false
-    })
+      visualizer({
+        filename: 'bundle-analysis.html',
+        open: false
+      })
   ].filter(Boolean)
 };
 
@@ -154,38 +155,14 @@ const searchBundleConfig = {
     ...commonPlugins,
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
-    gzipPlugin({
-      fileName: '.br',
-      customCompression: content => brotliCompressSync(Buffer.from(content)),
-      additionalFiles: []
-    })
+      gzipPlugin({
+        fileName: '.br',
+        customCompression: content => brotliCompressSync(Buffer.from(content)),
+        additionalFiles: []
+      })
   ].filter(Boolean)
 };
 
-// Bootstrap script (versioned, loads the widget/search bundles)
-const bootstrapScriptConfig = {
-  input: 'src/bootstrap.js',
-  output: {
-    dir: `dist/${appVersion}`,
-    format: 'es',
-    sourcemap: false,
-    compact: true,
-    entryFileNames: 'bootstrap.js',
-    chunkFileNames: '[name]-[hash].js'
-  },
-  plugins: [
-    ...commonPlugins,
-    isProduction && gzipPlugin({ fileName: '.gz' }),
-    isProduction &&
-    gzipPlugin({
-      fileName: '.br',
-      customCompression: content => brotliCompressSync(Buffer.from(content)),
-      additionalFiles: []
-    })
-  ].filter(Boolean)
-};
-
-// Embed script (minimal, unversioned - users embed this)
 const embedScriptConfig = {
   input: 'src/embed.js',
   output: {
@@ -198,15 +175,15 @@ const embedScriptConfig = {
   },
   plugins: [
     ...commonPlugins,
-    generateVersionFile(), // Generate version.json in root dist
+    generateVersionFile(), // Generate version.json for embed script too
     isProduction && gzipPlugin({ fileName: '.gz' }),
     isProduction &&
-    gzipPlugin({
-      fileName: '.br',
-      customCompression: content => brotliCompressSync(Buffer.from(content)),
-      additionalFiles: []
-    })
+      gzipPlugin({
+        fileName: '.br',
+        customCompression: content => brotliCompressSync(Buffer.from(content)),
+        additionalFiles: []
+      })
   ].filter(Boolean)
 };
 
-export default [mainBundleConfig, searchBundleConfig, bootstrapScriptConfig, embedScriptConfig];
+export default [mainBundleConfig, searchBundleConfig, embedScriptConfig];

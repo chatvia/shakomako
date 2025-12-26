@@ -1,5 +1,3 @@
-// Minimal loader script - This file should rarely change
-// It loads the versioned embed.js to avoid caching issues
 window.chatvia =
   window.chatvia ||
   function () {
@@ -9,38 +7,40 @@ window.chatvia =
 (function () {
   const namespace = 'chatvia';
 
-  // Prevent multiple initializations
-  if (window[namespace].loaderInitialized) {
-    console.warn('chatvia loader already initialized.');
+  // Prevent multiple initializations (check within the IIFE)
+  if (window[namespace].initialized) {
+    console.warn('chatvia already initialized.');
     return;
   }
 
-  window[namespace].loaderInitialized = true;
+  window[namespace].initialized = true;
 
   // Safari-compatible script tag detection
-  let loaderScriptTag = document.currentScript;
+  // document.currentScript doesn't work in Safari with async scripts
+  let embedScriptTag = document.currentScript;
 
   // Fallback for Safari and other browsers where currentScript is null
-  if (!loaderScriptTag) {
-    loaderScriptTag = document.getElementById('chatbot-embed-script');
+  if (!embedScriptTag) {
+    // Try to find by ID first (recommended approach)
+    embedScriptTag = document.getElementById('chatbot-embed-script');
 
-    if (!loaderScriptTag) {
+    // If not found by ID, search for script with agent-id attribute
+    if (!embedScriptTag) {
       const scripts = document.querySelectorAll('script[agent-id]');
-      loaderScriptTag = scripts[scripts.length - 1];
+      embedScriptTag = scripts[scripts.length - 1]; // Get the last one (most recently added)
     }
   }
 
-  if (!loaderScriptTag) {
-    console.error('chatvia: Could not find loader script tag. Make sure the script has id="chatbot-embed-script" or agent-id attribute.');
-    window[namespace].error = 'Could not find loader script tag.';
+  if (!embedScriptTag) {
+    console.error('chatvia: Could not find embed script tag. Make sure the script has id="chatbot-embed-script" or agent-id attribute.');
+    window[namespace].error = 'Could not find embed script tag.';
     return;
   }
 
-  // Store attributes for the embed script to use later
-  const agentId = loaderScriptTag.getAttribute('agent-id');
-  const mountId = loaderScriptTag.getAttribute('mount-id');
-  const type = loaderScriptTag.getAttribute('type') || 'widget';
-  const language = loaderScriptTag.getAttribute('language') || 'auto';
+  const agentId = embedScriptTag.getAttribute('agent-id');
+  const mountId = embedScriptTag.getAttribute('mount-id');
+  const type = embedScriptTag.getAttribute('type') || 'widget'; // 'widget' or 'search'
+  const language = embedScriptTag.getAttribute('data-language') || 'auto';
 
   window[namespace].agentId = agentId;
   window[namespace].type = type;
@@ -48,21 +48,28 @@ window.chatvia =
   if (mountId) window[namespace].mountId = mountId;
 
   /* global __SCRIPT_URL__ */
-  const scriptHost = __SCRIPT_URL__;
+  // Determine script host: use __SCRIPT_URL__ if set, otherwise detect from script src
+  let scriptHost = __SCRIPT_URL__;
+
 
   if (!agentId) {
-    console.error('chatvia: Missing agent-id attribute on loader script tag.');
+    console.error('chatvia: Missing agent-id attribute on embed script tag.');
     window[namespace].error = 'Missing agent-id attribute.';
     return;
   }
 
-  console.log(`chatvia: Loading for agent ${agentId} from ${scriptHost}`);
+  console.log(`chatvia: Initializing for agent ${agentId} from ${scriptHost}`);
 
-  async function loadEmbedScript() {
+  // Add init command to the queue
+  window[namespace].q = window[namespace].q || [];
+  window[namespace].q.push(['init']);
+
+  async function loadBundle() {
     try {
       const versionUrl = `${scriptHost}/version.json?t=${Date.now()}`;
       console.log('chatvia: Fetching version from:', versionUrl);
 
+      // Fetch current version from version.json with cache busting
       const versionResponse = await fetch(versionUrl);
       console.log('chatvia: Version response status:', versionResponse.status, versionResponse.statusText);
 
@@ -76,28 +83,30 @@ window.chatvia =
       const version = versionData.version;
       console.log('chatvia: Using version:', version);
 
-      const scriptId = 'chatvia-bootstrap-script-' + version.replace(/\./g, '-');
-      const fullScriptUrl = `${scriptHost}/${version}/bootstrap.js`;
-      console.log('chatvia: Loading bootstrap script from:', fullScriptUrl);
+      const bundleFile = type === 'search' ? 'search.min.js' : 'widget.min.js';
+      const scriptId = 'chatvia-embed-script-' + type + '-' + version.replace(/\./g, '-');
+      const fullScriptUrl = `${scriptHost}/${version}/${bundleFile}`;
+      console.log(`chatvia: Loading ${type} from:`, fullScriptUrl);
 
       if (document.getElementById(scriptId)) {
-        console.log('chatvia: Bootstrap script already exists for version:', version);
+        console.log('chatvia: Bundle script tag already exists for version:', version);
         return;
       }
 
       const script = document.createElement('script');
+
       script.id = scriptId;
       script.type = 'text/javascript';
       script.defer = true;
       script.src = fullScriptUrl;
       script.onerror = () => {
-        console.error(`chatvia: Failed to load bootstrap script from ${fullScriptUrl}`);
-        window[namespace].error = `Failed to load bootstrap script from ${fullScriptUrl}`;
+        console.error(`chatvia: Failed to load bundle from ${fullScriptUrl}`);
+        window[namespace].error = `Failed to load bundle from ${fullScriptUrl}`;
       };
       script.onload = () =>
-        console.log(`chatvia: Bootstrap script loaded successfully from ${fullScriptUrl}`);
+        console.log(`chatvia: Bundle loaded successfully from ${fullScriptUrl}`);
 
-      console.log('chatvia: Inserting bootstrap script tag with ID:', scriptId);
+      console.log('chatvia: Inserting script tag with ID:', scriptId);
       const firstScript = document.getElementsByTagName('script')[0];
 
       if (firstScript && firstScript.parentNode) {
@@ -106,18 +115,16 @@ window.chatvia =
         (document.head || document.body).appendChild(script);
       }
     } catch (error) {
-      console.error('chatvia: Error loading version or bootstrap script:', error);
+      console.error('chatvia: Error loading version or bundle:', error);
       console.error('chatvia: Script host was:', scriptHost);
-      window[namespace].error = `Error loading bootstrap script: ${error.message}`;
+      window[namespace].error = `Error loading bundle: ${error.message}`;
     }
   }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadEmbedScript);
+    document.addEventListener('DOMContentLoaded', loadBundle);
     console.log('chatvia: DOMContentLoaded listener added.');
   } else {
-    console.log('chatvia: DOM already loaded, loading bootstrap script immediately.');
-    loadEmbedScript();
+    console.log('chatvia: DOM already loaded or script deferred, loading bundle immediately.');
+    loadBundle();
   }
 })();
-
