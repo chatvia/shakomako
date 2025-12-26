@@ -39,7 +39,7 @@
     .btn-danger:hover { background: #DC2626; }
     .btn-warning { background: #F59E0B; color: white; }
     .btn-warning:hover { background: #D97706; }
-    
+
     .input-group {
       display: flex;
       gap: 10px;
@@ -52,7 +52,7 @@
       border-radius: 6px;
       font-size: 14px;
     }
-    
+
     #event-log {
       background: #1F2937;
       color: #10B981;
@@ -73,7 +73,7 @@
     #event-log .log-open { color: #10B981; }
     #event-log .log-close { color: #EF4444; }
     #event-log .log-ready { color: #F59E0B; }
-    
+
     .status {
       display: inline-block;
       padding: 5px 12px;
@@ -83,7 +83,7 @@
     }
     .status-open { background: #D1FAE5; color: #065F46; }
     .status-closed { background: #FEE2E2; color: #991B1B; }
-    
+
     .card {
       background: white;
       border-radius: 8px;
@@ -165,20 +165,20 @@
     const entry = document.createElement('div');
     entry.className = 'log-entry';
     entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">${message}</span>`;
-    
+
     // Remove "waiting" message if it exists
     const waiting = log.querySelector('.log-entry:first-child');
     if (waiting && waiting.textContent.includes('Waiting')) {
       waiting.remove();
     }
-    
+
     log.insertBefore(entry, log.firstChild);
   }
-  
+
   function clearLog() {
     document.getElementById('event-log').innerHTML = '<div class="log-entry"><span class="log-time">[Log cleared]</span></div>';
   }
-  
+
   function updateStatus() {
     const statusEl = document.getElementById('status');
     if (window.chatvia && typeof window.chatvia.isOpen === 'function') {
@@ -187,7 +187,7 @@
       statusEl.className = 'status ' + (isOpen ? 'status-open' : 'status-closed');
     }
   }
-  
+
   function checkStatus() {
     if (window.chatvia && typeof window.chatvia.isOpen === 'function') {
       const isOpen = chatvia.isOpen();
@@ -197,7 +197,7 @@
       logEvent('Widget not ready yet');
     }
   }
-  
+
   function sendMessage() {
     const input = document.getElementById('message-input');
     const message = input.value.trim();
@@ -207,14 +207,14 @@
       input.value = '';
     }
   }
-  
+
   function destroyWidget() {
     if (confirm('Are you sure you want to destroy the widget? You will need to refresh to reload it.')) {
       chatvia.destroy();
       logEvent('Widget destroyed!', 'close');
     }
   }
-  
+
   // Wait for widget to be ready, then set up event listeners
   function setupEventListeners() {
     if (window.chatvia && typeof window.chatvia.on === 'function') {
@@ -222,32 +222,32 @@
         logEvent('🚀 Widget READY', 'ready');
         updateStatus();
       });
-      
+
       chatvia.on('open', () => {
         logEvent('📂 Chat OPENED', 'open');
         updateStatus();
       });
-      
+
       chatvia.on('close', () => {
         logEvent('📁 Chat CLOSED', 'close');
         updateStatus();
       });
-      
+
       logEvent('Event listeners registered');
     } else {
       // Widget not ready yet, try again
       setTimeout(setupEventListeners, 100);
     }
   }
-  
+
   // Load the widget
   const today = new Date();
   const dateString = today.toISOString().split('T')[0];
   const script = document.createElement('script');
   script.id = 'chatbot-embed-script';
   script.src = `dist/embed.js?c=${dateString}`;
-  script.async = true;
-  script.setAttribute('agent-id', '407f7fdfa1cf18');
+  script.defer = true;
+  script.setAttribute('data-agent-id', '407f7fdfa1cf18');
   script.onload = () => {
     logEvent('Embed script loaded');
     setupEventListeners();
