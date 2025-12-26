@@ -24,22 +24,23 @@ window.chatvia =
     // Try to find by ID first (recommended approach)
     embedScriptTag = document.getElementById('chatbot-embed-script');
 
-    // If not found by ID, search for script with agent-id attribute
+    // If not found by ID, search for script with data-agent-id attribute
     if (!embedScriptTag) {
-      const scripts = document.querySelectorAll('script[agent-id]');
+      const scripts = document.querySelectorAll('script[data-agent-id]');
       embedScriptTag = scripts[scripts.length - 1]; // Get the last one (most recently added)
     }
   }
 
   if (!embedScriptTag) {
-    console.error('chatvia: Could not find embed script tag. Make sure the script has id="chatbot-embed-script" or agent-id attribute.');
+    console.error('chatvia: Could not find embed script tag. Make sure the script has id="chatbot-embed-script" or data-agent-id attribute.');
     window[namespace].error = 'Could not find embed script tag.';
     return;
   }
 
-  const agentId = embedScriptTag.getAttribute('agent-id');
-  const mountId = embedScriptTag.getAttribute('mount-id');
-  const type = embedScriptTag.getAttribute('type') || 'widget'; // 'widget' or 'search'
+  // Read attributes with data- prefix (HTML5 compliant custom data attributes)
+  const agentId = embedScriptTag.getAttribute('data-agent-id');
+  const mountId = embedScriptTag.getAttribute('data-mount-id');
+  const type = embedScriptTag.getAttribute('data-type') || 'widget'; // 'widget' or 'search'
   const language = embedScriptTag.getAttribute('data-language') || 'auto';
 
   window[namespace].agentId = agentId;
@@ -51,10 +52,21 @@ window.chatvia =
   // Determine script host: use __SCRIPT_URL__ if set, otherwise detect from script src
   let scriptHost = __SCRIPT_URL__;
 
+  // Function to detect script host from embed script's src attribute (fallback)
+  function detectScriptHostFromSrc() {
+    if (!embedScriptTag.src) return null;
+    try {
+      const scriptUrl = new URL(embedScriptTag.src);
+      return `${scriptUrl.protocol}//${scriptUrl.host}${scriptUrl.pathname.replace(/\/embed\.js$/, '')}`;
+    } catch (error) {
+      console.warn('chatvia: Could not parse script src URL:', error);
+      return null;
+    }
+  }
 
   if (!agentId) {
-    console.error('chatvia: Missing agent-id attribute on embed script tag.');
-    window[namespace].error = 'Missing agent-id attribute.';
+    console.error('chatvia: Missing data-agent-id attribute on embed script tag.');
+    window[namespace].error = 'Missing data-agent-id attribute.';
     return;
   }
 
@@ -64,9 +76,9 @@ window.chatvia =
   window[namespace].q = window[namespace].q || [];
   window[namespace].q.push(['init']);
 
-  async function loadBundle() {
+  async function loadBundle(primaryHost = scriptHost) {
     try {
-      const versionUrl = `${scriptHost}/version.json?t=${Date.now()}`;
+      const versionUrl = `${primaryHost}/version.json?t=${Date.now()}`;
       console.log('chatvia: Fetching version from:', versionUrl);
 
       // Fetch current version from version.json with cache busting
@@ -85,7 +97,7 @@ window.chatvia =
 
       const bundleFile = type === 'search' ? 'search.min.js' : 'widget.min.js';
       const scriptId = 'chatvia-embed-script-' + type + '-' + version.replace(/\./g, '-');
-      const fullScriptUrl = `${scriptHost}/${version}/${bundleFile}`;
+      const fullScriptUrl = `${primaryHost}/${version}/${bundleFile}`;
       console.log(`chatvia: Loading ${type} from:`, fullScriptUrl);
 
       if (document.getElementById(scriptId)) {
@@ -116,7 +128,18 @@ window.chatvia =
       }
     } catch (error) {
       console.error('chatvia: Error loading version or bundle:', error);
-      console.error('chatvia: Script host was:', scriptHost);
+      console.error('chatvia: Script host was:', primaryHost);
+
+      // Try fallback host if primary failed and we haven't tried fallback yet
+      if (primaryHost === scriptHost) {
+        const fallbackHost = detectScriptHostFromSrc();
+        if (fallbackHost && fallbackHost !== scriptHost) {
+          console.warn('chatvia: Trying fallback host:', fallbackHost);
+          return loadBundle(fallbackHost);
+        }
+      }
+
+      // If we get here, both primary and fallback failed
       window[namespace].error = `Error loading bundle: ${error.message}`;
     }
   }
