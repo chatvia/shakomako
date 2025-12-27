@@ -73,7 +73,10 @@ export function createElement(tagName, attributes = {}, eventListeners = {}) {
       const svg = createElementFromHTML(value);
       if (svg) element.appendChild(svg);
     } else if (key === 'innerHTML') element.innerHTML = value;
-    else element.setAttribute(key, value);
+    // Boolean attributes like 'required' should only be set if truthy
+    else if (typeof value === 'boolean') {
+      if (value) element.setAttribute(key, '');
+    } else element.setAttribute(key, value);
   });
   Object.entries(eventListeners).forEach(([eventName, callback]) => {
     element.addEventListener(eventName, callback);
