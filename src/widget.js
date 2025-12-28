@@ -537,7 +537,7 @@ export class ChatWidget {
 
     bubble.addEventListener('click', () => {
       // Open the chat widget when bubble is clicked
-      this.open();
+      this.toggleChat(true);
 
       // Fade out the clicked bubble
       bubble.classList.remove(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
