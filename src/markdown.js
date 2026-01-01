@@ -14,6 +14,13 @@ export function parseMarkdown(text) {
 
     let html = text;
 
+    // Handle NoAnswer tags before HTML escaping
+    // Remove self-closing <NoAnswer/> tag completely
+    html = html.replace(/<NoAnswer\s*\/>/gi, '');
+
+    // Extract content from <NoAnswer>content</NoAnswer> and keep only the content
+    html = html.replace(/<NoAnswer>(.*?)<\/NoAnswer>/gis, '$1');
+
     // Escape HTML entities first (except for what we'll process)
     html = escapeHtml(html);
 
