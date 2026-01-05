@@ -18,7 +18,7 @@ export async function initThreads(widget) {
     console.log('Loaded threads from API:', threads, 'Active ID:', activeThreadId);
 
     widget.threads = threads || [];
-    
+
     // Use thread ID from session init if available, otherwise use stored activeThreadId
     if (widget.initialThreadId) {
       console.log('Using thread ID from session init:', widget.initialThreadId);
@@ -67,6 +67,9 @@ export async function createNewThread(widget) {
 
       // Re-setup SSE with the new thread ID
       widget.setupSSE();
+
+      // Subscribe to WebSocket for handoff events
+      await subscribeToConversation(widget);
 
       await widget.displayHistoryMessages();
       widget._updateThreadActionButtons();
@@ -181,11 +184,9 @@ export async function loadActiveThread(widget) {
       widget.setupSSE();
     }
 
-    // Only subscribe to WebSocket if the conversation exists on the server
-    // (indicated by having messages - conversations are created on first message)
-    if (widget.messageHistory && widget.messageHistory.length > 0) {
-      await subscribeToConversation(widget);
-    }
+    // Always subscribe to WebSocket for this conversation
+    // This ensures we receive handoff events even for threads without messages yet
+    await subscribeToConversation(widget);
   } catch (error) {
     console.error(`Error loading messages for thread ${activeThread.id}:`, error);
     await widget.addMessage(

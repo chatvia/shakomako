@@ -179,7 +179,10 @@ export async function checkHandoffStatus(widget) {
 async function syncHandoffState(widget, data) {
   const { handoff_status, admin_name, is_human_controlled } = data;
 
+  console.log('[Handoff] Syncing state:', { handoff_status, admin_name, is_human_controlled });
+
   if (handoff_status === 'human' && is_human_controlled) {
+    console.log('[Handoff] Switching to HUMAN mode');
     widget.handoffMode = HANDOFF_MODE.HUMAN;
     widget.adminName = admin_name;
     widget.conversationId = data.conversation_id || widget.getCurrentActiveThreadId();
@@ -190,7 +193,9 @@ async function syncHandoffState(widget, data) {
     }
 
     updateHandoffUI(widget, 'human');
+    console.log('[Handoff] UI updated to human mode');
   } else if (handoff_status === 'pending') {
+    console.log('[Handoff] Switching to PENDING mode');
     widget.handoffMode = HANDOFF_MODE.PENDING;
     widget.conversationId = data.conversation_id || widget.getCurrentActiveThreadId();
 
@@ -200,11 +205,14 @@ async function syncHandoffState(widget, data) {
     }
 
     updateHandoffUI(widget, 'pending');
+    console.log('[Handoff] UI updated to pending mode');
   } else {
+    console.log('[Handoff] Switching to AI mode');
     // AI mode
     widget.handoffMode = HANDOFF_MODE.AI;
     widget.adminName = null;
     updateHandoffUI(widget, 'ai');
+    console.log('[Handoff] UI updated to AI mode');
   }
 }
 
@@ -557,8 +565,12 @@ function subscribeToChannel(widget) {
   widget.pusherChannel = widget.pusherClient.subscribe(channelName);
 
   // Bind channel events
-  widget.pusherChannel.bind('pusher:subscription_succeeded', (members) => {
+  widget.pusherChannel.bind('pusher:subscription_succeeded', async (members) => {
     console.log('[Handoff] Channel subscription succeeded. Members:', members);
+
+    // Immediately check handoff status to sync UI state
+    // This handles cases where takeover happened before we subscribed
+    await checkHandoffStatus(widget);
   });
   widget.pusherChannel.bind('pusher:subscription_error', (error) => {
     console.error('[Handoff] Channel subscription error:', error);
@@ -584,9 +596,11 @@ function subscribeToChannel(widget) {
 
   // Listen for handoff status changes (Reverb sends WITHOUT leading dot)
   widget.pusherChannel.bind('handoff', (data) => {
-    console.log('[Handoff] Received handoff event:', data);
+    console.log('[Handoff] ⚡ Received handoff event via WebSocket:', data);
     handleHandoffEvent(widget, data);
   });
+
+  console.log('[Handoff] ✅ All event bindings set up for channel:', channelName);
 }
 
 
@@ -876,8 +890,12 @@ export async function sendMessageInHumanMode(widget, text) {
  * Update UI to reflect handoff mode
  */
 function updateHandoffUI(widget, mode) {
+  console.log('[Handoff] updateHandoffUI called with mode:', mode);
   const chatWindow = widget.chatWindow;
-  if (!chatWindow) return;
+  if (!chatWindow) {
+    console.warn('[Handoff] No chatWindow found, cannot update UI');
+    return;
+  }
 
   // Remove all mode classes
   chatWindow.classList.remove(CSS_CLASSES.HUMAN_MODE, 'chatvia-widget-pending-mode');
@@ -885,6 +903,8 @@ function updateHandoffUI(widget, mode) {
   // Get header title element
   const headerTitle = chatWindow.querySelector('.chatvia-widget-header-title');
   const originalTitle = widget.settings?.title || 'Chat';
+
+  console.log('[Handoff] Current classes before update:', chatWindow.className);
 
   switch (mode) {
     case 'pending':
@@ -900,6 +920,7 @@ function updateHandoffUI(widget, mode) {
 
     case 'human':
       chatWindow.classList.add(CSS_CLASSES.HUMAN_MODE);
+      console.log('[Handoff] Added human mode class. Classes now:', chatWindow.className);
       if (widget.chatInput) {
         const agentName = widget.adminName || 'agent';
         widget.chatInput.placeholder = `Message ${agentName}...`;
