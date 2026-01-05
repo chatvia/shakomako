@@ -283,6 +283,18 @@ export function setupKeyboardShortcuts(widget) {
 
   widget.chatInput?.addEventListener('input', resetHistoryIndex);
   widget.searchInput?.addEventListener('input', resetHistoryIndex);
+  
+  // Window resize listener to recalculate dynamic widget height
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    // Debounce resize events
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (widget.applyWindowSize && !widget.isFlat) {
+        widget.applyWindowSize();
+      }
+    }, 150);
+  });
 }
 
 /**

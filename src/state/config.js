@@ -12,8 +12,8 @@ import { createElement } from '../ui.js';
 export function applyConfiguration(widget) {
   if (!widget.container) return;
 
-  const positionClass = widget.settings.position === 'bottom-left' 
-    ? CSS_CLASSES.POSITION_BOTTOM_LEFT 
+  const positionClass = widget.settings.position === 'bottom-left'
+    ? CSS_CLASSES.POSITION_BOTTOM_LEFT
     : CSS_CLASSES.POSITION_BOTTOM_RIGHT;
   widget.container.className = `${CSS_CLASSES.WIDGET} ${widget.isFlat ? CSS_CLASSES.FLAT_MODE : positionClass}`;
 
@@ -35,13 +35,13 @@ export function applyConfiguration(widget) {
  */
 export function applyWindowSize(widget) {
   if (!widget.chatWindow) return;
-  
+
   // Skip applying window sizes in flat mode
   if (widget.isFlat) return;
 
   widget.chatWindow.classList.remove(
-    CSS_CLASSES.WINDOW_SMALL, 
-    CSS_CLASSES.WINDOW_MEDIUM, 
+    CSS_CLASSES.WINDOW_SMALL,
+    CSS_CLASSES.WINDOW_MEDIUM,
     CSS_CLASSES.WINDOW_LARGE
   );
 
@@ -56,6 +56,27 @@ export function applyWindowSize(widget) {
       }
     }
   }
+
+  // Apply dynamic height constraint based on viewport
+  applyDynamicHeightConstraint(widget);
+}
+
+/**
+ * Apply dynamic height constraint based on viewport
+ * Ensures widget never gets cut off at the top
+ */
+function applyDynamicHeightConstraint(widget) {
+  if (!widget.chatWindow || widget.isFlat) return;
+
+  const viewportHeight = window.innerHeight;
+  const bottomOffset = 100; // Bottom position from CSS (bottom: 100px when open)
+  const topMargin = 20; // Minimum margin from top of viewport
+
+  // Calculate maximum safe height
+  const maxSafeHeight = viewportHeight - bottomOffset - topMargin;
+
+  // Apply constraint inline (overrides CSS if needed)
+  widget.chatWindow.style.maxHeight = `${maxSafeHeight}px`;
 }
 
 /**
@@ -64,11 +85,11 @@ export function applyWindowSize(widget) {
 export function applyColors(widget) {
   const colorTheme = widget.settings.color_theme;
   const colorShade = widget.settings.color_shade;
-  
+
   if (!colorTheme || colorShade == null) {
     return;
   }
-  
+
   document.documentElement.style.setProperty('--chat-primary', `var(--${colorTheme}-${colorShade})`);
 }
 
@@ -99,11 +120,11 @@ export function applyBranding(widget) {
   const showBranding = widget.settings.branding?.enabled;
   if (showBranding) {
     widget.brandFooter.innerHTML = '';
-    
+
     const brandName = widget.settings.branding.name || '';
     const brandUrl = widget.settings.branding.url || '';
     const brandLogoUrl = widget.settings.branding.logo_url || '';
-    
+
     const isValidUrl = (url) => {
       if (!url) return false;
       try {
@@ -113,15 +134,15 @@ export function applyBranding(widget) {
         return false;
       }
     };
-    
-    const container = brandUrl && isValidUrl(brandUrl) 
-      ? createElement('a', { 
-          href: brandUrl, 
-          target: '_blank', 
-          rel: 'noopener noreferrer' 
-        }) 
+
+    const container = brandUrl && isValidUrl(brandUrl)
+      ? createElement('a', {
+        href: brandUrl,
+        target: '_blank',
+        rel: 'noopener noreferrer'
+      })
       : createElement('span');
-    
+
     if (brandLogoUrl && isValidUrl(brandLogoUrl)) {
       const logo = createElement('img', {
         src: brandLogoUrl,
@@ -130,10 +151,10 @@ export function applyBranding(widget) {
       });
       container.appendChild(logo);
     }
-    
+
     const textNode = document.createTextNode(brandName);
     container.appendChild(textNode);
-    
+
     widget.brandFooter.appendChild(container);
     widget.brandFooter.style.display = 'block';
   } else {
@@ -146,12 +167,12 @@ export function applyBranding(widget) {
  */
 export function applyInputPlaceholder(widget) {
   const placeholder = widget.settings?.welcome_message || widget.options?.placeholder || 'Type a message...';
-  
+
   if (widget.chatInput) {
     widget.chatInput.placeholder = placeholder;
     widget.chatInput.setAttribute('aria-label', placeholder);
   }
-  
+
   if (widget.searchInput) {
     widget.searchInput.placeholder = placeholder;
   }
