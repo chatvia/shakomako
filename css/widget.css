@@ -465,21 +465,29 @@
 .chatvia-widget .chatvia-widget-window.chatvia-widget-small {
   width: var(--chat-small-width);
   height: var(--chat-small-height);
+  max-height: calc(100vh - 140px);
+  /* Prevent overflow - account for bottom position + margin */
+  max-height: calc(100dvh - 140px);
+  /* Use dynamic viewport height for mobile */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .chatvia-widget .chatvia-widget-window.chatvia-widget-medium {
   width: var(--chat-medium-width);
   height: var(--chat-medium-height);
+  max-height: calc(100vh - 140px);
+  /* Prevent overflow - account for bottom position + margin */
+  max-height: calc(100dvh - 140px);
+  /* Use dynamic viewport height for mobile */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .chatvia-widget .chatvia-widget-window.chatvia-widget-large {
   width: var(--chat-large-width);
   height: var(--chat-large-height);
-  max-height: calc(100vh - 120px);
-  /* Prevent overflow above viewport */
-  max-height: calc(100dvh - 120px);
+  max-height: calc(100vh - 140px);
+  /* Prevent overflow - account for bottom position + margin */
+  max-height: calc(100dvh - 140px);
   /* Use dynamic viewport height for mobile */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
