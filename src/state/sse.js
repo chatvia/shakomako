@@ -11,7 +11,8 @@ import {
   finalizeStreamingMessage,
   clearSSETimeouts,
   resetFinalizeTimeout,
-  enableStreamingMessageActions
+  handleToolEvent,
+  renderStreamError
 } from './messages.js';
 import { handleHandoffEvent, HANDOFF_STATUS } from './handoff.js';
 
@@ -26,7 +27,7 @@ export function setupSSE(widget) {
   const currentActiveThreadId = widget.getCurrentActiveThreadId();
   widget.sseClient = createSSEClient(widget.agentId, widget.sessionId, currentActiveThreadId, {
     onOpen: () => removeConnectionErrorMessages(widget),
-    onClose: () => {
+    onClose: (info = {}) => {
       // Clear loading timeout to prevent race conditions
       if (widget._loadingTimeout) {
         clearTimeout(widget._loadingTimeout);
@@ -34,6 +35,31 @@ export function setupSSE(widget) {
       }
       widget.hideLoading();
       finalizeStreamingMessage(widget);
+
+      // Tool-only turn that produced no text: finalize bails early (isStreaming
+      // false), leaving an empty placeholder whose avatar/bubble row is still
+      // hidden. Drop it entirely so no blank assistant message lingers;
+      // otherwise just clear the streaming marker + avatar pulse.
+      const leftover = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
+      if (leftover) {
+        const bubble = leftover.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
+        if (!bubble || bubble.textContent.trim() === '') {
+          leftover.remove();
+        } else {
+          leftover.querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)?.classList.remove(CSS_CLASSES.STREAMING);
+          leftover.removeAttribute('id');
+        }
+      }
+
+      // Stream closed cleanly but nothing was rendered and no error was
+      // shown — surface a generic failure instead of a silent dead turn.
+      // Skip when aborted (teardown/supersede): that's not a failed turn.
+      if (!info.aborted && !widget._streamHandled && !widget._streamErrorShown) {
+        renderStreamError(widget);
+      }
+      widget._streamHandled = false;
+      widget._streamErrorShown = false;
+
       // Re-enable input on close
       if (widget.chatInput) widget.chatInput.disabled = false;
       if (widget.sendButton) widget.sendButton.disabled = false;
@@ -115,6 +141,24 @@ export async function handleReceivedMessage(widget, message) {
     return;
   }
 
+  // Tool activity (function + MCP) — render as a chip; no text content.
+  if (messageType === 'tool') {
+    widget._streamHandled = true;
+    if (!document.getElementById(CSS_CLASSES.STREAMING_MESSAGE)) {
+      startStreamingMessage(widget);
+    }
+    handleToolEvent(widget, message);
+    return;
+  }
+
+  // Backend-signalled error — surface it and stop.
+  if (messageType === 'error') {
+    widget._streamHandled = true;
+    widget._streamErrorShown = true;
+    renderStreamError(widget, message.message);
+    return;
+  }
+
   // Check for handoff event - can come in different formats:
   // 1. { type: 'handoff', status: 'human', ... }
   // 2. { handoff: { status: 'human', ... } }
@@ -125,6 +169,7 @@ export async function handleReceivedMessage(widget, message) {
     (message.status && ['human', 'returned', 'ai'].includes(message.status));
 
   if (isHandoffEvent) {
+    widget._streamHandled = true;
     const handoffData = message.handoff || message;
     console.log('🔄 Handoff event detected:', handoffData);
 
@@ -141,10 +186,10 @@ export async function handleReceivedMessage(widget, message) {
   if (messageId) {
     widget.currentStreamedMessageId = messageId;
     console.log('Stored message ID:', messageId);
-    enableStreamingMessageActions(widget, messageId);
   }
 
   if (messageContent) {
+    widget._streamHandled = true;
     if (widget.isStreaming) {
       console.log('Adding to existing stream:', messageContent);
       widget.currentStreamedMessage += messageContent;

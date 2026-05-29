@@ -436,9 +436,10 @@ export async function sendUserMessage(widget, customText) {
     const success = await sendMessageInHumanMode(widget, text);
 
     if (!success) {
-      await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
+      const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
         retryText: text
       });
+      el?.classList.add('error');
     }
 
     widget.scrollToBottom();
@@ -462,9 +463,10 @@ export async function sendUserMessage(widget, customText) {
     console.error('SSE client not initialized.');
     clearTimeout(widget._loadingTimeout);
     widget.hideLoading();
-    await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'SSE client error. Cannot send message.', false, {
+    const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'SSE client error. Cannot send message.', false, {
       retryText: text
     });
+    el?.classList.add('error');
     return;
   }
 
@@ -479,15 +481,20 @@ export async function sendUserMessage(widget, customText) {
 
   console.log('Sending SSE message:', messagePayload);
 
+  // Reset per-turn stream flags used by the silent-close error guard.
+  widget._streamHandled = false;
+  widget._streamErrorShown = false;
+
   const success = await widget.sseClient.send(messagePayload);
 
   if (!success) {
     console.error('Failed to send message via SSE.');
     clearTimeout(widget._loadingTimeout);
     widget.hideLoading();
-    await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
+    const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
       retryText: text
     });
+    el?.classList.add('error');
     widget.chatInput.disabled = false;
     widget.sendButton.disabled = false;
   } else {
@@ -564,8 +571,19 @@ export function startStreamingMessage(widget) {
     id: CSS_CLASSES.STREAMING_MESSAGE
   });
 
+  // Tool activity lives OUTSIDE the bubble (the bubble's innerHTML is
+  // overwritten on every delta). Holds the transient "calling tool" shimmer.
+  const toolActivity = createElement('div', { className: CSS_CLASSES.TOOL_ACTIVITY });
+  streamingMsgElement.appendChild(toolActivity);
+  widget._activeToolCalls = new Set();
+
   const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
-  contentWrapper.appendChild(createAvatar(widget));
+  // Hidden until the first text delta arrives, so a tool-call shimmer shows on
+  // its own with no empty avatar/bubble beneath it.
+  contentWrapper.style.display = 'none';
+  const avatar = createAvatar(widget);
+  avatar.classList.add(CSS_CLASSES.STREAMING); // drives the avatar typing pulse
+  contentWrapper.appendChild(avatar);
   const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
   contentWrapper.appendChild(messageBubble);
 
@@ -575,31 +593,42 @@ export function startStreamingMessage(widget) {
 }
 
 /**
- * Update streaming message
+ * Schedule a streaming re-render, coalesced to one paint per animation frame.
+ * SSE deltas can arrive far faster than the browser paints; rendering each one
+ * re-parsed + DOMPurify-sanitized the entire accumulated message, making a turn
+ * O(N²) in its own length. Instead we render the latest text once per frame.
  */
-export async function updateStreamingMessage(widget) {
+export function updateStreamingMessage(widget) {
+  if (widget._streamRenderScheduled) return;
+  widget._streamRenderScheduled = true;
+  widget._streamRenderRAF = requestAnimationFrame(() => {
+    widget._streamRenderScheduled = false;
+    widget._streamRenderRAF = null;
+    renderStreamingMessageNow(widget);
+  });
+}
+
+/**
+ * Render the current accumulated streamed text synchronously. Always reads the
+ * live widget.currentStreamedMessage, so one frame reflects every delta that
+ * landed since the previous paint.
+ */
+function renderStreamingMessageNow(widget) {
   const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-  if (streamingMsgElement) {
-    const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
-    if (messageBubble) {
-      await updateMessageBubbleContent(messageBubble, widget.currentStreamedMessage);
-    }
+  if (!streamingMsgElement) return;
 
-    // Create action buttons early
-    if (!streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`) &&
-      widget.currentStreamedMessage &&
-      widget.currentStreamedMessage.trim().length > 0) {
-      const actionsContainer = createMessageActions(
-        widget,
-        widget.currentStreamedMessage,
-        widget.currentStreamedMessageId,
-        null
-      );
-      streamingMsgElement.appendChild(actionsContainer);
+  const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
+  if (messageBubble) {
+    // Reveal the avatar/bubble row now that real text is streaming in
+    // (it stays hidden during a tool-call shimmer, see startStreamingMessage).
+    if (widget.currentStreamedMessage) {
+      const wrapper = messageBubble.closest('.chatvia-widget-content-wrapper');
+      if (wrapper) wrapper.style.display = '';
     }
-
-    widget.scrollToBottom();
+    updateMessageBubbleContent(messageBubble, widget.currentStreamedMessage);
   }
+
+  widget.scrollToBottom();
 }
 
 /**
@@ -619,6 +648,15 @@ export function updateMessageBubbleContent(messageBubble, content) {
  */
 export async function finalizeStreamingMessage(widget) {
   if (!widget.isStreaming) return;
+
+  // Cancel any pending coalesced render; we render the final text synchronously
+  // below, so a late frame must not overwrite or re-append actions.
+  if (widget._streamRenderRAF) {
+    cancelAnimationFrame(widget._streamRenderRAF);
+    widget._streamRenderRAF = null;
+  }
+  widget._streamRenderScheduled = false;
+
   console.log('Finalizing streaming message');
 
   clearSSETimeouts(widget);
@@ -637,19 +675,23 @@ export async function finalizeStreamingMessage(widget) {
   if (streamingMsgElement && finalMessage !== '') {
     const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
     if (messageBubble) {
+      // Ensure the row is visible (e.g. a single-shot final message that never
+      // went through updateStreamingMessage's reveal).
+      const wrapper = messageBubble.closest('.chatvia-widget-content-wrapper');
+      if (wrapper) wrapper.style.display = '';
       await updateMessageBubbleContent(messageBubble, finalMessage);
     }
 
-    let actionsContainer = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
+    const actionsContainer = createMessageActions(
+      widget,
+      finalMessage,
+      widget.currentStreamedMessageId
+    );
+    streamingMsgElement.appendChild(actionsContainer);
 
-    if (!actionsContainer) {
-      actionsContainer = createMessageActions(widget, finalMessage, widget.currentStreamedMessageId);
-      streamingMsgElement.appendChild(actionsContainer);
-    } else if (widget.currentStreamedMessageId) {
-      enableStreamingMessageActions(widget, widget.currentStreamedMessageId);
-    }
-
-    streamingMsgElement.classList.remove(CSS_CLASSES.STREAMING);
+    streamingMsgElement
+      .querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)
+      ?.classList.remove(CSS_CLASSES.STREAMING);
     streamingMsgElement.removeAttribute('id');
 
     addMessageToHistory(widget, CSS_CLASSES.MESSAGE_AGENT, finalMessage, {
@@ -679,55 +721,65 @@ export async function finalizeStreamingMessage(widget) {
 }
 
 /**
- * Enable streaming message actions (add feedback buttons when messageId arrives)
+ * Show a transient "calling external tool" shimmer while a function/MCP call
+ * runs, then hide it once every active call has finished so the answer can
+ * stream in below. Tracked by tool_call_id so parallel or sequential calls
+ * keep the indicator visible until the last one ends — no per-tool icons.
  */
-export function enableStreamingMessageActions(widget, messageId) {
-  const streamingElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-  if (!streamingElement || !messageId) return;
+export function handleToolEvent(widget, tool) {
+  const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
+  if (!streamingMsgElement || !tool || !tool.tool_call_id) return;
 
-  let actionsContainer = streamingElement.querySelector(`.${CSS_CLASSES.MESSAGE_ACTIONS}`);
+  const container = streamingMsgElement.querySelector(`.${CSS_CLASSES.TOOL_ACTIVITY}`);
+  if (!container) return;
 
-  if (actionsContainer) {
-    // Check if feedback buttons already exist
-    let thumbsUpBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_UP}`);
-    let thumbsDownBtn = actionsContainer.querySelector(`.${CSS_CLASSES.MESSAGE_THUMBS_DOWN}`);
+  if (!widget._activeToolCalls) widget._activeToolCalls = new Set();
 
-    // If no feedback buttons exist yet, add them now that we have a messageId
-    if (!thumbsUpBtn && !thumbsDownBtn) {
-      // Thumbs up button
-      thumbsUpBtn = createElement('button', {
-        className: `chatvia-widget-action-btn chatvia-widget-thumbs-up`,
-        'aria-label': t('messages.good_response'),
-        title: t('messages.good_response'),
-        'data-message-id': messageId
-      });
-      thumbsUpBtn.appendChild(createIcon('thumbs-up'));
-
-      // Thumbs down button
-      thumbsDownBtn = createElement('button', {
-        className: `chatvia-widget-action-btn chatvia-widget-thumbs-down`,
-        'aria-label': t('messages.bad_response'),
-        title: t('messages.bad_response'),
-        'data-message-id': messageId
-      });
-      thumbsDownBtn.appendChild(createIcon('thumbs-down'));
-
-      // Add event listeners
-      thumbsUpBtn.addEventListener('click', () =>
-        handleFeedback(widget, messageId, true, thumbsUpBtn, thumbsDownBtn)
+  if (tool.phase === 'start') {
+    widget._activeToolCalls.add(tool.tool_call_id);
+    if (!container.firstChild) {
+      container.appendChild(
+        createElement('div', {
+          className: CSS_CLASSES.TOOL_CALLING,
+          textContent: t('tool.calling')
+        })
       );
-      thumbsDownBtn.addEventListener('click', () =>
-        handleFeedback(widget, messageId, false, thumbsDownBtn, thumbsUpBtn)
-      );
-
-      actionsContainer.appendChild(thumbsUpBtn);
-      actionsContainer.appendChild(thumbsDownBtn);
     }
-  } else if (widget.currentStreamedMessage && widget.currentStreamedMessage.trim().length > 0) {
-    // No actions container yet, create one with messageId (so it will include feedback buttons)
-    actionsContainer = createMessageActions(widget, widget.currentStreamedMessage, messageId, null);
-    streamingElement.appendChild(actionsContainer);
+    widget.scrollToBottom();
+    return;
   }
+
+  if (tool.phase === 'end') {
+    widget._activeToolCalls.delete(tool.tool_call_id);
+    if (widget._activeToolCalls.size === 0) {
+      container.innerHTML = '';
+    }
+  }
+}
+
+/**
+ * Surface a stream error as a system message. Used for backend `error`
+ * events, transport failures, and silent empty closes (so the user always
+ * sees something instead of a stuck/empty turn).
+ */
+export async function renderStreamError(widget, message) {
+  widget.hideLoading();
+
+  // Drop an empty streaming bubble so we don't leave a blank assistant turn.
+  const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
+  if (streamingMsgElement && !widget.currentStreamedMessage) {
+    streamingMsgElement.remove();
+  }
+
+  const text = message || t('errors.response_failed');
+  const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, text, false);
+  // `.error` swaps the default (green handoff-style) system bubble for the
+  // red error variant + warning-triangle icon defined in widget.css.
+  el?.classList.add('error');
+
+  if (widget.chatInput) widget.chatInput.disabled = false;
+  if (widget.sendButton) widget.sendButton.disabled = false;
+  widget.scrollToBottom();
 }
 
 /**

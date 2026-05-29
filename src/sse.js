@@ -29,6 +29,7 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
     abortController = new AbortController();
     isStreaming = true;
     let isDone = false;
+    let assistantMessageId = null;
 
     try {
       /* global __API_URL__ */
@@ -99,37 +100,72 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
             const dataMatch = line.match(/^data: (.+)$/m);
             
             if (dataMatch) {
+              let event;
               try {
-                const data = JSON.parse(dataMatch[1]);
-                console.log('✅ Received SSE message:', data);
-                
-                // Handle [DONE] marker
-                if (data.content === '[DONE]') {
-                  isDone = true;
-                  isStreaming = false;
-                  sseCallbacks.onClose();
-                  return Promise.resolve();
-                }
-                
-                // Handle handoff events (status: human/returned/ai)
-                if (data.status && ['human', 'returned', 'ai'].includes(data.status)) {
-                  console.log('🔄 Handoff event detected in SSE client:', data);
-                  sseCallbacks.onMessage(data);
-                  // Close stream after handoff - human mode will use WebSocket
-                  isDone = true;
-                  isStreaming = false;
-                  sseCallbacks.onClose();
-                  return Promise.resolve();
-                }
-                
-                // Handle regular content messages
-                if (data.content) {
-                  sseCallbacks.onMessage(data);
-                }
+                event = JSON.parse(dataMatch[1]);
               } catch (e) {
-                console.error('❌ Error parsing SSE data:', e);
-                console.log('Raw data:', dataMatch[1]);
+                console.error('❌ Error parsing SSE data:', e, dataMatch[1]);
+                continue;
               }
+
+              const type = event.type;
+              const d = event.data || {};
+
+              // start: capture assistant id for feedback/copy; emit nothing
+              // (avoids a premature hideLoading flash before any text arrives).
+              if (type === 'start') {
+                assistantMessageId = d.assistant_message_id || event.id || assistantMessageId;
+                continue;
+              }
+
+              // terminal: clean `done` envelope OR legacy [DONE]
+              if (type === 'done' || event.content === '[DONE]') {
+                isDone = true;
+                isStreaming = false;
+                sseCallbacks.onClose();
+                return Promise.resolve();
+              }
+
+              // backend-signalled error: surface, then let the following `done` close
+              if (type === 'error') {
+                sseCallbacks.onMessage({ type: 'error', code: d.code, message: d.message });
+                continue;
+              }
+
+              // streamed text chunk
+              if (type === 'delta') {
+                if (d.text) sseCallbacks.onMessage({ content: d.text, id: assistantMessageId });
+                continue;
+              }
+
+              // function + MCP tool lifecycle
+              if (type === 'tool') {
+                sseCallbacks.onMessage({ type: 'tool', id: assistantMessageId, ...d });
+                continue;
+              }
+
+              // handoff now rides inside meta{key:'handoff', value:{status,…}}
+              if (type === 'meta' && d.key === 'handoff' && d.value) {
+                sseCallbacks.onMessage({ ...d.value, status: d.value.status });
+                isDone = true;
+                isStreaming = false;
+                sseCallbacks.onClose();
+                return Promise.resolve();
+              }
+
+              // legacy flat handoff: { status: 'human' | 'returned' | 'ai' }
+              const legacyStatus = d.status || event.status;
+              if (legacyStatus && ['human', 'returned', 'ai'].includes(legacyStatus)) {
+                sseCallbacks.onMessage({ ...(event.data || event), status: legacyStatus });
+                isDone = true;
+                isStreaming = false;
+                sseCallbacks.onClose();
+                return Promise.resolve();
+              }
+
+              // backward-compat: flat { content } (old format + server.js mock)
+              if (event.content) sseCallbacks.onMessage(event);
+              // meta(non-handoff) / sources / unknown types: ignored
             }
           }
 
@@ -140,13 +176,16 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
         return reader.read().then(processChunk);
       })
       .catch(error => {
+        isStreaming = false;
         if (error.name === 'AbortError') {
+          // Superseded by a new send or torn down — not a failed turn.
           console.log('Fetch aborted');
+          sseCallbacks.onClose({ aborted: true });
         } else {
           console.error('❌ SSE error:', error);
+          sseCallbacks.onMessage({ type: 'error', message: 'Connection lost. Please try again.' });
+          sseCallbacks.onClose();
         }
-        isStreaming = false;
-        sseCallbacks.onClose();
       });
 
       return Promise.resolve(true); // Return immediately since we're streaming
@@ -165,7 +204,9 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
       abortController = null;
     }
     isStreaming = false;
-    sseCallbacks.onClose();
+    // Teardown (init, thread switch, new chat) — not a failed turn, so flag it
+    // aborted to keep the empty-close guard from surfacing a spurious error.
+    sseCallbacks.onClose({ aborted: true });
   }
 
   return {

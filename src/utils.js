@@ -65,6 +65,8 @@ export const CSS_CLASSES = {
   WINDOW_MEDIUM: 'chatvia-widget-medium',
   WINDOW_LARGE: 'chatvia-widget-large',
   STREAMING: 'chatvia-widget-streaming',
+  TOOL_ACTIVITY: 'chatvia-widget-tool-activity',
+  TOOL_CALLING: 'chatvia-widget-tool-calling',
   LEAD_FORM: 'chatvia-widget-lead-form',
   LEAD_FORM_CONTAINER: 'chatvia-widget-lead-container',
   LEAD_FORM_FIELD: 'chatvia-widget-lead-field',

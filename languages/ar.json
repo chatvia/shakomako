@@ -85,12 +85,16 @@
     "agent_typing": "{name} يكتب...",
     "waiting_for_agent": "في انتظار موظف متاح..."
   },
+  "tool": {
+    "calling": "جاري استدعاء أداة خارجية..."
+  },
   "errors": {
     "initialization_failed": "خطأ في التهيئة. يرجى المحاولة لاحقاً.",
     "verification_failed": "فشل التحقق من العميل.",
     "session_failed": "فشل إنشاء الجلسة.",
     "connection_error": "خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت.",
-    "message_send_failed": "فشل إرسال الرسالة. يرجى المحاولة مرة أخرى."
+    "message_send_failed": "فشل إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+    "response_failed": "حدث خطأ أثناء إنشاء الرد. يرجى المحاولة مرة أخرى."
   },
   "shortcuts": {
     "mac": "⌘K",

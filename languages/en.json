@@ -85,12 +85,16 @@
     "agent_typing": "{name} is typing...",
     "waiting_for_agent": "Waiting for an available agent..."
   },
+  "tool": {
+    "calling": "Calling external tool..."
+  },
   "errors": {
     "initialization_failed": "Initialization error. Please try again later.",
     "verification_failed": "Client verification failed.",
     "session_failed": "Session initialization failed.",
     "connection_error": "Connection error. Please check your internet connection.",
-    "message_send_failed": "Failed to send message. Please try again."
+    "message_send_failed": "Failed to send message. Please try again.",
+    "response_failed": "Something went wrong while generating the response. Please try again."
   },
   "shortcuts": {
     "mac": "⌘K",

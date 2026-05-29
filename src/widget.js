@@ -1025,6 +1025,11 @@ export class ChatWidget {
       cancelAnimationFrame(this._resizeRAF);
       this._resizeRAF = null;
     }
+    if (this._streamRenderRAF) {
+      cancelAnimationFrame(this._streamRenderRAF);
+      this._streamRenderRAF = null;
+    }
+    this._streamRenderScheduled = false;
 
     if (this._finalizeTimeout) {
       clearTimeout(this._finalizeTimeout);
