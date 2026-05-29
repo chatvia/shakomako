@@ -29,7 +29,6 @@ export const CSS_CLASSES = {
   MESSAGE_ACTIONS: 'chatvia-widget-actions',
   MESSAGE_ACTION_BTN: 'chatvia-widget-action-btn',
   MESSAGE_COPY_BTN: 'chatvia-widget-copy-btn',
-  MESSAGE_COPY_BTN_COPIED: 'chatvia-widget-copy-btn-copied',
   MESSAGE_THUMBS_UP: 'chatvia-widget-thumbs-up',
   MESSAGE_THUMBS_DOWN: 'chatvia-widget-thumbs-down',
   MESSAGE_ACTION_ACTIVE: 'chatvia-widget-active',
