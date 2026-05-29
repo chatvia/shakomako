@@ -152,7 +152,9 @@ function constrainToViewport(widget) {
         widget.chatWindow.style.maxHeight = `${maxHeight}px`;
       }
     };
-    window.addEventListener('resize', widget._viewportResizeHandler);
+    window.addEventListener('resize', widget._viewportResizeHandler, {
+      signal: widget._eventController?.signal
+    });
   }
 }
 

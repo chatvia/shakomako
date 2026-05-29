@@ -392,11 +392,6 @@ export async function switchToAIMode(widget, serverMessage) {
   widget.scrollToBottom();
   if (widget.sendButton) widget.sendButton.disabled = false;
 
-  // Re-setup SSE for AI mode
-  if (widget.setupSSE) {
-    widget.setupSSE();
-  }
-
   // Emit event
   emitHandoffEvent(widget, { mode: HANDOFF_MODE.AI, status: 'ai' });
 }
@@ -626,6 +621,11 @@ export function disconnectPusher(widget) {
     clearTimeout(widget._typingTimeout);
     widget._typingTimeout = null;
   }
+  if (widget._typingInterval) {
+    clearInterval(widget._typingInterval);
+    widget._typingInterval = null;
+  }
+  widget._isTypingSent = false;
   widget._adminTyping = false;
 }
 
@@ -724,15 +724,6 @@ function showAdminTyping(widget, agentName) {
     widget.messagesContainer.appendChild(typingIndicator);
     widget.scrollToBottom();
   }
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
 }
 
 /**

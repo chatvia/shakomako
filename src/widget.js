@@ -1038,14 +1038,31 @@ export class ChatWidget {
       clearTimeout(this._wsMessageLoadingTimeout);
       this._wsMessageLoadingTimeout = null;
     }
+    if (this._loadingTimeout) {
+      clearTimeout(this._loadingTimeout);
+      this._loadingTimeout = null;
+    }
+    if (this._nextBubbleTimeout) {
+      clearTimeout(this._nextBubbleTimeout);
+      this._nextBubbleTimeout = null;
+    }
+
+    // Remove all global document/window listeners in one shot.
+    if (this._eventController) {
+      this._eventController.abort();
+      this._eventController = null;
+    }
 
     if (this.sseClient) {
       this.sseClient.close();
       this.sseClient = null;
     }
 
-    // Cleanup handoff/Pusher resources
-    handoff.cleanupHandoff(this);
+    // Hard teardown of handoff/Pusher: stop the heartbeat interval and fully
+    // disconnect the socket (cleanupHandoff only unsubscribes, keeping the
+    // client alive — wrong for a destroy).
+    handoff.stopHeartbeat(this);
+    handoff.disconnectPusher(this);
 
     controls.unlockBodyScroll(this);
 

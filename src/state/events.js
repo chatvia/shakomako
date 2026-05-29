@@ -9,6 +9,10 @@ import { CSS_CLASSES } from '../utils.js';
  * Setup all event listeners
  */
 export function setupEventListeners(widget) {
+  // One controller for all global (document/window) listeners so destroy() can
+  // remove them in a single abort() — element-scoped listeners die with the DOM.
+  if (!widget._eventController) widget._eventController = new AbortController();
+
   if (widget.mode === 'search') {
     setupSearchBarListeners(widget);
   } else {
@@ -185,8 +189,9 @@ export function setupGlobalListeners(widget) {
     }
   };
   
-  document.addEventListener('mousedown', closeMenuOnOutside);
-  document.addEventListener('touchstart', closeMenuOnOutside, { passive: true });
+  const signal = widget._eventController?.signal;
+  document.addEventListener('mousedown', closeMenuOnOutside, { signal });
+  document.addEventListener('touchstart', closeMenuOnOutside, { passive: true, signal });
 
   setupKeyboardShortcuts(widget);
 }
@@ -273,7 +278,7 @@ export function setupKeyboardShortcuts(widget) {
 
       activeElement.selectionStart = activeElement.selectionEnd = activeElement.value.length;
     }
-  });
+  }, { signal: widget._eventController?.signal });
 
   // Reset history index when user types
   const resetHistoryIndex = () => {
@@ -294,7 +299,7 @@ export function setupKeyboardShortcuts(widget) {
         widget.applyWindowSize();
       }
     }, 150);
-  });
+  }, { signal: widget._eventController?.signal });
 }
 
 /**
