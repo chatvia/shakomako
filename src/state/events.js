@@ -152,6 +152,13 @@ export function setupHeaderButtonListeners(widget) {
       widget.confirmDeleteThread();
     }
   });
+  widget.themeToggleButton?.addEventListener('click', () => widget.toggleTheme());
+  widget.themeToggleButton?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      widget.toggleTheme();
+    }
+  });
   widget.menuButton?.addEventListener('click', e => {
     e.stopPropagation();
     widget.toggleMenuDropdown();

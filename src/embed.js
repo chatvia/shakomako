@@ -91,6 +91,7 @@ window.chatvia =
   window[namespace].agentId = agentId;
   window[namespace].mode = mode;
   window[namespace].language = language;
+  window[namespace].theme = theme;
   if (mountId) window[namespace].mountId = mountId;
 
   /* global __SCRIPT_URL__ */

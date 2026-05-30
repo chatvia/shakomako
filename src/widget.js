@@ -50,6 +50,11 @@ export class ChatWidget {
     this.barPosition = this.options.position || 'bottom';
     this.language = this.options.language || 'auto';
 
+    // Theme preference: 'auto' | 'light' | 'dark' | null.
+    // A visitor's saved toggle choice wins over the embed's data-theme.
+    // Resolved against backend settings in config.applyTheme().
+    this.themePreference = config.readStoredTheme(this.agentId) || this.options.theme || null;
+
     this.sessionId = null;
     this.isFlat = !!this.mountId;
 
@@ -639,6 +644,11 @@ export class ChatWidget {
       CSS_CLASSES.DELETE_BUTTON
     );
     this.deleteThreadButton.style.display = 'none';
+    this.themeToggleButton = this._createHeaderButton(
+      'moon',
+      t('menu.theme_toggle'),
+      CSS_CLASSES.THEME_TOGGLE
+    );
     this.expandButton = this._createHeaderButton(
       'expand',
       t('widget.expand_chat'),
@@ -654,6 +664,7 @@ export class ChatWidget {
     header.appendChild(this.headerLogo);
     header.appendChild(this.headerTitle);
     header.appendChild(this.deleteThreadButton);
+    header.appendChild(this.themeToggleButton);
     header.appendChild(this.expandButton);
     header.appendChild(this.menuButton);
     header.appendChild(this.menuDropdown);
@@ -939,6 +950,9 @@ export class ChatWidget {
       this._eventController.abort();
       this._eventController = null;
     }
+
+    // Detach the prefers-color-scheme listener used by 'auto' theme.
+    config.teardownAutoThemeListener(this);
 
     if (this.sseClient) {
       this.sseClient.close();

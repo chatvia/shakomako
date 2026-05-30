@@ -1662,6 +1662,7 @@
   width: 32px;
   height: 32px;
   cursor: pointer;
+  border-radius: 6px;
   transition: all 0.2s ease;
   margin-right: 5px;
   background-color: transparent;
@@ -1675,7 +1676,7 @@
 .chatvia-widget .chatvia-widget-theme-toggle svg {
   width: 18px;
   height: 18px;
-  color: white;
+  color: var(--chat-header-text);
   transition: transform 0.5s ease;
 }
 
@@ -2551,4 +2552,134 @@ body.chatvia-scroll-locked {
 
 .chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-typing-dot {
   background-color: #64748b;
+}
+
+/* Menu divider — token-driven, adapts to light/dark automatically */
+.chatvia-widget .chatvia-widget-menu-dropdown hr {
+  border: none;
+  border-top: 1px solid var(--chat-border);
+  margin: 6px 4px;
+}
+
+/* ============================================
+   DARK MODE — comprehensive coverage
+   Toggled by adding .chatvia-widget-dark to the chat window.
+   Redefining the semantic tokens here cascades to every
+   token-driven surface (messages, bubbles, input, starters,
+   menu, scrollbar, code). The explicit rules below cover the
+   remaining surfaces that still carry hard-coded light values.
+   ============================================ */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark {
+  --chat-bg: #0f172a;
+  --chat-bg-secondary: #1e293b;
+  --chat-surface: #1e293b;
+  --chat-surface-hover: #334155;
+  --chat-text: #e5e9f0;
+  --chat-text-secondary: #9aa7bd;
+  --chat-text-muted: #6b7a93;
+  --chat-hover-bg: rgba(255, 255, 255, 0.06);
+  --chat-border: rgba(255, 255, 255, 0.09);
+  --chat-border-subtle: rgba(255, 255, 255, 0.055);
+  --chat-border-strong: rgba(255, 255, 255, 0.16);
+  --chat-assistant-bubble: #1e293b;
+  --chat-assistant-text: #e5e9f0;
+  --chat-assistant-border: rgba(255, 255, 255, 0.07);
+  --chat-code-bg: #0b1322;
+  --chat-code-border: rgba(255, 255, 255, 0.10);
+  --chat-code-text: #e5e7eb;
+  --chat-input-bg: #1b2638;
+  --chat-input-bg-focus: #223047;
+  --chat-scrollbar-thumb: rgba(255, 255, 255, 0.14);
+  --chat-scrollbar-thumb-hover: rgba(255, 255, 255, 0.26);
+  background-color: var(--chat-bg);
+}
+
+/* Footer */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-footer {
+  background: linear-gradient(180deg, #131c2e 0%, #0f172a 100%);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-footer a,
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-footer span {
+  color: var(--chat-text-muted);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-footer a:hover {
+  color: var(--chat-text-secondary);
+}
+
+/* Loading-dots bubble */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-loading-dots {
+  background-color: var(--chat-surface);
+  border-color: var(--chat-border);
+}
+
+/* Message action buttons + timestamps */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-action-btn:hover {
+  background-color: var(--chat-hover-bg);
+  color: var(--chat-text-secondary);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-actions .chatvia-widget-message-time {
+  color: var(--chat-text-muted);
+  border-left-color: rgba(255, 255, 255, 0.12);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-message > .chatvia-widget-message-time {
+  color: var(--chat-text-muted);
+}
+
+/* Thread list */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-thread-item:hover {
+  background-color: var(--chat-hover-bg);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-thread-arrow {
+  color: var(--chat-text-muted);
+}
+
+/* Bar mode — collapsed launcher.
+   The dark class is also placed on the bar container so the floating bar
+   matches a dark host page (the expanded panel is the dark chat window). */
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-bar-input-wrapper {
+  background: rgba(30, 41, 59, 0.98);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5),
+    0 2px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark.chatvia-widget-expanded .chatvia-widget-bar-input-wrapper {
+  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.6),
+    0 4px 12px -2px rgba(0, 0, 0, 0.45);
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-bar-input-wrapper:focus-within {
+  background: #223047;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-bar-input {
+  color: #e5e9f0;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-bar-input::placeholder {
+  color: #6b7a93;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-bar-input:focus::placeholder {
+  color: #475569;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-shortcut-hint {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9aa7bd;
+}
+/* Markdown-emitted images inside chat bubbles. Sizing used to be an inline
+ * `style` attribute on the <img>, dropped now that DOMPurify rejects `style`
+ * outright. Same visual.
+ */
+.chatvia-widget .chatvia-widget-md-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 10px 0;
 }

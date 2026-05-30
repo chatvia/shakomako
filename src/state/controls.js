@@ -6,6 +6,7 @@
 import { CSS_CLASSES } from '../utils.js';
 import { createIcon } from '../ui.js';
 import { markMessagesAsRead, HANDOFF_MODE } from './handoff.js';
+import { applyTheme, writeStoredTheme } from './config.js';
 
 /**
  * Toggle chat open/close
@@ -178,20 +179,20 @@ function removeViewportConstraint(widget) {
  * Toggle theme
  */
 export function toggleTheme(widget) {
-  widget.settings.theme = widget.settings.theme === 'dark' ? 'light' : 'dark';
+  // A manual toggle is an explicit choice — flip to the opposite concrete mode
+  // and opt out of 'auto'. applyTheme() handles the class on every surface,
+  // detaches the prefers-color-scheme listener, syncs settings.theme, and
+  // updates the toggle button's icon/label via updateThemeToggleButton().
+  const isDark = widget.chatWindow?.classList.contains(CSS_CLASSES.WINDOW_DARK);
+  widget.themePreference = isDark ? 'light' : 'dark';
+  writeStoredTheme(widget.agentId, widget.themePreference);
+  applyTheme(widget);
 
-  if (widget.settings.theme === 'dark') {
-    widget.chatWindow?.classList.add(CSS_CLASSES.WINDOW_DARK);
-    widget.themeToggleButton?.setAttribute('aria-label', 'Switch to light theme');
-    widget.themeToggleButton.title = 'Switch to light theme';
-    widget.themeToggleButton.innerHTML = '';
-    widget.themeToggleButton.appendChild(createIcon('sun'));
-  } else {
-    widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_DARK);
-    widget.themeToggleButton?.setAttribute('aria-label', 'Switch to dark theme');
-    widget.themeToggleButton.title = 'Switch to dark theme';
-    widget.themeToggleButton.innerHTML = '';
-    widget.themeToggleButton.appendChild(createIcon('moon'));
+  // Brief rotate flourish on the icon (animation defined in CSS).
+  const btn = widget.themeToggleButton;
+  if (btn) {
+    btn.classList.add('chatvia-widget-animating');
+    setTimeout(() => btn.classList.remove('chatvia-widget-animating'), 500);
   }
 
   widget._updateStartersContainer();

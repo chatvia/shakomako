@@ -307,8 +307,14 @@
      DESIGN TOKENS - Shared across widgets
      ============================================ */
   
-  /* Primary color - set by JavaScript */
-  --chat-primary: rgba(0,0,0,0);
+  /* Primary brand color — REQUIRED to be set at runtime by applyColors()
+     from settings.color_theme + settings.color_shade. We deliberately keep
+     a transparent sentinel here so a missing API contract renders an
+     obviously-broken widget (transparent header, invisible bubbles) rather
+     than silently coloring it with a fake default. applyColors() warns
+     loudly when the contract is violated; see src/state/config.js. */
+  --chat-primary: rgba(0, 0, 0, 0);
+  --chat-primary-contrast: #ffffff;
   --chat-header-text: #ffffff;
 
   /* Surfaces & Text */
