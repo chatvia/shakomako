@@ -1,11 +1,12 @@
 import { ChatWidget } from './widget.js';
+import { NAMESPACE } from './utils.js';
 
 (function () {
-  const namespace = 'chatvia';
+  const namespace = NAMESPACE;
 
   if (!window[namespace] || !window[namespace].agentId) {
     console.error(
-      'chatvia: Embedder script not found or missing agentId. Cannot initialize widget.'
+      `${namespace}: Embedder script not found or missing agentId. Cannot initialize widget.`
     );
     return;
   }

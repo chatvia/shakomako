@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run clean && rollup -c rollup.config.js",
+    "build": "NODE_ENV=production npm run clean && rollup -c rollup.config.js",
+    "build:dev": "npm run clean && rollup -c rollup.config.js",
     "build:prod": "NODE_ENV=production npm run clean && rollup -c rollup.config.js",
     "clean": "rimraf dist && mkdir dist",
     "demo": "node serve-demo.js",

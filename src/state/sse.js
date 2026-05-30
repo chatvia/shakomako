@@ -4,7 +4,7 @@
  */
 
 import { createSSEClient } from '../sse.js';
-import { CSS_CLASSES, STREAMING_DONE_MARKER } from '../utils.js';
+import { CSS_CLASSES, STREAMING_DONE_MARKER, debug } from '../utils.js';
 import {
   startStreamingMessage,
   updateStreamingMessage,
@@ -72,7 +72,9 @@ export function setupSSE(widget) {
  * Handle incoming SSE messages
  */
 export function handleSSEMessage(widget, data) {
-  console.log('Received raw SSE data:', data);
+  // Per-delta log — gated behind debug so a hot turn (50+ deltas/sec) doesn't
+  // flood the host page's console.
+  debug('Received raw SSE data', data);
 
   // Clear the loading timeout to prevent it from firing after we've received a message
   if (widget._loadingTimeout) {

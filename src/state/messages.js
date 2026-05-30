@@ -3,7 +3,7 @@
  * Handles message display, streaming, and markdown parsing
  */
 
-import { CSS_CLASSES, DEFAULT_AVATAR_SVG, STREAMING_FINALIZE_TIMEOUT } from '../utils.js';
+import { CSS_CLASSES, DEFAULT_AVATAR_SVG, STREAMING_FINALIZE_TIMEOUT, debug } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
 import { t } from '../i18n.js';
@@ -57,11 +57,7 @@ export function escapeHtml(text) {
  * Add a message to the chat
  */
 export async function addMessage(widget, type, text, addToHistory = true, options = {}) {
-  console.log('addMessage called:', { type, text, addToHistory, messagesContainer: !!widget.messagesContainer });
-  if (!widget.messagesContainer) {
-    console.log('No messagesContainer found, returning null');
-    return null;
-  }
+  if (!widget.messagesContainer) return null;
 
   const isHumanAgentMessage = options.isHuman === true;
 
@@ -432,7 +428,7 @@ export async function sendUserMessage(widget, customText) {
   // Check if we're in human mode (handoff active)
   if (isInHumanMode(widget)) {
     // In human mode, send via HTTP POST (WebSocket receives response)
-    console.log('Sending message in human mode');
+    debug('Sending message in human mode');
     const success = await sendMessageInHumanMode(widget, text);
 
     if (!success) {
@@ -479,7 +475,8 @@ export async function sendUserMessage(widget, customText) {
     referrer: document.referrer || ''
   };
 
-  console.log('Sending SSE message:', messagePayload);
+  // Don't log full payload in production — it contains user content.
+  debug('Sending SSE message', { thread_id: messagePayload.thread_id });
 
   // Reset per-turn stream flags used by the silent-close error guard.
   widget._streamHandled = false;
@@ -535,26 +532,24 @@ export async function displayHistoryMessages(widget) {
       });
     }
   } else if (widget.settings.welcome_message) {
-    console.log('Welcome message exists:', widget.settings.welcome_message);
     const activeThread = widget.getActiveThread();
-    console.log('Active thread:', activeThread);
-
     if (activeThread && !activeThread.welcomeShown) {
-      console.log('Showing welcome message');
       activeThread.welcomeShown = true;
-
-      setTimeout(async () => {
-        console.log('Welcome message timeout fired, calling addMessage');
-        const result = await addMessage(widget, CSS_CLASSES.MESSAGE_AGENT, widget.settings.welcome_message, false, {
-          hideActions: true
-        });
-        console.log('addMessage result:', result);
+      // Tracked on the widget so destroy() can cancel it; the original code
+      // leaked this 500ms timer if the widget was torn down during the gap.
+      widget._welcomeMessageTimeout = setTimeout(async () => {
+        widget._welcomeMessageTimeout = null;
+        await addMessage(
+          widget,
+          CSS_CLASSES.MESSAGE_AGENT,
+          widget.settings.welcome_message,
+          false,
+          {
+            hideActions: true
+          }
+        );
       }, 500);
-    } else {
-      console.log('Welcome message already shown or no active thread');
     }
-  } else {
-    console.log('No welcome message in settings');
   }
 }
 
@@ -657,7 +652,7 @@ export async function finalizeStreamingMessage(widget) {
   }
   widget._streamRenderScheduled = false;
 
-  console.log('Finalizing streaming message');
+  debug('Finalizing streaming message');
 
   clearSSETimeouts(widget);
   widget.hideLoading();

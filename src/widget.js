@@ -9,8 +9,8 @@ import StorageManager from './storage.js';
 import { AgentManager } from './agent.js';
 import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
-import { CSS_CLASSES, DEFAULT_LOGO_SVG } from './utils.js';
-import { createElement, createIcon, createLeadForm } from './ui.js';
+import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug } from './utils.js';
+import { createElement, createIcon } from './ui.js';
 import { initI18n, t } from './i18n.js';
 
 // Import state modules
@@ -73,12 +73,15 @@ export class ChatWidget {
     this.isWidthExpanded = false;
     this.startersVisible = true;
 
-    // Internal timers/state
+    // Internal timers/state. All setTimeout ids stored on `this` so destroy()
+    // can clear them; never schedule a bare setTimeout from instance methods.
     this._previousWindowSize = null;
     this._finalizeTimeout = null;
     this._loadingSafetyTimeout = null;
     this._wsMessageLoadingTimeout = null;
     this._nextBubbleTimeout = null;
+    this._showOnLoadTimeout = null;
+    this._initialResizeTimeout = null;
 
     // Initialize handoff state
     handoff.initHandoff(this);
@@ -147,7 +150,7 @@ export class ChatWidget {
       await this._verifyClient();
 
       this.settings = await getSettings(this.agentId);
-      console.log('Initial settings:', this.settings);
+      debug('Initial settings', this.settings);
 
       if (this.isMobileApp) {
         this.settings.show_on_load = false;
@@ -171,19 +174,19 @@ export class ChatWidget {
       startHeartbeat(this);
 
       if (this.settings.show_on_load) {
-        console.log('Setting up show_on_load timer');
-        setTimeout(() => {
-          console.log('show_on_load timer fired');
+        this._showOnLoadTimeout = setTimeout(() => {
+          this._showOnLoadTimeout = null;
           this.toggleChat(true);
         }, this.settings.show_on_load_delay);
       }
-      console.log('Widget initialization complete.');
 
       this._initializeMessageBubbles();
 
-      setTimeout(() => {
+      // Initial textarea resize. Tracked so destroy() can clear it if the
+      // widget is torn down during the 300ms boot window.
+      this._initialResizeTimeout = setTimeout(() => {
+        this._initialResizeTimeout = null;
         this.autoResizeInput();
-        console.log('Initial textarea resize complete');
       }, 300);
     } catch (error) {
       console.error('Error during async initialization:', error);
@@ -199,36 +202,28 @@ export class ChatWidget {
       await this.disabledChat(t('errors.verification_failed'));
       throw new Error('Client verification failed');
     }
-    console.log('Client verified.');
+    debug('Client verified.');
   }
 
   async _initializeSession() {
-    console.log('Initializing session and thread...');
+    debug('Initializing session and thread...');
     const initData = await this.sessionManager.startSession();
 
     if (!initData || !initData.sessionId) {
-      console.error('Failed to initialize session. Disabling chat.');
+      console.error('chatvia: Failed to initialize session. Disabling chat.');
       await this.disabledChat(t('errors.session_failed'));
       throw new Error('Session initialization failed');
     }
 
     this.sessionId = initData.sessionId;
-    this.initialThreadId = initData.threadId; // Store for later use
-    
-    console.log('Session initialized:', initData.sessionId);
-    console.log('Thread initialized:', initData.threadId);
-    
-    if (initData.isNewSession) {
-      console.log('✨ New session created');
-    } else {
-      console.log('✅ Session validated and restored');
-    }
-    
-    if (initData.isNewThread) {
-      console.log('✨ New thread created');
-    } else {
-      console.log('✅ Thread validated and restored');
-    }
+    this.initialThreadId = initData.threadId;
+
+    debug('Session initialized', {
+      sessionId: initData.sessionId,
+      threadId: initData.threadId,
+      isNewSession: initData.isNewSession,
+      isNewThread: initData.isNewThread
+    });
   }
 
   // ========================================
@@ -929,40 +924,19 @@ export class ChatWidget {
   // ========================================
 
   destroy() {
-    if (this._scrollRAF) {
-      cancelAnimationFrame(this._scrollRAF);
-      this._scrollRAF = null;
-    }
-    if (this._resizeRAF) {
-      cancelAnimationFrame(this._resizeRAF);
-      this._resizeRAF = null;
-    }
-    if (this._streamRenderRAF) {
-      cancelAnimationFrame(this._streamRenderRAF);
-      this._streamRenderRAF = null;
-    }
+    this._cancelTrackedRafs(['_scrollRAF', '_resizeRAF', '_streamRenderRAF']);
     this._streamRenderScheduled = false;
 
-    if (this._finalizeTimeout) {
-      clearTimeout(this._finalizeTimeout);
-      this._finalizeTimeout = null;
-    }
-    if (this._loadingSafetyTimeout) {
-      clearTimeout(this._loadingSafetyTimeout);
-      this._loadingSafetyTimeout = null;
-    }
-    if (this._wsMessageLoadingTimeout) {
-      clearTimeout(this._wsMessageLoadingTimeout);
-      this._wsMessageLoadingTimeout = null;
-    }
-    if (this._loadingTimeout) {
-      clearTimeout(this._loadingTimeout);
-      this._loadingTimeout = null;
-    }
-    if (this._nextBubbleTimeout) {
-      clearTimeout(this._nextBubbleTimeout);
-      this._nextBubbleTimeout = null;
-    }
+    this._clearTrackedTimers([
+      '_finalizeTimeout',
+      '_loadingSafetyTimeout',
+      '_wsMessageLoadingTimeout',
+      '_loadingTimeout',
+      '_nextBubbleTimeout',
+      '_showOnLoadTimeout',
+      '_initialResizeTimeout',
+      '_welcomeMessageTimeout'
+    ]);
 
     // Remove all global document/window listeners in one shot.
     if (this._eventController) {
@@ -987,6 +961,6 @@ export class ChatWidget {
       this.container.parentNode.removeChild(this.container);
     }
 
-    console.log('Widget destroyed and resources cleaned up');
+    debug('Widget destroyed and resources cleaned up');
   }
 }

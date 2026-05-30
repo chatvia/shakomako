@@ -1,3 +1,41 @@
+/**
+ * The global namespace the embed script attaches everything to:
+ * `window.chatvia`. Imported by both the embed loader and the widget
+ * so the string lives in exactly one place.
+ */
+export const NAMESPACE = 'chatvia';
+
+/**
+ * Log prefix used in console messages so embedding sites can grep for it.
+ */
+const LOG_PREFIX = `${NAMESPACE}:`;
+
+/* global __DEV__ */
+// __DEV__ is replaced by rollup; default to false if running un-bundled.
+const DEBUG_BUILD = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
+
+/**
+ * Debug logger. No-op in production builds; in dev, prefixed `chatvia:` log.
+ * Use this for anything informational ("starting", "thread loaded", state dumps).
+ * Use console.warn / console.error directly for things customers should see.
+ */
+export function debug(...args) {
+  if (!DEBUG_BUILD) return;
+  console.log(LOG_PREFIX, ...args);
+}
+
+/**
+ * Standard warn / error helpers — always log, always prefixed. Use these
+ * instead of bare `console.warn`/`console.error` so the prefix stays consistent.
+ */
+export function warn(...args) {
+  console.warn(LOG_PREFIX, ...args);
+}
+
+export function error(...args) {
+  console.error(LOG_PREFIX, ...args);
+}
+
 export const CSS_CLASSES = {
   WIDGET: 'chatvia-widget',
   BUBBLE: 'chatvia-widget-bubble',
