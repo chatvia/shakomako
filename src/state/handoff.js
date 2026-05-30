@@ -5,6 +5,7 @@
 
 import { CSS_CLASSES } from '../utils.js';
 import { t } from '../i18n.js';
+import { authHeaders } from '../auth.js';
 
 // Handoff modes
 export const HANDOFF_MODE = {
@@ -85,7 +86,8 @@ async function sendHeartbeat(widget) {
       headers: {
         'Content-Type': 'application/json',
         'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId
+        'X-AGENT-ID': widget.agentId,
+        ...authHeaders(widget.agentId)
       },
       body: JSON.stringify({
         conversation_id: conversationId
@@ -118,7 +120,8 @@ export async function markMessagesAsRead(widget) {
       headers: {
         'Content-Type': 'application/json',
         'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId
+        'X-AGENT-ID': widget.agentId,
+        ...authHeaders(widget.agentId)
       },
       body: JSON.stringify({
         conversation_id: conversationId
@@ -147,7 +150,8 @@ export async function checkHandoffStatus(widget) {
         'Content-Type': 'application/json',
         'X-SESSION-ID': widget.sessionId,
         'X-AGENT-ID': widget.agentId,
-        'X-THREAD-ID': conversationId
+        'X-THREAD-ID': conversationId,
+        ...authHeaders(widget.agentId)
       }
     });
 
@@ -412,7 +416,8 @@ export async function endLiveChat(widget) {
       headers: {
         'Content-Type': 'application/json',
         'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId
+        'X-AGENT-ID': widget.agentId,
+        ...authHeaders(widget.agentId)
       },
       body: JSON.stringify({
         conversation_id: conversationId
@@ -508,7 +513,8 @@ export async function connectPusher(widget) {
         auth: {
           headers: {
             'X-SESSION-ID': widget.sessionId,
-            'X-AGENT-ID': widget.agentId
+            'X-AGENT-ID': widget.agentId,
+            ...authHeaders(widget.agentId)
           }
         }
       });
@@ -827,7 +833,8 @@ async function postTypingStatus(widget, isTyping) {
       headers: {
         'Content-Type': 'application/json',
         'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId
+        'X-AGENT-ID': widget.agentId,
+        ...authHeaders(widget.agentId)
       },
       body: JSON.stringify({
         conversation_id: widget.conversationId || widget.getCurrentActiveThreadId(),
@@ -853,7 +860,8 @@ export async function sendMessageInHumanMode(widget, text) {
         'Content-Type': 'application/json',
         'X-AGENT-ID': widget.agentId,
         'X-SESSION-ID': widget.sessionId,
-        'X-THREAD-ID': widget.getCurrentActiveThreadId()
+        'X-THREAD-ID': widget.getCurrentActiveThreadId(),
+        ...authHeaders(widget.agentId)
       },
       body: JSON.stringify({
         agent_id: widget.agentId,

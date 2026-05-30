@@ -7,6 +7,7 @@ import '../css/widget.css';
 
 import StorageManager from './storage.js';
 import { AgentManager } from './agent.js';
+import { AuthManager } from './auth.js';
 import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug } from './utils.js';
@@ -28,6 +29,18 @@ export const VALID_MODES = ['bubble', 'bar'];
 const DEFAULT_MODE = 'bubble';
 
 export class ChatWidget {
+  /**
+   * @param {string} agentId — public agent id from `data-agent-id`.
+   * @param {object|string} [options] — widget options. Passing a string is a
+   *   legacy form that treats the value as a `mountId`.
+   * @param {'bubble'|'bar'} [options.mode]
+   * @param {'top'|'bottom'} [options.position] — `bar` mode only: which edge
+   *   of the viewport the bar floats against.
+   * @param {string} [options.language]
+   * @param {'auto'|'light'|'dark'} [options.theme]
+   * @param {string} [options.auth] — bootstrap JWT for protected agents.
+   * @param {string} [options.mountId] — id of a host element for flat mode.
+   */
   constructor(agentId, options = {}) {
     this.agentId = agentId;
 
@@ -64,6 +77,13 @@ export class ChatWidget {
     this.agentManager = new AgentManager(agentId);
     this.storageManager = null;
     this.sessionManager = null;
+
+    // Auth: protected agents (is_public = false) ship a signed bootstrap token
+    // via the embed's data-auth. We exchange it once for a session token and
+    // lock the chat if it's missing or rejected.
+    this.bootstrapToken = this.options.auth || null;
+    this.authManager = new AuthManager(agentId, this.bootstrapToken);
+    this.isLocked = false;
 
     // State
     this.threads = [];
@@ -167,11 +187,21 @@ export class ChatWidget {
         this.settings.is_fullscreen = true;
       }
 
+      // Protected agents must trade their bootstrap token for a session token
+      // before any gated request. On failure we still mount the shell but lock
+      // it, so the visitor sees the branded window with a sign-in notice rather
+      // than a broken/blank corner.
+      this.isLocked = this.settings.protected === true && !(await this._authorizeProtectedWidget());
+
       this.sessionManager = new SessionManager(this.agentId);
-      await this._initializeSession();
+      if (!this.isLocked) {
+        await this._initializeSession();
+      }
 
       this.storageManager = new StorageManager(this.agentId, this.sessionId);
-      await this.initThreads();
+      if (!this.isLocked) {
+        await this.initThreads();
+      }
 
       await this._createWidgetElements();
 
@@ -181,6 +211,15 @@ export class ChatWidget {
       this._hideBootLoader();
 
       this._setupEventListeners();
+
+      // Locked: skip session-bound wiring (SSE, threads, heartbeat) and leave
+      // the chat in its disabled sign-in state.
+      if (this.isLocked) {
+        await this.disabledChat(t('errors.auth_required'));
+        console.warn('chatvia: widget locked — agent is protected and authorization failed.');
+        return;
+      }
+
       this.setupSSE();
       await this.loadActiveThread();
 
@@ -208,6 +247,18 @@ export class ChatWidget {
       await this.disabledChat(t('errors.initialization_failed'));
       throw error;
     }
+  }
+
+  /**
+   * Exchange the embed's signed bootstrap token for a widget session token.
+   * @returns {Promise<boolean>} true when a session token was obtained
+   */
+  async _authorizeProtectedWidget() {
+    if (!this.authManager.hasBootstrapToken()) {
+      console.warn('chatvia: agent is protected but the embed is missing a data-auth token.');
+      return false;
+    }
+    return await this.authManager.exchange();
   }
 
   async _verifyClient() {

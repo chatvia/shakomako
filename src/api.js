@@ -1,3 +1,5 @@
+import { authHeaders } from './auth.js';
+
 /**
  * Make an API request with proper error handling
  * @param {Object} options - Request options
@@ -13,6 +15,11 @@ export default async function api({ endpoint, method, headers = {}, body = null 
     Accept: 'application/json',
     ...headers
   };
+
+  // Attach the widget session token (X-AUTH-TOKEN) for protected agents. Keyed
+  // off the X-AGENT-ID the caller already sets, so every gated api() call is
+  // authorized without each call site knowing about auth.
+  Object.assign(mergedHeaders, authHeaders(mergedHeaders['X-AGENT-ID']));
 
   /* global __API_URL__ */
   const apiUrl = __API_URL__;

@@ -93,6 +93,7 @@ window.chatvia =
   window[namespace].language = language;
   window[namespace].theme = theme;
   if (mountId) window[namespace].mountId = mountId;
+  if (auth) window[namespace].auth = auth;
 
   /* global __SCRIPT_URL__ */
   // Determine script host: use __SCRIPT_URL__ if set, otherwise detect from script src

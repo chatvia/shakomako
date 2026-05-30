@@ -1,3 +1,6 @@
+import { authHeaders } from './auth.js';
+import { debug } from './utils.js';
+
 export function createSSEClient(agent_id, session_id, thread_id, callbacks = {}) {
   const sseCallbacks = {
     onOpen: () => {},
@@ -10,17 +13,14 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
   let isStreaming = false;
 
   function connect() {
-    console.log('=== SSE CLIENT READY ===');
-    console.log('Agent ID:', agent_id);
-    console.log('Session ID:', session_id);
-    console.log('Thread ID:', thread_id);
+    debug('SSE client ready', { agent_id, session_id, thread_id });
     sseCallbacks.onOpen();
   }
 
   function send(message) {
-    console.log('=== SENDING MESSAGE ===');
-    console.log('Message:', message);
-    
+    // Never log full message content in production — gated via debug().
+    debug('SSE send', { thread_id, type: message?.type });
+
     // Abort any existing connection
     if (abortController) {
       abortController.abort();
@@ -34,20 +34,7 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
     try {
       /* global __API_URL__ */
       const sendUrl = __API_URL__ + '/stream';
-      
-      console.log('Send URL:', sendUrl);
-      console.log('Message payload:', {
-        ...message,
-        agent_id: agent_id
-      });
-      console.log('Headers:', {
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
-        'X-AGENT-ID': agent_id,
-        'X-SESSION-ID': session_id,
-        'X-THREAD-ID': thread_id,
-      });
-      
+
       // Create POST request with payload
       fetch(sendUrl, {
         method: 'POST',
@@ -57,6 +44,7 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
           'X-AGENT-ID': agent_id,
           'X-SESSION-ID': session_id,
           'X-THREAD-ID': thread_id,
+          ...authHeaders(agent_id)
         },
         body: JSON.stringify({
           ...message,
@@ -199,7 +187,7 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
 
   function close() {
     if (abortController) {
-      console.log('🧹 Aborting SSE connection');
+      debug('Aborting SSE connection');
       abortController.abort();
       abortController = null;
     }
