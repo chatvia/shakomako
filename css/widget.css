@@ -449,20 +449,6 @@
   object-fit: cover;
 }
 
-/* Online presence dot on the header avatar (AI mode only) */
-.chatvia-widget .chatvia-widget-window:not(.chatvia-widget-pending-mode):not(.chatvia-widget-human-mode) .chatvia-widget-header::after {
-  content: '';
-  position: absolute;
-  left: 40px;
-  top: 38px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #34d399;
-  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--chat-primary) 82%, black);
-  z-index: 3;
-}
-
 .chatvia-widget .chatvia-widget-header-title {
   flex-grow: 1;
   font-weight: 600;
