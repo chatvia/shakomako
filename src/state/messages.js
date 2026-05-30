@@ -516,11 +516,9 @@ export async function displayHistoryMessages(widget) {
 
   if (widget.messageHistory && widget.messageHistory.length > 0) {
     for (const message of widget.messageHistory) {
-      const messageType = message.role
-        ? widget._mapRoleToMessageType(message.role)
-        : message.type;
-      const isWelcomeMessage = widget.settings.welcome_message &&
-        message.content === widget.settings.welcome_message;
+      const messageType = message.role ? mapRoleToMessageType(message.role) : message.type;
+      const isWelcomeMessage =
+        widget.settings.welcome_message && message.content === widget.settings.welcome_message;
       const isHumanAgent = message.role === 'agent';
       await addMessage(widget, messageType, message.content, false, {
         messageId: message.id,

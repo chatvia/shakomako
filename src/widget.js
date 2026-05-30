@@ -286,10 +286,6 @@ export class ChatWidget {
     return messages.displayHistoryMessages(this);
   }
 
-  _mapRoleToMessageType(role) {
-    return messages.mapRoleToMessageType(role);
-  }
-
   async parseMarkdown(text) {
     return messages.parseMarkdown(text);
   }

@@ -6,6 +6,7 @@
 import { CSS_CLASSES } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 import { cleanupHandoff, subscribeToConversation } from './handoff.js';
+import { mapRoleToMessageType } from './messages.js';
 import { t } from '../i18n.js';
 
 /**
@@ -154,9 +155,7 @@ export async function loadActiveThread(widget) {
 
     // Check if there are any user messages in the thread
     const hasUserMessages = widget.messageHistory.some(message => {
-      const messageType = message.role
-        ? widget._mapRoleToMessageType(message.role)
-        : message.type;
+      const messageType = message.role ? mapRoleToMessageType(message.role) : message.type;
       return messageType === CSS_CLASSES.MESSAGE_USER;
     });
 
@@ -166,7 +165,7 @@ export async function loadActiveThread(widget) {
       !widget.messageHistory.length ||
       (widget.messageHistory.length === 1 &&
         (widget.messageHistory[0].role
-          ? widget._mapRoleToMessageType(widget.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT
+          ? mapRoleToMessageType(widget.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT
           : widget.messageHistory[0].type === CSS_CLASSES.MESSAGE_AGENT))
     ) {
       widget.showStarters();
@@ -415,7 +414,9 @@ function createThreadItem(widget, thread) {
   contentContainer.appendChild(titleEl);
 
   const subtitleEl = createElement('div', { className: CSS_CLASSES.THREAD_SUBTITLE });
-  subtitleEl.textContent = widget.settings.title || 'Chatbase AI';
+  // Fall back to the agent id so the list never shows another product's brand
+  // when settings.title hasn't loaded yet.
+  subtitleEl.textContent = widget.settings.title || widget.agentId;
   contentContainer.appendChild(subtitleEl);
 
   if (thread.timestamp) {
@@ -449,7 +450,7 @@ function getFirstUserMessage(widget, thread) {
   if (!thread.messages || !Array.isArray(thread.messages)) return null;
 
   const firstUserMessage = thread.messages.find(msg => {
-    const messageType = msg.role ? widget._mapRoleToMessageType(msg.role) : msg.type;
+    const messageType = msg.role ? mapRoleToMessageType(msg.role) : msg.type;
     return messageType === CSS_CLASSES.MESSAGE_USER;
   });
 
@@ -493,7 +494,7 @@ export function updateThreadActionButtons(widget) {
   let hasUserMessages = false;
   if (activeThread && Array.isArray(activeThread.messages)) {
     hasUserMessages = activeThread.messages.some(m => {
-      const messageType = m.role ? widget._mapRoleToMessageType(m.role) : m.type;
+      const messageType = m.role ? mapRoleToMessageType(m.role) : m.type;
       return messageType === CSS_CLASSES.MESSAGE_USER;
     });
   }
