@@ -662,14 +662,7 @@ export async function finalizeStreamingMessage(widget) {
   clearSSETimeouts(widget);
   widget.hideLoading();
 
-  let finalMessage = widget.currentStreamedMessage;
-  let shouldShowLeadForm = false;
-
-  if (finalMessage.includes('<ShowLeadForm/>')) {
-    console.log('ShowLeadForm detected in final message! Triggering lead form');
-    finalMessage = finalMessage.replace('<ShowLeadForm/>', '').trim();
-    shouldShowLeadForm = true;
-  }
+  const finalMessage = widget.currentStreamedMessage;
 
   const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
   if (streamingMsgElement && finalMessage !== '') {
@@ -704,11 +697,6 @@ export async function finalizeStreamingMessage(widget) {
   widget.isStreaming = false;
   widget.currentStreamedMessage = '';
   widget.currentStreamedMessageId = null;
-
-  if (shouldShowLeadForm) {
-    console.log('Showing lead form after message finalization');
-    widget._showLeadForm();
-  }
 
   if (widget.chatInput) {
     widget.chatInput.disabled = false;

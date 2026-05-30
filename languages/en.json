@@ -50,32 +50,6 @@
     "retry": "Retry",
     "copied": "Copied!"
   },
-  "lead_form": {
-    "title": "Get in touch",
-    "loading": "Loading form...",
-    "submit": "Submit",
-    "submitting": "Submitting...",
-    "thank_you": "Thank you!",
-    "success_message": "Your information has been received and someone will get back to you soon.",
-    "error_message": "Failed to submit form. Please try again.",
-    "error_load": "Unable to load form. Please try again later.",
-    "fields": {
-      "name": "Name",
-      "email": "Email",
-      "phone": "Phone",
-      "job_title": "Job Title",
-      "company": "Company",
-      "location": "Location",
-      "message": "Message",
-      "enter_name": "Enter your name",
-      "enter_email": "Enter your email",
-      "enter_phone": "Enter your phone number",
-      "enter_job_title": "Enter your job title",
-      "enter_company": "Enter your company name",
-      "enter_location": "Enter your location",
-      "enter_message": "Enter your message"
-    }
-  },
   "handoff": {
     "talk_to_human": "Talk to a human",
     "connecting": "Connecting you to an agent...",
