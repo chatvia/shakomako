@@ -2327,6 +2327,50 @@ body.chatvia-scroll-locked {
   height: 19px;
 }
 
+/* History dot — circular launcher that reopens the slider so the user can
+   see what they wrote earlier. Sized to match the submit button. */
+.chatvia-widget-bar-history-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: all var(--chat-transition-normal);
+  flex-shrink: 0;
+  color: #64748b;
+  padding: 0;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-expanded .chatvia-widget-bar-history-btn {
+  width: 42px;
+  height: 42px;
+}
+
+.chatvia-widget-bar-history-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
+  box-shadow: var(--chat-shadow-sm);
+}
+
+.chatvia-widget-bar-history-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.chatvia-widget-bar-history-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-expanded .chatvia-widget-bar-history-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
 /* Slider Mode - Full Height Panel */
 .chatvia-widget .chatvia-widget-window.chatvia-widget-slider-mode {
   position: fixed;
@@ -2725,6 +2769,16 @@ body.chatvia-scroll-locked {
 .chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-shortcut-hint {
   background: rgba(255, 255, 255, 0.08);
   color: #9aa7bd;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-bar-history-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9aa7bd;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-dark .chatvia-widget-bar-history-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
 }
 /* Markdown-emitted images inside chat bubbles. Sizing used to be an inline
  * `style` attribute on the <img>, dropped now that DOMPurify rejects `style`

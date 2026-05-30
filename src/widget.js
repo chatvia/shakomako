@@ -624,6 +624,14 @@ export class ChatWidget {
       title: t('widget.open_chat')
     });
 
+    this.barHistoryButton = createElement('button', {
+      className: CSS_CLASSES.BAR_HISTORY_BUTTON,
+      'aria-label': t('widget.view_history'),
+      title: t('widget.view_history'),
+      type: 'button'
+    });
+    this.barHistoryButton.appendChild(createIcon('history'));
+
     this.barButton = createElement('button', {
       className: CSS_CLASSES.BAR_BUTTON,
       'aria-label': t('widget.send_message')
@@ -632,6 +640,7 @@ export class ChatWidget {
 
     inputWrapper.appendChild(this.barInput);
     inputWrapper.appendChild(shortcutHint);
+    inputWrapper.appendChild(this.barHistoryButton);
     inputWrapper.appendChild(this.barButton);
     barContainer.appendChild(inputWrapper);
 

@@ -74,6 +74,21 @@ export function setupBarListeners(widget) {
   widget.barButton?.addEventListener('click', async () => {
     await handleBarSubmit(widget);
   });
+
+  // History dot — open the slider panel without sending anything, so the
+  // user can see (and continue) the conversation they already started.
+  // preventDefault on mousedown keeps the input focused: otherwise the input
+  // blurs, the blur handler collapses the bar from 42→36px mid-press, and
+  // mouseup lands outside the shrunken dot so click never fires.
+  widget.barHistoryButton?.addEventListener('mousedown', e => {
+    e.preventDefault();
+  });
+  widget.barHistoryButton?.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!widget.isOpen) {
+      widget.toggleChat(true);
+    }
+  });
 }
 
 /**

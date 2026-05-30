@@ -116,6 +116,7 @@ export const CSS_CLASSES = {
   BAR_INPUT: 'chatvia-widget-bar-input',
   BAR_SHORTCUT_HINT: 'chatvia-widget-shortcut-hint',
   BAR_BUTTON: 'chatvia-widget-bar-btn',
+  BAR_HISTORY_BUTTON: 'chatvia-widget-bar-history-btn',
   // Thread content classes
   THREAD_CONTENT: 'chatvia-widget-thread-content',
   THREAD_SUBTITLE: 'chatvia-widget-thread-subtitle',
