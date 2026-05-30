@@ -10,9 +10,7 @@
     "type_message": "اكتب رسالة...",
     "ask_question": "اطرح سؤالاً...",
     "loading": "جاري التحميل",
-    "search": "بحث",
-    "view_history": "عرض سجل المحادثات",
-    "press_to_toggle": "اضغط للتبديل إلى البحث"
+    "view_history": "عرض سجل المحادثات"
   },
   "menu": {
     "new_chat": "ابدأ محادثة جديدة",

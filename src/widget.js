@@ -23,6 +23,10 @@ import * as config from './state/config.js';
 import * as handoff from './state/handoff.js';
 import { startHeartbeat } from './state/handoff.js';
 
+/** Render modes. `bubble` = chat-bubble launcher, `bar` = floating bar launcher. */
+export const VALID_MODES = ['bubble', 'bar'];
+const DEFAULT_MODE = 'bubble';
+
 export class ChatWidget {
   constructor(agentId, options = {}) {
     this.agentId = agentId;
@@ -39,9 +43,11 @@ export class ChatWidget {
       this.options = options;
     }
 
-    // Mode: 'bubble' (default chat bubble) or 'search' (search bar with slider)
-    this.mode = this.options.mode || 'bubble';
-    this.searchPosition = this.options.position || 'bottom';
+    // Mode: 'bubble' (default chat bubble) or 'bar' (floating launcher bar).
+    // embed.js validates the input attribute; this is a safety net for direct
+    // callers that bypass the loader (e.g. the index.html / bar.html demos).
+    this.mode = ChatWidget._validateMode(this.options.mode);
+    this.barPosition = this.options.position || 'bottom';
     this.language = this.options.language || 'auto';
 
     this.sessionId = null;
@@ -85,6 +91,44 @@ export class ChatWidget {
       return !tabletRegex.test(navigator.userAgent);
     }
     return window.innerWidth <= 768;
+  }
+
+  /**
+   * Clear every setTimeout id stored on the instance under the listed keys,
+   * then null the field. Safe to call with a missing field.
+   */
+  _clearTrackedTimers(keys) {
+    for (const key of keys) {
+      if (this[key]) {
+        clearTimeout(this[key]);
+        this[key] = null;
+      }
+    }
+  }
+
+  /**
+   * Same as `_clearTrackedTimers` for cancelAnimationFrame ids.
+   */
+  _cancelTrackedRafs(keys) {
+    for (const key of keys) {
+      if (this[key]) {
+        cancelAnimationFrame(this[key]);
+        this[key] = null;
+      }
+    }
+  }
+
+  /**
+   * Validate the requested mode and fall back to `bubble` on anything unexpected.
+   * Warns once on invalid input so misconfigured embeds fail loud, not silent.
+   */
+  static _validateMode(rawMode) {
+    if (!rawMode) return DEFAULT_MODE;
+    if (VALID_MODES.includes(rawMode)) return rawMode;
+    console.warn(
+      `chatvia: Invalid mode "${rawMode}". Expected ${VALID_MODES.join(' or ')}. Falling back to "${DEFAULT_MODE}".`
+    );
+    return DEFAULT_MODE;
   }
 
   // ========================================
@@ -378,18 +422,18 @@ export class ChatWidget {
       this._loadExternalLibrariesIfNeeded();
 
       const isFlat = this.isFlat;
-      const isSearchMode = this.mode === 'search';
+      const isBarMode = this.mode === 'bar';
 
       this.container = createElement('div', { className: CSS_CLASSES.WIDGET });
 
-      if (isSearchMode) {
-        this.container.classList.add('chatvia-widget-search-mode');
+      if (isBarMode) {
+        this.container.classList.add('chatvia-widget-bar-mode');
       }
 
       if (!isFlat) {
-        if (isSearchMode) {
-          this.searchBar = this._createSearchBar();
-          this.container.appendChild(this.searchBar);
+        if (isBarMode) {
+          this.bar = this._createBar();
+          this.container.appendChild(this.bar);
         } else {
           this.chatBubble = this._createChatBubble();
           this.container.appendChild(this.chatBubble);
@@ -401,7 +445,9 @@ export class ChatWidget {
 
       this.chatWindow = this._createChatWindow();
 
-      if (isSearchMode) {
+      if (isBarMode) {
+        // The chat window itself opens with a slider animation above the bar;
+        // the mode it lives in is `bar`, but the window-open style is `slider`.
         this.chatWindow.classList.add('chatvia-widget-slider-mode');
       }
 
@@ -412,7 +458,7 @@ export class ChatWidget {
         this.isOpen = true;
         if (this.expandButton) this.expandButton.style.display = 'none';
         if (this.closeButton) this.closeButton.style.display = 'none';
-      } else if (this.isMobileApp && !isSearchMode) {
+      } else if (this.isMobileApp && !isBarMode) {
         this.chatWindow.style.display = 'none';
         this.isOpen = false;
         if (this.expandButton) this.expandButton.style.display = 'none';
@@ -445,54 +491,50 @@ export class ChatWidget {
     return bubble;
   }
 
-  _createSearchBar() {
+  /**
+   * Build the floating bar launcher for `bar` mode. Returns the container
+   * element; instance refs (`barInput`, `barButton`) are stashed so the
+   * controls/events modules can wire interactions to them later.
+   */
+  _createBar() {
     const positionClass =
-      this.searchPosition === 'top'
-        ? CSS_CLASSES.SEARCH_POSITION_TOP
-        : CSS_CLASSES.SEARCH_POSITION_BOTTOM;
-    const searchContainer = createElement('div', {
-      className: `${CSS_CLASSES.SEARCH_CONTAINER} ${positionClass}`
+      this.barPosition === 'top' ? CSS_CLASSES.BAR_POSITION_TOP : CSS_CLASSES.BAR_POSITION_BOTTOM;
+    const barContainer = createElement('div', {
+      className: `${CSS_CLASSES.BAR_CONTAINER} ${positionClass}`
     });
 
     const inputWrapper = createElement('div', {
-      className: CSS_CLASSES.SEARCH_INPUT_WRAPPER
+      className: CSS_CLASSES.BAR_INPUT_WRAPPER
     });
 
     const placeholder =
-      this.settings.welcome_message || this.options.placeholder || 'Ask a question...';
+      this.settings.welcome_message || this.options.placeholder || t('widget.ask_question');
 
-    this.searchInput = createElement('input', {
-      className: CSS_CLASSES.SEARCH_INPUT,
+    this.barInput = createElement('input', {
+      className: CSS_CLASSES.BAR_INPUT,
       type: 'text',
       placeholder: placeholder
     });
 
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const shortcutHint = createElement('span', {
-      className: CSS_CLASSES.SEARCH_SHORTCUT_HINT,
-      textContent: isMac ? '⌘K' : 'Ctrl+K',
-      title: 'Press to toggle search'
+      className: CSS_CLASSES.BAR_SHORTCUT_HINT,
+      textContent: isMac ? t('shortcuts.mac') : t('shortcuts.windows'),
+      title: t('widget.open_chat')
     });
 
-    this.searchButton = createElement('button', {
-      className: CSS_CLASSES.SEARCH_BUTTON,
-      'aria-label': 'Search'
+    this.barButton = createElement('button', {
+      className: CSS_CLASSES.BAR_BUTTON,
+      'aria-label': t('widget.send_message')
     });
-    this.searchButton.appendChild(createIcon('arrow-right'));
+    this.barButton.appendChild(createIcon('arrow-right'));
 
-    this.historyButton = createElement('button', {
-      className: CSS_CLASSES.SEARCH_HISTORY_BUTTON,
-      title: 'View chat history'
-    });
-    this.historyButton.appendChild(createIcon('history'));
-
-    inputWrapper.appendChild(this.searchInput);
+    inputWrapper.appendChild(this.barInput);
     inputWrapper.appendChild(shortcutHint);
-    inputWrapper.appendChild(this.searchButton);
-    inputWrapper.appendChild(this.historyButton);
-    searchContainer.appendChild(inputWrapper);
+    inputWrapper.appendChild(this.barButton);
+    barContainer.appendChild(inputWrapper);
 
-    return searchContainer;
+    return barContainer;
   }
 
   _createMessageBubblesContainer() {

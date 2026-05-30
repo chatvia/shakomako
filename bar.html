@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>Search Widget Demo</title>
+        <title>Bar Widget Demo</title>
         <style>
             * {
                 margin: 0;
@@ -112,14 +112,14 @@
             }
         </style>
         <script type="module">
-          import { SearchWidget } from './src/search.js';
+          import { BarWidget } from './src/bar.js';
           window.onload = async function() {
-            window.searchWidget = new SearchWidget("407f7fdfa1cf18", {
-              position: 'bottom',  // 'top' or 'bottom' for search bar
+            window.barWidget = new BarWidget("407f7fdfa1cf18", {
+              position: 'bottom',  // 'top' or 'bottom' edge for the floating bar
               placeholder: 'Ask a question...'
             });
 
-            await window.searchWidget.init();
+            await window.barWidget.init();
           };
         </script>
     </head>
@@ -138,14 +138,14 @@
           </p>
           <p>
             Whether you're looking for information, need assistance, or want to explore our features,
-            we're here to help. Use the search bar at the top to ask any questions you might have.
+            we're here to help. Use the ask bar at the bottom to ask any questions you might have.
           </p>
         </div>
 
         <div class="content-section">
           <h2>Key Features</h2>
           <ul>
-            <li>Real-time search and instant answers</li>
+            <li>Real-time answers to any question</li>
             <li>Intelligent conversation interface</li>
             <li>24/7 availability</li>
             <li>Secure and private interactions</li>
@@ -156,7 +156,7 @@
         <div class="feature-grid">
           <div class="feature-card">
             <h3>Fast Response</h3>
-            <p>Get instant answers to your questions with our advanced AI-powered search system. No waiting, no delays.</p>
+            <p>Get instant answers to your questions with our advanced AI assistant. No waiting, no delays.</p>
           </div>
 
           <div class="feature-card">
@@ -173,12 +173,12 @@
         <div class="content-section">
           <h2>How It Works</h2>
           <p>
-            Simply type your question in the search bar at the top of the page. Our intelligent system
+            Simply type your question in the ask bar at the bottom of the page. Our intelligent system
             will analyze your query and provide you with the most relevant information instantly.
           </p>
           <p>
             You can ask about our services, features, pricing, or anything else you'd like to know.
-            The search widget is always available and ready to help.
+            The widget is always available and ready to help.
           </p>
         </div>
       </div>

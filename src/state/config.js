@@ -173,8 +173,8 @@ export function applyInputPlaceholder(widget) {
     widget.chatInput.setAttribute('aria-label', placeholder);
   }
 
-  if (widget.searchInput) {
-    widget.searchInput.placeholder = placeholder;
+  if (widget.barInput) {
+    widget.barInput.placeholder = placeholder;
   }
 }
 

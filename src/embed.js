@@ -40,11 +40,56 @@ window.chatvia =
   // Read attributes with data- prefix (HTML5 compliant custom data attributes)
   const agentId = embedScriptTag.getAttribute('data-agent-id');
   const mountId = embedScriptTag.getAttribute('data-mount-id');
-  const type = embedScriptTag.getAttribute('data-type') || 'widget'; // 'widget' or 'search'
   const language = embedScriptTag.getAttribute('data-language') || 'auto';
 
+  // Render mode: 'bubble' (default chat bubble) or 'bar' (floating launcher bar).
+  // data-mode is canonical. data-type is a deprecated alias kept for older
+  // embeds, with this legacy mapping:
+  //   data-type="widget" → bubble
+  //   data-type="search" → bar   (renamed; "search" was misleading — the bar
+  //                               is a generic ask/launcher, not a search box)
+  const VALID_MODES = ['bubble', 'bar'];
+  const rawMode = (embedScriptTag.getAttribute('data-mode') || '').toLowerCase().trim();
+  const rawLegacyType = (embedScriptTag.getAttribute('data-type') || '').toLowerCase().trim();
+  let mode = 'bubble';
+  if (rawMode) {
+    if (VALID_MODES.includes(rawMode)) {
+      mode = rawMode;
+    } else {
+      console.warn(
+        `chatvia: Invalid data-mode "${rawMode}". Expected ${VALID_MODES.join(' or ')}.`
+      );
+    }
+  } else if (rawLegacyType) {
+    console.warn('chatvia: data-type is deprecated; use data-mode="bubble" or "bar" instead.');
+    if (rawLegacyType === 'search') {
+      mode = 'bar';
+    } else if (rawLegacyType === 'widget') {
+      mode = 'bubble';
+    } else {
+      console.warn(`chatvia: Invalid data-type "${rawLegacyType}". Expected widget or search.`);
+    }
+  }
+
+  // Signed bootstrap token for protected agents (is_public = false). The
+  // embedding site signs a short-lived JWT per visitor; the widget exchanges it
+  // once for a session token. Absent for public agents.
+  const auth = embedScriptTag.getAttribute('data-auth');
+
+  // Theme preference: 'auto' (follow OS), 'light', or 'dark'.
+  // Absent/invalid leaves it unset so the widget falls back to its backend setting.
+  const rawTheme = (embedScriptTag.getAttribute('data-theme') || '').toLowerCase().trim();
+  let theme = null;
+  if (rawTheme) {
+    if (['auto', 'light', 'dark'].includes(rawTheme)) {
+      theme = rawTheme;
+    } else {
+      console.warn(`chatvia: Invalid data-theme "${rawTheme}". Expected auto, light, or dark.`);
+    }
+  }
+
   window[namespace].agentId = agentId;
-  window[namespace].type = type;
+  window[namespace].mode = mode;
   window[namespace].language = language;
   if (mountId) window[namespace].mountId = mountId;
 
@@ -95,10 +140,12 @@ window.chatvia =
       const version = versionData.version;
       console.log('chatvia: Using version:', version);
 
-      const bundleFile = type === 'search' ? 'search.min.js' : 'widget.min.js';
-      const scriptId = 'chatvia-embed-script-' + type + '-' + version.replace(/\./g, '-');
+      // One bundle serves every mode; the widget reads window.chatvia.mode to
+      // decide between the chat bubble and the floating bar.
+      const bundleFile = 'widget.min.js';
+      const scriptId = 'chatvia-embed-script-' + version.replace(/\./g, '-');
       const fullScriptUrl = `${primaryHost}/${version}/${bundleFile}`;
-      console.log(`chatvia: Loading ${type} from:`, fullScriptUrl);
+      console.log(`chatvia: Loading ${mode} from:`, fullScriptUrl);
 
       if (document.getElementById(scriptId)) {
         console.log('chatvia: Bundle script tag already exists for version:', version);

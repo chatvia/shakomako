@@ -36,7 +36,7 @@ const server = http.createServer((req, res) => {
 
   let filePath = '.' + req.url;
   if (filePath === './') {
-    filePath = './search.html';
+    filePath = './bar.html';
   }
 
   const extname = String(path.extname(filePath)).toLowerCase();
@@ -60,7 +60,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`\n🚀 Demo server running at http://localhost:${PORT}/`);
-  console.log(`📝 View search widget demo: http://localhost:${PORT}/search.html`);
-  console.log(`📝 View search demo (alt): http://localhost:${PORT}/search-demo.html\n`);
+  console.log(`📝 View bar widget demo: http://localhost:${PORT}/bar.html`);
+  console.log(`📝 View embed demo: http://localhost:${PORT}/embed.html\n`);
 });
 

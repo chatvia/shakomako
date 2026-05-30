@@ -2057,16 +2057,16 @@ body.chatvia-scroll-locked {
 }
 
 /* ============================================
-   SEARCH MODE STYLES
+   BAR MODE STYLES
    ============================================ */
 
-/* Search mode container */
-.chatvia-widget.chatvia-widget-search-mode {
+/* Bar mode container */
+.chatvia-widget.chatvia-widget-bar-mode {
   position: static;
 }
 
-/* Floating Search Bar */
-.chatvia-widget-search-container {
+/* Floating bar */
+.chatvia-widget-bar-container {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
@@ -2078,27 +2078,27 @@ body.chatvia-scroll-locked {
   visibility: visible;
 }
 
-.chatvia-widget-search-container.chatvia-widget-expanded {
+.chatvia-widget-bar-container.chatvia-widget-expanded {
   width: 580px;
   max-width: 90vw;
 }
 
-.chatvia-widget-search-container.chatvia-widget-hidden {
+.chatvia-widget-bar-container.chatvia-widget-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-.chatvia-widget-search-container.chatvia-widget-search-top {
+.chatvia-widget-bar-container.chatvia-widget-bar-top {
   top: 20px;
 }
 
-.chatvia-widget-search-container.chatvia-widget-search-bottom {
+.chatvia-widget-bar-container.chatvia-widget-bar-bottom {
   bottom: 20px;
 }
 
-/* Search Input Wrapper */
-.chatvia-widget-search-input-wrapper {
+/* Bar input wrapper */
+.chatvia-widget-bar-input-wrapper {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2113,22 +2113,22 @@ body.chatvia-scroll-locked {
   -webkit-backdrop-filter: blur(12px);
 }
 
-.chatvia-widget-search-container.chatvia-widget-expanded .chatvia-widget-search-input-wrapper {
+.chatvia-widget-bar-container.chatvia-widget-expanded .chatvia-widget-bar-input-wrapper {
   border-radius: 20px;
   padding: 8px 8px 8px 12px;
   box-shadow: 0 8px 28px -4px rgba(0, 0, 0, 0.16),
     0 4px 10px -2px rgba(0, 0, 0, 0.1);
 }
 
-.chatvia-widget-search-input-wrapper:focus-within {
+.chatvia-widget-bar-input-wrapper:focus-within {
   border-color: color-mix(in srgb, var(--chat-primary, #3b82f6) 50%, transparent);
   box-shadow: 0 8px 28px -4px color-mix(in srgb, var(--chat-primary, #3b82f6) 25%, transparent),
     0 4px 10px -2px rgba(0, 0, 0, 0.08);
   background: #ffffff;
 }
 
-/* Search Input Field */
-.chatvia-widget-search-input {
+/* Bar input field */
+.chatvia-widget-bar-input {
   flex: 1;
   border: none;
   outline: none;
@@ -2140,16 +2140,16 @@ body.chatvia-scroll-locked {
   min-width: 0;
 }
 
-.chatvia-widget-search-container.chatvia-widget-expanded .chatvia-widget-search-input {
+.chatvia-widget-bar-container.chatvia-widget-expanded .chatvia-widget-bar-input {
   font-size: 16px;
   padding: 10px 12px;
 }
 
-.chatvia-widget-search-input::placeholder {
+.chatvia-widget-bar-input::placeholder {
   color: var(--chat-text-muted);
 }
 
-.chatvia-widget-search-input:focus::placeholder {
+.chatvia-widget-bar-input:focus::placeholder {
   color: #cbd5e1;
 }
 
@@ -2173,12 +2173,12 @@ body.chatvia-scroll-locked {
   letter-spacing: 0.5px;
 }
 
-.chatvia-widget-search-container.chatvia-widget-expanded .chatvia-widget-shortcut-hint {
+.chatvia-widget-bar-container.chatvia-widget-expanded .chatvia-widget-shortcut-hint {
   display: none;
 }
 
-/* Search Submit Button */
-.chatvia-widget-search-btn {
+/* Bar submit button */
+.chatvia-widget-bar-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2194,70 +2194,31 @@ body.chatvia-scroll-locked {
   color: white;
 }
 
-.chatvia-widget-search-container.chatvia-widget-expanded .chatvia-widget-search-btn {
+.chatvia-widget-bar-container.chatvia-widget-expanded .chatvia-widget-bar-btn {
   width: 42px;
   height: 42px;
   border-radius: 12px;
 }
 
-.chatvia-widget-search-btn:hover {
+.chatvia-widget-bar-btn:hover {
   transform: translateY(-1px) scale(1.04);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--chat-primary, #3b82f6) 40%, transparent);
 }
 
-.chatvia-widget-search-btn:active {
+.chatvia-widget-bar-btn:active {
   transform: translateY(0) scale(0.97);
 }
 
-.chatvia-widget-search-btn svg {
+.chatvia-widget-bar-btn svg {
   fill: white;
   stroke: white;
   width: 17px;
   height: 17px;
 }
 
-.chatvia-widget-search-container.chatvia-widget-expanded .chatvia-widget-search-btn svg {
+.chatvia-widget-bar-container.chatvia-widget-expanded .chatvia-widget-bar-btn svg {
   width: 19px;
   height: 19px;
-}
-
-/* History Button */
-.chatvia-widget-search-history-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f5f9;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  cursor: pointer;
-  transition: all var(--chat-transition-normal);
-  flex-shrink: 0;
-  color: #64748b;
-}
-
-.chatvia-widget-search-container.chatvia-widget-expanded .chatvia-widget-search-history-btn {
-  width: 42px;
-  height: 42px;
-}
-
-.chatvia-widget-search-history-btn:hover {
-  background: #e2e8f0;
-  color: #475569;
-  transform: translateY(-1px);
-  box-shadow: var(--chat-shadow-sm);
-}
-
-.chatvia-widget-search-history-btn:active {
-  transform: translateY(0) scale(0.97);
-}
-
-.chatvia-widget-search-history-btn svg {
-  fill: currentColor;
-  stroke: currentColor;
-  width: 17px;
-  height: 17px;
 }
 
 /* Slider Mode - Full Height Panel */
@@ -2292,19 +2253,24 @@ body.chatvia-scroll-locked {
   border-radius: 0;
 }
 
+/* Expand has no effect on the full-height slider, so hide it in bar mode */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-slider-mode .chatvia-widget-expand-btn {
+  display: none;
+}
+
 /* Slider expanded state */
 .chatvia-widget .chatvia-widget-window.chatvia-widget-slider-mode.chatvia-widget-expanded {
   width: 700px;
 }
 
-/* Mobile responsiveness for search mode */
+/* Mobile responsiveness for bar mode */
 @media (max-width: 768px) {
-  .chatvia-widget-search-container {
+  .chatvia-widget-bar-container {
     width: 280px;
     max-width: calc(100vw - 32px);
   }
 
-  .chatvia-widget-search-container.chatvia-widget-expanded {
+  .chatvia-widget-bar-container.chatvia-widget-expanded {
     width: calc(100vw - 32px);
   }
 
@@ -2317,7 +2283,7 @@ body.chatvia-scroll-locked {
     width: 100%;
   }
 
-  .chatvia-widget-search-input {
+  .chatvia-widget-bar-input {
     font-size: 16px;
     /* Prevent zoom on iOS */
   }

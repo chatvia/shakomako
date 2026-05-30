@@ -17,9 +17,14 @@ import { ChatWidget } from './widget.js';
   console.log(`chatvia: Instantiating ChatWidget from main.js for client ${clientId}`);
 
   try {
+    // Mode is validated in embed.js; default here is a safety net for direct
+    // callers that bypass the embed script.
     const options = {
       mountId: window[namespace].mountId,
-      language: window[namespace].language
+      language: window[namespace].language,
+      theme: window[namespace].theme,
+      auth: window[namespace].auth,
+      mode: window[namespace].mode || 'bubble'
     };
     const widgetInstance = new ChatWidget(clientId, options);
 

@@ -31,7 +31,6 @@ export default defineConfig(({ command, mode }) => {
       rollupOptions: {
         input: {
           widget: 'src/main.js',
-          search: 'src/search.js',
           embed: 'src/embed.js'
         },
         output: [
@@ -41,13 +40,6 @@ export default defineConfig(({ command, mode }) => {
             sourcemap: false,
             compact: true,
             name: 'ChatWidgetBundle'
-          },
-          {
-            entryFileNames: `${env.VITE_APP_VERSION}/search.min.js`,
-            format: 'iife',
-            sourcemap: false,
-            compact: true,
-            name: 'SearchWidgetBundle'
           },
           {
             entryFileNames: 'embed.js',

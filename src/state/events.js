@@ -13,8 +13,8 @@ export function setupEventListeners(widget) {
   // remove them in a single abort() — element-scoped listeners die with the DOM.
   if (!widget._eventController) widget._eventController = new AbortController();
 
-  if (widget.mode === 'search') {
-    setupSearchBarListeners(widget);
+  if (widget.mode === 'bar') {
+    setupBarListeners(widget);
   } else {
     setupBubbleListeners(widget);
   }
@@ -39,68 +39,58 @@ export function setupBubbleListeners(widget) {
 }
 
 /**
- * Setup search bar listeners
+ * Wire up interactions for the floating bar launcher (bar mode).
+ * The bar expands on focus/click, contracts on blur (when the panel is
+ * closed), and submits on Enter or button click.
  */
-export function setupSearchBarListeners(widget) {
-  // Expand search bar on focus
-  widget.searchInput?.addEventListener('focus', () => {
-    widget.searchBar?.classList.add('chatvia-widget-expanded');
+export function setupBarListeners(widget) {
+  // Expand on focus
+  widget.barInput?.addEventListener('focus', () => {
+    widget.bar?.classList.add('chatvia-widget-expanded');
   });
 
-  // Contract search bar on blur (if panel is not open)
-  widget.searchInput?.addEventListener('blur', () => {
+  // Contract on blur (only while the chat panel is closed)
+  widget.barInput?.addEventListener('blur', () => {
     if (!widget.isOpen) {
-      widget.searchBar?.classList.remove('chatvia-widget-expanded');
+      widget.bar?.classList.remove('chatvia-widget-expanded');
     }
   });
 
-  // Also expand on click anywhere in the search bar
-  widget.searchBar?.addEventListener('click', () => {
-    widget.searchBar?.classList.add('chatvia-widget-expanded');
-    widget.searchInput?.focus();
+  // Clicking anywhere on the bar focuses the input
+  widget.bar?.addEventListener('click', () => {
+    widget.bar?.classList.add('chatvia-widget-expanded');
+    widget.barInput?.focus();
   });
 
-  // Search input - submit on Enter
-  widget.searchInput?.addEventListener('keydown', async e => {
+  // Enter submits
+  widget.barInput?.addEventListener('keydown', async e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      await handleSearchSubmit(widget);
+      await handleBarSubmit(widget);
     }
   });
 
-  // Search button click
-  widget.searchButton?.addEventListener('click', async () => {
-    await handleSearchSubmit(widget);
-  });
-
-  // History button - open panel with thread list
-  widget.historyButton?.addEventListener('click', () => {
-    widget.toggleChat(true);
-    showThreadsList(widget);
+  // Submit button click
+  widget.barButton?.addEventListener('click', async () => {
+    await handleBarSubmit(widget);
   });
 }
 
 /**
- * Handle search submit
+ * Process a submission from the bar: open the chat panel and send the query
+ * as the first message.
  */
-async function handleSearchSubmit(widget) {
-  const query = widget.searchInput?.value?.trim();
+async function handleBarSubmit(widget) {
+  const query = widget.barInput?.value?.trim();
   if (!query) return;
 
-  widget.searchInput.value = '';
+  widget.barInput.value = '';
 
   if (!widget.isOpen) {
     widget.toggleChat(true);
   }
 
   await widget.sendUserMessage(query);
-}
-
-/**
- * Show threads list
- */
-function showThreadsList(widget) {
-  widget.toggleMenuDropdown();
 }
 
 /**
@@ -203,82 +193,87 @@ export function setupKeyboardShortcuts(widget) {
   widget._historyIndex = -1;
   widget._userInputHistory = [];
 
-  document.addEventListener('keydown', e => {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+  document.addEventListener(
+    'keydown',
+    e => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifierKey = isMac ? e.metaKey : e.ctrlKey;
 
-    // Cmd/Ctrl + K to toggle search/chat
-    if (modifierKey && e.key.toLowerCase() === 'k') {
-      e.preventDefault();
-      
-      if (widget.mode === 'search') {
-        if (widget.isOpen) {
-          widget.toggleChat(false);
-        } else if (widget.searchBar?.classList.contains('chatvia-widget-expanded')) {
-          widget.searchBar.classList.remove('chatvia-widget-expanded');
-          widget.searchInput?.blur();
-        } else {
-          widget.searchBar?.classList.add('chatvia-widget-expanded');
-          widget.searchInput?.focus();
-        }
-      } else {
-        widget.toggleChat();
-        if (widget.isOpen) {
-          setTimeout(() => widget.chatInput?.focus(), 100);
-        }
-      }
-      return;
-    }
-
-    // Escape to close panel
-    if (e.key === 'Escape') {
-      if (widget.menuDropdownIsOpened()) {
-        widget.closeMenuDropdown();
-        return;
-      }
-      if (widget.isOpen) {
+      // Cmd/Ctrl + K to toggle the bar/chat launcher
+      if (modifierKey && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        widget.toggleChat(false);
-        return;
-      }
-      if (widget.mode === 'search' && widget.searchBar?.classList.contains('chatvia-widget-expanded')) {
-        widget.searchBar.classList.remove('chatvia-widget-expanded');
-        widget.searchInput?.blur();
-        return;
-      }
-    }
 
-    // Arrow up/down to navigate user message history
-    const activeElement = document.activeElement;
-    const isInputFocused = activeElement === widget.chatInput || activeElement === widget.searchInput;
-    
-    if (isInputFocused && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-      const userMessages = getUserMessageHistory(widget);
-      if (userMessages.length === 0) return;
-
-      e.preventDefault();
-
-      if (e.key === 'ArrowUp') {
-        if (widget._historyIndex < userMessages.length - 1) {
-          if (widget._historyIndex === -1) {
-            widget._savedInput = activeElement.value;
+        if (widget.mode === 'bar') {
+          if (widget.isOpen) {
+            widget.toggleChat(false);
+          } else if (widget.bar?.classList.contains('chatvia-widget-expanded')) {
+            widget.bar.classList.remove('chatvia-widget-expanded');
+            widget.barInput?.blur();
+          } else {
+            widget.bar?.classList.add('chatvia-widget-expanded');
+            widget.barInput?.focus();
           }
-          widget._historyIndex++;
-          activeElement.value = userMessages[userMessages.length - 1 - widget._historyIndex];
+        } else {
+          widget.toggleChat();
+          if (widget.isOpen) {
+            setTimeout(() => widget.chatInput?.focus(), 100);
+          }
         }
-      } else if (e.key === 'ArrowDown') {
-        if (widget._historyIndex > 0) {
-          widget._historyIndex--;
-          activeElement.value = userMessages[userMessages.length - 1 - widget._historyIndex];
-        } else if (widget._historyIndex === 0) {
-          widget._historyIndex = -1;
-          activeElement.value = widget._savedInput || '';
+        return;
+      }
+
+      // Escape to close panel
+      if (e.key === 'Escape') {
+        if (widget.menuDropdownIsOpened()) {
+          widget.closeMenuDropdown();
+          return;
+        }
+        if (widget.isOpen) {
+          e.preventDefault();
+          widget.toggleChat(false);
+          return;
+        }
+        if (widget.mode === 'bar' && widget.bar?.classList.contains('chatvia-widget-expanded')) {
+          widget.bar.classList.remove('chatvia-widget-expanded');
+          widget.barInput?.blur();
+          return;
         }
       }
 
-      activeElement.selectionStart = activeElement.selectionEnd = activeElement.value.length;
-    }
-  }, { signal: widget._eventController?.signal });
+      // Arrow up/down to navigate user message history
+      const activeElement = document.activeElement;
+      const isInputFocused =
+        activeElement === widget.chatInput || activeElement === widget.barInput;
+
+      if (isInputFocused && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        const userMessages = getUserMessageHistory(widget);
+        if (userMessages.length === 0) return;
+
+        e.preventDefault();
+
+        if (e.key === 'ArrowUp') {
+          if (widget._historyIndex < userMessages.length - 1) {
+            if (widget._historyIndex === -1) {
+              widget._savedInput = activeElement.value;
+            }
+            widget._historyIndex++;
+            activeElement.value = userMessages[userMessages.length - 1 - widget._historyIndex];
+          }
+        } else if (e.key === 'ArrowDown') {
+          if (widget._historyIndex > 0) {
+            widget._historyIndex--;
+            activeElement.value = userMessages[userMessages.length - 1 - widget._historyIndex];
+          } else if (widget._historyIndex === 0) {
+            widget._historyIndex = -1;
+            activeElement.value = widget._savedInput || '';
+          }
+        }
+
+        activeElement.selectionStart = activeElement.selectionEnd = activeElement.value.length;
+      }
+    },
+    { signal: widget._eventController?.signal }
+  );
 
   // Reset history index when user types
   const resetHistoryIndex = () => {
@@ -287,8 +282,8 @@ export function setupKeyboardShortcuts(widget) {
   };
 
   widget.chatInput?.addEventListener('input', resetHistoryIndex);
-  widget.searchInput?.addEventListener('input', resetHistoryIndex);
-  
+  widget.barInput?.addEventListener('input', resetHistoryIndex);
+
   // Window resize listener to recalculate dynamic widget height
   let resizeTimeout;
   window.addEventListener('resize', () => {

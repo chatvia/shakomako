@@ -22,26 +22,28 @@ export function toggleChat(widget, open) {
     widget.mode
   );
   widget.isOpen = typeof open === 'boolean' ? open : !widget.isOpen;
-  const isSearchMode = widget.mode === 'search';
+  const isBarMode = widget.mode === 'bar';
 
   if (widget.isOpen) {
     widget.chatWindow?.classList.add(CSS_CLASSES.WINDOW_OPEN);
 
-    if (isSearchMode) {
-      widget.searchBar?.classList.add('chatvia-widget-hidden');
+    if (isBarMode) {
+      widget.bar?.classList.add('chatvia-widget-hidden');
     } else {
       widget.chatBubble?.classList.add(CSS_CLASSES.BUBBLE_ACTIVE);
       stopMessageBubbles(widget);
     }
 
-    if (widget.settings.is_fullscreen && !isSearchMode) {
+    if (widget.settings.is_fullscreen && !isBarMode) {
       widget.container.classList.add(CSS_CLASSES.FULLSCREEN);
       if (widget.chatBubble) {
         widget.chatBubble.style.display = 'none';
       }
     }
 
-    if (widget.settings.is_fullscreen || widget.isMobileApp || isSearchMode) {
+    // Bar mode is a self-contained fixed-position panel — it must not touch
+    // the host page. Only lock the host scroll for true fullscreen/mobile.
+    if (widget.settings.is_fullscreen || widget.isMobileApp) {
       lockBodyScroll(widget);
     }
 
@@ -57,8 +59,8 @@ export function toggleChat(widget, open) {
   } else {
     widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
 
-    if (isSearchMode) {
-      widget.searchBar?.classList.remove('chatvia-widget-hidden', 'chatvia-widget-expanded');
+    if (isBarMode) {
+      widget.bar?.classList.remove('chatvia-widget-hidden', 'chatvia-widget-expanded');
     } else {
       widget.chatBubble?.classList.remove(CSS_CLASSES.BUBBLE_ACTIVE);
       if (widget.settings.is_fullscreen) {
@@ -69,7 +71,7 @@ export function toggleChat(widget, open) {
       }
     }
 
-    if (widget.settings.is_fullscreen || widget.isMobileApp || isSearchMode) {
+    if (widget.settings.is_fullscreen || widget.isMobileApp) {
       unlockBodyScroll(widget);
     }
   }
