@@ -7,51 +7,10 @@ import { CSS_CLASSES, DEFAULT_AVATAR_SVG, STREAMING_FINALIZE_TIMEOUT, debug } fr
 import { createElement, createIcon } from '../ui.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
 import { t } from '../i18n.js';
-import { parseMarkdown as parseMarkdownRaw } from '../markdown.js';
-import DOMPurify from 'dompurify';
-
-// DOMPurify configuration for sanitizing HTML
-const DOMPURIFY_CONFIG = {
-  ALLOWED_TAGS: [
-    'a', 'b', 'br', 'code', 'del', 'div', 'em', 'h1', 'h2', 'h3',
-    'h4', 'h5', 'h6', 'hr', 'i', 'img', 'li', 'ol', 'p', 'pre',
-    'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr',
-    'ul', 'span', 'blockquote'
-  ],
-  ALLOWED_ATTR: ['href', 'target', 'class', 'rel', 'colspan', 'rowspan', 'style', 'src', 'alt'],
-  ADD_ATTR: ['target', 'rel']
-};
-
-/**
- * Parse markdown text to HTML (synchronous, no dynamic imports)
- */
-export function parseMarkdown(text) {
-  if (!text) return '';
-
-  try {
-    // Parse markdown to HTML
-    let html = parseMarkdownRaw(text);
-    // Sanitize the HTML for security
-    html = DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
-    return html;
-  } catch (error) {
-    console.error('Error parsing markdown:', error);
-    return escapeHtml(text);
-  }
-}
-
-/**
- * Escape HTML entities (fallback)
- */
-export function escapeHtml(text) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-    .replace(/\n/g, '<br>');
-}
+// Canonical markdown impl lives in markdown.js. Import for local use, and
+// re-export so existing call sites that go through messages.js keep working.
+import { parseMarkdown, escapeHtml } from '../markdown.js';
+export { parseMarkdown, escapeHtml };
 
 /**
  * Add a message to the chat
