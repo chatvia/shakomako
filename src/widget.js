@@ -149,6 +149,11 @@ export class ChatWidget {
 
   async _initialize() {
     try {
+      // Show a centered spinner immediately so the corner isn't blank while the
+      // session + settings requests are in flight. Removed once the real widget
+      // mounts (after applyConfiguration), so the launcher swaps in seamlessly.
+      this._showBootLoader();
+
       // Initialize i18n system first
       await initI18n({ language: this.language });
 
@@ -171,6 +176,10 @@ export class ChatWidget {
       await this._createWidgetElements();
 
       await this.applyConfiguration();
+
+      // Real widget is mounted and styled — fade out the boot spinner.
+      this._hideBootLoader();
+
       this._setupEventListeners();
       this.setupSSE();
       await this.loadActiveThread();
@@ -195,6 +204,7 @@ export class ChatWidget {
       }, 300);
     } catch (error) {
       console.error('Error during async initialization:', error);
+      this._hideBootLoader();
       await this.disabledChat(t('errors.initialization_failed'));
       throw error;
     }
@@ -412,6 +422,50 @@ export class ChatWidget {
   // ========================================
   // UI Element Creation
   // ========================================
+
+  _showBootLoader() {
+    if (this._bootLoader) return;
+
+    const loader = createElement('div', { className: 'chatvia-widget-boot' });
+    loader.appendChild(createElement('div', { className: 'chatvia-widget-boot-spinner' }));
+
+    const mountEl = this.isFlat && this.mountId ? document.getElementById(this.mountId) : null;
+    if (mountEl) {
+      loader.classList.add('chatvia-widget-boot-flat');
+      // inset:0 needs a positioned ancestor; only touch a static mount, and
+      // restore it in _hideBootLoader so we don't permanently alter the host.
+      if (window.getComputedStyle(mountEl).position === 'static') {
+        mountEl.style.position = 'relative';
+        this._bootLoaderMountFixed = mountEl;
+      }
+      mountEl.appendChild(loader);
+    } else {
+      document.body.appendChild(loader);
+    }
+
+    this._bootLoader = loader;
+  }
+
+  _hideBootLoader() {
+    const loader = this._bootLoader;
+    if (!loader) return;
+    this._bootLoader = null;
+
+    let done = false;
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      loader.remove();
+      if (this._bootLoaderMountFixed) {
+        this._bootLoaderMountFixed.style.position = '';
+        this._bootLoaderMountFixed = null;
+      }
+    };
+
+    loader.classList.add('chatvia-widget-boot-hiding');
+    loader.addEventListener('transitionend', cleanup, { once: true });
+    setTimeout(cleanup, 300); // fallback if transitionend doesn't fire
+  }
 
   async _createWidgetElements() {
     return new Promise(resolve => {
@@ -966,6 +1020,16 @@ export class ChatWidget {
     handoff.disconnectPusher(this);
 
     controls.unlockBodyScroll(this);
+
+    // Remove the boot spinner if destroy() lands mid-init.
+    if (this._bootLoader) {
+      this._bootLoader.remove();
+      this._bootLoader = null;
+    }
+    if (this._bootLoaderMountFixed) {
+      this._bootLoaderMountFixed.style.position = '';
+      this._bootLoaderMountFixed = null;
+    }
 
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
