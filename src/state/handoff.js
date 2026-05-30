@@ -3,6 +3,8 @@
  * Handles switching between AI (SSE) and Human Agent (WebSocket/Pusher) modes
  */
 
+/* global __API_URL__, __DEV__, __REVERB_APP_KEY__, __REVERB_HOST__, __REVERB_PORT__, __REVERB_SCHEME__ */
+
 import { CSS_CLASSES } from '../utils.js';
 import { t } from '../i18n.js';
 import { authHeaders } from '../auth.js';
@@ -16,10 +18,10 @@ export const HANDOFF_MODE = {
 
 // Handoff status from server
 export const HANDOFF_STATUS = {
-  PENDING: 'pending',  // Waiting for agent
-  HUMAN: 'human',      // Connected to human agent
+  PENDING: 'pending', // Waiting for agent
+  HUMAN: 'human', // Connected to human agent
   RETURNED: 'returned', // Returned to AI
-  AI: 'ai'             // AI mode (same as returned)
+  AI: 'ai' // AI mode (same as returned)
 };
 
 // Heartbeat interval (30 seconds)
@@ -80,7 +82,6 @@ async function sendHeartbeat(widget) {
   }
 
   try {
-    /* global __API_URL__ */
     await fetch(`${__API_URL__}/heartbeat`, {
       method: 'POST',
       headers: {
@@ -114,7 +115,6 @@ export async function markMessagesAsRead(widget) {
   }
 
   try {
-    /* global __API_URL__ */
     await fetch(`${__API_URL__}/mark-read`, {
       method: 'POST',
       headers: {
@@ -138,7 +138,6 @@ export async function markMessagesAsRead(widget) {
  */
 export async function checkHandoffStatus(widget) {
   try {
-    /* global __API_URL__ */
     const conversationId = widget.getCurrentActiveThreadId();
     if (!conversationId) {
       return null;
@@ -267,7 +266,8 @@ export async function switchToPendingMode(widget, serverMessage) {
   widget.handoffMode = HANDOFF_MODE.PENDING;
 
   // Show notification message
-  const notificationMessage = serverMessage || 'Your request has been sent. Please wait for an agent to connect.';
+  const notificationMessage =
+    serverMessage || 'Your request has been sent. Please wait for an agent to connect.';
   await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, notificationMessage, false);
 
   // Connect to WebSocket to listen for handoff event
@@ -407,7 +407,6 @@ export async function endLiveChat(widget) {
   if (widget.handoffMode !== HANDOFF_MODE.HUMAN) return;
 
   try {
-    /* global __API_URL__ */
     const conversationId = widget.conversationId || widget.getCurrentActiveThreadId();
 
     // Notify backend that user ended the chat
@@ -429,12 +428,11 @@ export async function endLiveChat(widget) {
     }
 
     // Switch back to AI mode
-    await switchToAIMode(widget, 'You ended the live chat. You\'re now back with our AI assistant.');
-
+    await switchToAIMode(widget, "You ended the live chat. You're now back with our AI assistant.");
   } catch (error) {
     console.error('Error ending live chat:', error);
     // Still switch to AI mode even if the request failed
-    await switchToAIMode(widget, 'Connection ended. You\'re now back with our AI assistant.');
+    await switchToAIMode(widget, "Connection ended. You're now back with our AI assistant.");
   }
 }
 
@@ -469,19 +467,38 @@ export async function connectPusher(widget) {
   try {
     const Pusher = await loadPusherLibrary();
 
-    /* global __REVERB_APP_KEY__, __REVERB_HOST__, __REVERB_PORT__, __REVERB_SCHEME__, __DEV__ */
     // Dev fallbacks for local development with Laravel Herd
     const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : true;
     const devAppKey = 'laravel-herd';
     const devHost = 'reverb.herd.test';
 
-    const appKey = typeof __REVERB_APP_KEY__ !== 'undefined' && __REVERB_APP_KEY__ ? __REVERB_APP_KEY__ : (isDev ? devAppKey : null);
-    const wsHost = typeof __REVERB_HOST__ !== 'undefined' && __REVERB_HOST__ ? __REVERB_HOST__ : (isDev ? devHost : null);
-    const wsPort = parseInt(typeof __REVERB_PORT__ !== 'undefined' && __REVERB_PORT__ ? __REVERB_PORT__ : 443, 10);
-    const scheme = typeof __REVERB_SCHEME__ !== 'undefined' && __REVERB_SCHEME__ ? __REVERB_SCHEME__ : 'https';
+    const appKey =
+      typeof __REVERB_APP_KEY__ !== 'undefined' && __REVERB_APP_KEY__
+        ? __REVERB_APP_KEY__
+        : isDev
+          ? devAppKey
+          : null;
+    const wsHost =
+      typeof __REVERB_HOST__ !== 'undefined' && __REVERB_HOST__
+        ? __REVERB_HOST__
+        : isDev
+          ? devHost
+          : null;
+    const wsPort = parseInt(
+      typeof __REVERB_PORT__ !== 'undefined' && __REVERB_PORT__ ? __REVERB_PORT__ : 443,
+      10
+    );
+    const scheme =
+      typeof __REVERB_SCHEME__ !== 'undefined' && __REVERB_SCHEME__ ? __REVERB_SCHEME__ : 'https';
     const forceTLS = scheme === 'https';
 
-    console.log('[Handoff] WebSocket config:', { appKey: appKey ? '***' : 'MISSING', wsHost, wsPort, scheme, isDev });
+    console.log('[Handoff] WebSocket config:', {
+      appKey: appKey ? '***' : 'MISSING',
+      wsHost,
+      wsPort,
+      scheme,
+      isDev
+    });
 
     // No WebSocket config = no live chat capability
     if (!appKey || !wsHost) {
@@ -489,7 +506,6 @@ export async function connectPusher(widget) {
       return;
     }
 
-    /* global __API_URL__ */
     const apiUrl = __API_URL__;
 
     // Create Pusher client if not exists
@@ -520,7 +536,7 @@ export async function connectPusher(widget) {
       });
 
       // Handle connection state changes
-      widget.pusherClient.connection.bind('state_change', (states) => {
+      widget.pusherClient.connection.bind('state_change', states => {
         console.log('[Handoff] Connection state:', states.previous, '->', states.current);
       });
 
@@ -528,7 +544,7 @@ export async function connectPusher(widget) {
         console.log('[Handoff] WebSocket connected!');
       });
 
-      widget.pusherClient.connection.bind('error', (err) => {
+      widget.pusherClient.connection.bind('error', err => {
         console.error('[Handoff] WebSocket error:', err);
       });
     }
@@ -566,44 +582,43 @@ function subscribeToChannel(widget) {
   widget.pusherChannel = widget.pusherClient.subscribe(channelName);
 
   // Bind channel events
-  widget.pusherChannel.bind('pusher:subscription_succeeded', async (members) => {
+  widget.pusherChannel.bind('pusher:subscription_succeeded', async members => {
     console.log('[Handoff] Channel subscription succeeded. Members:', members);
 
     // Immediately check handoff status to sync UI state
     // This handles cases where takeover happened before we subscribed
     await checkHandoffStatus(widget);
   });
-  widget.pusherChannel.bind('pusher:subscription_error', (error) => {
+  widget.pusherChannel.bind('pusher:subscription_error', error => {
     console.error('[Handoff] Channel subscription error:', error);
   });
 
   // Listen for messages from admin (Reverb sends WITHOUT leading dot)
-  widget.pusherChannel.bind('message', (data) => {
+  widget.pusherChannel.bind('message', data => {
     console.log('[Handoff] Received message event:', data);
     handleWebSocketMessage(widget, data);
   });
 
   // Listen for typing indicators (server broadcast)
-  widget.pusherChannel.bind('typing', (data) => {
+  widget.pusherChannel.bind('typing', data => {
     console.log('[Handoff] Received typing event:', data);
     handleTypingEvent(widget, data);
   });
 
   // Also listen for client-side typing (whispers from admin)
-  widget.pusherChannel.bind('client-typing', (data) => {
+  widget.pusherChannel.bind('client-typing', data => {
     console.log('[Handoff] Received client-typing whisper:', data);
     handleTypingEvent(widget, data);
   });
 
   // Listen for handoff status changes (Reverb sends WITHOUT leading dot)
-  widget.pusherChannel.bind('handoff', (data) => {
+  widget.pusherChannel.bind('handoff', data => {
     console.log('[Handoff] ⚡ Received handoff event via WebSocket:', data);
     handleHandoffEvent(widget, data);
   });
 
   console.log('[Handoff] ✅ All event bindings set up for channel:', channelName);
 }
-
 
 /**
  * Disconnect from Pusher completely
@@ -846,7 +861,6 @@ function whisperTyping(widget, isTyping) {
  */
 async function postTypingStatus(widget, isTyping) {
   try {
-    /* global __API_URL__ */
     await fetch(`${__API_URL__}/typing`, {
       method: 'POST',
       headers: {
@@ -872,7 +886,6 @@ export async function sendMessageInHumanMode(widget, text) {
   sendTypingIndicator(widget, false);
 
   try {
-    /* global __API_URL__ */
     const response = await fetch(`${__API_URL__}/stream`, {
       method: 'POST',
       headers: {
@@ -1130,7 +1143,7 @@ export function createTalkToHumanButton(widget, onClick) {
   button.title = 'Request human assistance';
   button.type = 'button';
 
-  button.addEventListener('click', async (e) => {
+  button.addEventListener('click', async e => {
     e.preventDefault();
     if (onClick) {
       await onClick();
@@ -1179,4 +1192,3 @@ export async function checkAndSyncHandoffState(widget) {
   const status = await checkHandoffStatus(widget);
   return status;
 }
-

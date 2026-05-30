@@ -32,7 +32,9 @@ window.chatvia =
   }
 
   if (!embedScriptTag) {
-    console.error('chatvia: Could not find embed script tag. Make sure the script has id="chatbot-embed-script" or data-agent-id attribute.');
+    console.error(
+      'chatvia: Could not find embed script tag. Make sure the script has id="chatbot-embed-script" or data-agent-id attribute.'
+    );
     window[namespace].error = 'Could not find embed script tag.';
     return;
   }
@@ -97,7 +99,7 @@ window.chatvia =
 
   /* global __SCRIPT_URL__ */
   // Determine script host: use __SCRIPT_URL__ if set, otherwise detect from script src
-  let scriptHost = __SCRIPT_URL__;
+  const scriptHost = __SCRIPT_URL__;
 
   // Function to detect script host from embed script's src attribute (fallback)
   function detectScriptHostFromSrc() {
@@ -130,10 +132,16 @@ window.chatvia =
 
       // Fetch current version from version.json with cache busting
       const versionResponse = await fetch(versionUrl);
-      console.log('chatvia: Version response status:', versionResponse.status, versionResponse.statusText);
+      console.log(
+        'chatvia: Version response status:',
+        versionResponse.status,
+        versionResponse.statusText
+      );
 
       if (!versionResponse.ok) {
-        throw new Error(`Failed to fetch version.json: ${versionResponse.status} ${versionResponse.statusText}`);
+        throw new Error(
+          `Failed to fetch version.json: ${versionResponse.status} ${versionResponse.statusText}`
+        );
       }
 
       const versionData = await versionResponse.json();

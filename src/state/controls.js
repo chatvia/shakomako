@@ -346,9 +346,9 @@ export function autoResizeInput(widget) {
 
     const startersHeight =
       widget.startersContainer &&
-        widget.startersVisible &&
-        widget.settings.starters &&
-        widget.settings.starters.length > 0
+      widget.startersVisible &&
+      widget.settings.starters &&
+      widget.settings.starters.length > 0
         ? widget.startersContainer.offsetHeight
         : 0;
 
@@ -393,18 +393,23 @@ export function unlockBodyScroll(widget) {
 export function stopMessageBubbles(widget) {
   if (widget.messageBubblesContainer) {
     // Fade out all bubbles with animation
-    const bubbles = widget.messageBubblesContainer.querySelectorAll('.chatvia-widget-floating-bubble');
+    const bubbles = widget.messageBubblesContainer.querySelectorAll(
+      '.chatvia-widget-floating-bubble'
+    );
     bubbles.forEach((bubble, index) => {
       bubble.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
       bubble.style.opacity = '0';
       bubble.style.transform = 'scale(0.9) translateY(10px)';
 
       // Remove after animation completes
-      setTimeout(() => {
-        if (bubble.parentNode) {
-          bubble.parentNode.removeChild(bubble);
-        }
-      }, 300 + (index * 50)); // Stagger the removal
+      setTimeout(
+        () => {
+          if (bubble.parentNode) {
+            bubble.parentNode.removeChild(bubble);
+          }
+        },
+        300 + index * 50
+      ); // Stagger the removal
     });
 
     // Also stop any pending bubble timeouts
@@ -447,4 +452,3 @@ export async function disabledChat(widget, message = 'Chat disabled') {
   clearMessages(widget);
   await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, message, false);
 }
-

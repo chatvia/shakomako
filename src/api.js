@@ -32,7 +32,7 @@ export default async function api({ endpoint, method, headers = {}, body = null 
       // Add timeout via AbortController for better error handling
       signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined
     });
-    
+
     return response;
   } catch (error) {
     // Re-throw with more context

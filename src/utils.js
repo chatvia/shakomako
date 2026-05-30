@@ -94,7 +94,8 @@ export const CSS_CLASSES = {
   THREAD_TITLE: 'chatvia-widget-thread-title',
   THREAD_DATE: 'chatvia-widget-thread-date',
   STREAMING_MESSAGE: 'chatvia-widget-streaming-msg',
-  STREAMING_MESSAGE_CLASS: 'chatvia-widget-message chatvia-widget-assistant chatvia-widget-streaming',
+  STREAMING_MESSAGE_CLASS:
+    'chatvia-widget-message chatvia-widget-assistant chatvia-widget-streaming',
   MESSAGE_BUBBLES_CONTAINER: 'chatvia-widget-msg-bubbles',
   FLOATING_BUBBLE: 'chatvia-widget-floating-bubble',
   FLOATING_BUBBLE_SHOW: 'chatvia-widget-bubble-show',

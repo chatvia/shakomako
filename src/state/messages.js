@@ -40,10 +40,17 @@ export async function addMessage(widget, type, text, addToHistory = true, option
 
   // Add action buttons for AI assistant messages only (not human agent messages)
   // Timestamp goes inside actions for AI messages, standalone otherwise
-  const hasActions = type === CSS_CLASSES.MESSAGE_AGENT && text && !options.hideActions && !isHumanAgentMessage;
+  const hasActions =
+    type === CSS_CLASSES.MESSAGE_AGENT && text && !options.hideActions && !isHumanAgentMessage;
 
   if (hasActions) {
-    const actionsContainer = createMessageActions(widget, text, options.messageId, options.feedback, options.timestamp);
+    const actionsContainer = createMessageActions(
+      widget,
+      text,
+      options.messageId,
+      options.feedback,
+      options.timestamp
+    );
     message.appendChild(actionsContainer);
   } else if (options.timestamp || options.isHuman) {
     // Standalone timestamp for user messages and human agent messages
@@ -391,9 +398,15 @@ export async function sendUserMessage(widget, customText) {
     const success = await sendMessageInHumanMode(widget, text);
 
     if (!success) {
-      const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
-        retryText: text
-      });
+      const el = await addMessage(
+        widget,
+        CSS_CLASSES.MESSAGE_SYSTEM,
+        'Failed to send message. Please try again.',
+        false,
+        {
+          retryText: text
+        }
+      );
       el?.classList.add('error');
     }
 
@@ -418,9 +431,15 @@ export async function sendUserMessage(widget, customText) {
     console.error('SSE client not initialized.');
     clearTimeout(widget._loadingTimeout);
     widget.hideLoading();
-    const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'SSE client error. Cannot send message.', false, {
-      retryText: text
-    });
+    const el = await addMessage(
+      widget,
+      CSS_CLASSES.MESSAGE_SYSTEM,
+      'SSE client error. Cannot send message.',
+      false,
+      {
+        retryText: text
+      }
+    );
     el?.classList.add('error');
     return;
   }
@@ -447,9 +466,15 @@ export async function sendUserMessage(widget, customText) {
     console.error('Failed to send message via SSE.');
     clearTimeout(widget._loadingTimeout);
     widget.hideLoading();
-    const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to send message. Please try again.', false, {
-      retryText: text
-    });
+    const el = await addMessage(
+      widget,
+      CSS_CLASSES.MESSAGE_SYSTEM,
+      'Failed to send message. Please try again.',
+      false,
+      {
+        retryText: text
+      }
+    );
     el?.classList.add('error');
     widget.chatInput.disabled = false;
     widget.sendButton.disabled = false;
@@ -762,4 +787,3 @@ export function mapRoleToMessageType(role) {
       return CSS_CLASSES.MESSAGE_AGENT;
   }
 }
-

@@ -9,8 +9,8 @@ import arTranslations from '../languages/ar.json';
 
 // Available translations (bundled)
 const availableTranslations = {
-    en: enTranslations,
-    ar: arTranslations
+  en: enTranslations,
+  ar: arTranslations
 };
 
 // Translation cache
@@ -28,20 +28,20 @@ const fallbackLanguage = 'en';
  * @returns {Promise<void>}
  */
 export async function initI18n(config = {}) {
-    // Determine which language to use
-    let targetLanguage = fallbackLanguage;
+  // Determine which language to use
+  let targetLanguage = fallbackLanguage;
 
-    if (config.language && config.language !== 'auto') {
-        // User specified a language
-        userSetLanguage = normalizeLanguageCode(config.language);
-        targetLanguage = userSetLanguage;
-    } else {
-        // Auto-detect from browser
-        targetLanguage = detectBrowserLanguage();
-    }
+  if (config.language && config.language !== 'auto') {
+    // User specified a language
+    userSetLanguage = normalizeLanguageCode(config.language);
+    targetLanguage = userSetLanguage;
+  } else {
+    // Auto-detect from browser
+    targetLanguage = detectBrowserLanguage();
+  }
 
-    // Load the translation file
-    await loadLanguage(targetLanguage);
+  // Load the translation file
+  await loadLanguage(targetLanguage);
 }
 
 /**
@@ -49,33 +49,33 @@ export async function initI18n(config = {}) {
  * Examples: 'en' -> 'en', 'en-us' -> 'en', 'en_US' -> 'en', 'fr-FR' -> 'fr'
  */
 function normalizeLanguageCode(code) {
-    if (!code) return fallbackLanguage;
+  if (!code) return fallbackLanguage;
 
-    // Remove whitespace and convert to lowercase
-    code = code.trim().toLowerCase();
+  // Remove whitespace and convert to lowercase
+  code = code.trim().toLowerCase();
 
-    // Extract just the language part (before '-' or '_')
-    if (code.includes('-')) {
-        code = code.split('-')[0];
-    } else if (code.includes('_')) {
-        code = code.split('_')[0];
-    }
+  // Extract just the language part (before '-' or '_')
+  if (code.includes('-')) {
+    code = code.split('-')[0];
+  } else if (code.includes('_')) {
+    code = code.split('_')[0];
+  }
 
-    // Validate it's a 2-letter code
-    if (code.length === 2 && /^[a-z]{2}$/.test(code)) {
-        return code;
-    }
+  // Validate it's a 2-letter code
+  if (code.length === 2 && /^[a-z]{2}$/.test(code)) {
+    return code;
+  }
 
-    return fallbackLanguage;
+  return fallbackLanguage;
 }
 
 /**
  * Detect browser language
  */
 function detectBrowserLanguage() {
-    // Try to get language from browser
-    const browserLang = navigator.language || navigator.userLanguage || fallbackLanguage;
-    return normalizeLanguageCode(browserLang);
+  // Try to get language from browser
+  const browserLang = navigator.language || navigator.userLanguage || fallbackLanguage;
+  return normalizeLanguageCode(browserLang);
 }
 
 /**
@@ -83,29 +83,32 @@ function detectBrowserLanguage() {
  * @param {string} languageCode - Language code (e.g., 'en', 'ar')
  */
 async function loadLanguage(languageCode) {
-    try {
-        // Check if the language is available in bundled translations
-        if (availableTranslations[languageCode]) {
-            translations = availableTranslations[languageCode];
-            currentLanguage = languageCode;
-            console.log(`i18n: Loaded language: ${languageCode}`);
-        } else {
-            throw new Error(`Language not available: ${languageCode}`);
-        }
-    } catch (error) {
-        console.warn(`i18n: Failed to load language ${languageCode}, falling back to ${fallbackLanguage}`, error);
-
-        // Try to load fallback language if it's different
-        if (languageCode !== fallbackLanguage && availableTranslations[fallbackLanguage]) {
-            translations = availableTranslations[fallbackLanguage];
-            currentLanguage = fallbackLanguage;
-            console.log(`i18n: Loaded fallback language: ${fallbackLanguage}`);
-        } else {
-            console.error('i18n: Failed to load fallback language');
-            // Use empty translations object as last resort
-            translations = {};
-        }
+  try {
+    // Check if the language is available in bundled translations
+    if (availableTranslations[languageCode]) {
+      translations = availableTranslations[languageCode];
+      currentLanguage = languageCode;
+      console.log(`i18n: Loaded language: ${languageCode}`);
+    } else {
+      throw new Error(`Language not available: ${languageCode}`);
     }
+  } catch (error) {
+    console.warn(
+      `i18n: Failed to load language ${languageCode}, falling back to ${fallbackLanguage}`,
+      error
+    );
+
+    // Try to load fallback language if it's different
+    if (languageCode !== fallbackLanguage && availableTranslations[fallbackLanguage]) {
+      translations = availableTranslations[fallbackLanguage];
+      currentLanguage = fallbackLanguage;
+      console.log(`i18n: Loaded fallback language: ${fallbackLanguage}`);
+    } else {
+      console.error('i18n: Failed to load fallback language');
+      // Use empty translations object as last resort
+      translations = {};
+    }
+  }
 }
 
 /**
@@ -115,29 +118,29 @@ async function loadLanguage(languageCode) {
  * @returns {string} - Translated string
  */
 export function t(key, vars = {}) {
-    // Split the key by dots to navigate the object
-    const keys = key.split('.');
-    let value = translations;
+  // Split the key by dots to navigate the object
+  const keys = key.split('.');
+  let value = translations;
 
-    // Navigate through the translation object
-    for (const k of keys) {
-        if (value && typeof value === 'object' && k in value) {
-            value = value[k];
-        } else {
-            // Key not found, return the key itself as fallback
-            console.warn(`i18n: Translation key not found: ${key}`);
-            return key;
-        }
+  // Navigate through the translation object
+  for (const k of keys) {
+    if (value && typeof value === 'object' && k in value) {
+      value = value[k];
+    } else {
+      // Key not found, return the key itself as fallback
+      console.warn(`i18n: Translation key not found: ${key}`);
+      return key;
     }
+  }
 
-    // If value is not a string, return the key
-    if (typeof value !== 'string') {
-        console.warn(`i18n: Translation value is not a string: ${key}`);
-        return key;
-    }
+  // If value is not a string, return the key
+  if (typeof value !== 'string') {
+    console.warn(`i18n: Translation value is not a string: ${key}`);
+    return key;
+  }
 
-    // Replace variables in the string
-    return replaceVars(value, vars);
+  // Replace variables in the string
+  return replaceVars(value, vars);
 }
 
 /**
@@ -145,16 +148,16 @@ export function t(key, vars = {}) {
  * Example: "Hello {name}" with {name: "John"} -> "Hello John"
  */
 function replaceVars(str, vars) {
-    return str.replace(/\{(\w+)\}/g, (match, key) => {
-        return vars[key] !== undefined ? vars[key] : match;
-    });
+  return str.replace(/\{(\w+)\}/g, (match, key) => {
+    return vars[key] !== undefined ? vars[key] : match;
+  });
 }
 
 /**
  * Get current language code
  */
 export function getCurrentLanguage() {
-    return currentLanguage;
+  return currentLanguage;
 }
 
 /**
@@ -162,31 +165,32 @@ export function getCurrentLanguage() {
  * @param {string} languageCode - New language code
  */
 export async function changeLanguage(languageCode) {
-    const normalized = normalizeLanguageCode(languageCode);
-    await loadLanguage(normalized);
+  const normalized = normalizeLanguageCode(languageCode);
+  await loadLanguage(normalized);
 
-    // Emit event for components to re-render
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('chatvia:language-changed', {
-            detail: { language: currentLanguage }
-        }));
-    }
+  // Emit event for components to re-render
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('chatvia:language-changed', {
+        detail: { language: currentLanguage }
+      })
+    );
+  }
 }
 
 /**
  * Get list of available languages (from bundled translations)
  */
 export function getAvailableLanguages() {
-    return Object.keys(availableTranslations).map(code => {
-        const languageNames = {
-            en: { name: 'English', nativeName: 'English' },
-            ar: { name: 'Arabic', nativeName: 'العربية' }
-        };
-        return {
-            code,
-            name: languageNames[code]?.name || code,
-            nativeName: languageNames[code]?.nativeName || code
-        };
-    });
+  return Object.keys(availableTranslations).map(code => {
+    const languageNames = {
+      en: { name: 'English', nativeName: 'English' },
+      ar: { name: 'Arabic', nativeName: 'العربية' }
+    };
+    return {
+      code,
+      name: languageNames[code]?.name || code,
+      nativeName: languageNames[code]?.nativeName || code
+    };
+  });
 }
-

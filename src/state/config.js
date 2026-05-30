@@ -40,9 +40,10 @@ export function writeStoredTheme(agentId, value) {
 export function applyConfiguration(widget) {
   if (!widget.container) return;
 
-  const positionClass = widget.settings.position === 'bottom-left'
-    ? CSS_CLASSES.POSITION_BOTTOM_LEFT
-    : CSS_CLASSES.POSITION_BOTTOM_RIGHT;
+  const positionClass =
+    widget.settings.position === 'bottom-left'
+      ? CSS_CLASSES.POSITION_BOTTOM_LEFT
+      : CSS_CLASSES.POSITION_BOTTOM_RIGHT;
   widget.container.className = `${CSS_CLASSES.WIDGET} ${widget.isFlat ? CSS_CLASSES.FLAT_MODE : positionClass}`;
 
   if (widget.isFlat) {
@@ -74,7 +75,11 @@ export function applyWindowSize(widget) {
     CSS_CLASSES.WINDOW_LARGE
   );
 
-  if ([CSS_CLASSES.WINDOW_SMALL, CSS_CLASSES.WINDOW_MEDIUM, CSS_CLASSES.WINDOW_LARGE].includes(widget.settings.window_size)) {
+  if (
+    [CSS_CLASSES.WINDOW_SMALL, CSS_CLASSES.WINDOW_MEDIUM, CSS_CLASSES.WINDOW_LARGE].includes(
+      widget.settings.window_size
+    )
+  ) {
     widget.chatWindow.classList.add(widget.settings.window_size);
 
     if (widget.expandButton) {
@@ -281,7 +286,7 @@ export function applyBranding(widget) {
     const brandUrl = widget.settings.branding.url || '';
     const brandLogoUrl = widget.settings.branding.logo_url || '';
 
-    const isValidUrl = (url) => {
+    const isValidUrl = url => {
       if (!url) return false;
       try {
         const parsed = new URL(url, window.location.origin);
@@ -291,13 +296,14 @@ export function applyBranding(widget) {
       }
     };
 
-    const container = brandUrl && isValidUrl(brandUrl)
-      ? createElement('a', {
-        href: brandUrl,
-        target: '_blank',
-        rel: 'noopener noreferrer'
-      })
-      : createElement('span');
+    const container =
+      brandUrl && isValidUrl(brandUrl)
+        ? createElement('a', {
+            href: brandUrl,
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          })
+        : createElement('span');
 
     if (brandLogoUrl && isValidUrl(brandLogoUrl)) {
       const logo = createElement('img', {
@@ -322,7 +328,8 @@ export function applyBranding(widget) {
  * Apply input placeholder from settings
  */
 export function applyInputPlaceholder(widget) {
-  const placeholder = widget.settings?.welcome_message || widget.options?.placeholder || 'Type a message...';
+  const placeholder =
+    widget.settings?.welcome_message || widget.options?.placeholder || 'Type a message...';
 
   if (widget.chatInput) {
     widget.chatInput.placeholder = placeholder;
@@ -385,4 +392,3 @@ export function updateStartersContainer(widget) {
     widget.startersContainer.appendChild(starterButton);
   });
 }
-

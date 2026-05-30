@@ -125,7 +125,7 @@ export function setupInputListeners(widget) {
   });
   widget.chatInput?.addEventListener('input', () => {
     widget.autoResizeInput();
-    
+
     // Send typing indicator in human mode
     if (widget.isInHumanMode && widget.isInHumanMode()) {
       const hasText = widget.chatInput.value.trim().length > 0;
@@ -185,7 +185,7 @@ export function setupGlobalListeners(widget) {
       widget.closeMenuDropdown();
     }
   };
-  
+
   const signal = widget._eventController?.signal;
   document.addEventListener('mousedown', closeMenuOnOutside, { signal });
   document.addEventListener('touchstart', closeMenuOnOutside, { passive: true, signal });
@@ -293,15 +293,19 @@ export function setupKeyboardShortcuts(widget) {
 
   // Window resize listener to recalculate dynamic widget height
   let resizeTimeout;
-  window.addEventListener('resize', () => {
-    // Debounce resize events
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      if (widget.applyWindowSize && !widget.isFlat) {
-        widget.applyWindowSize();
-      }
-    }, 150);
-  }, { signal: widget._eventController?.signal });
+  window.addEventListener(
+    'resize',
+    () => {
+      // Debounce resize events
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (widget.applyWindowSize && !widget.isFlat) {
+          widget.applyWindowSize();
+        }
+      }, 150);
+    },
+    { signal: widget._eventController?.signal }
+  );
 }
 
 /**
@@ -310,9 +314,6 @@ export function setupKeyboardShortcuts(widget) {
 function getUserMessageHistory(widget) {
   const activeThread = widget.getActiveThread();
   if (!activeThread?.messages) return [];
-  
-  return activeThread.messages
-    .filter(m => m.role === 'user')
-    .map(m => m.content);
-}
 
+  return activeThread.messages.filter(m => m.role === 'user').map(m => m.content);
+}

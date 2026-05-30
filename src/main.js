@@ -79,7 +79,7 @@ import { NAMESPACE } from './utils.js';
        * @param {string} message - The message text to send
        * @returns {Promise<void>}
        */
-      send: async (message) => {
+      send: async message => {
         if (!message || typeof message !== 'string') {
           console.warn("chatvia: 'send' called without valid message text.");
           return;
@@ -92,7 +92,7 @@ import { NAMESPACE } from './utils.js';
        * @param {string} message - The message text to send
        * @returns {Promise<void>}
        */
-      sendMessage: async (message) => {
+      sendMessage: async message => {
         await api.send(message);
       },
 
@@ -159,8 +159,8 @@ import { NAMESPACE } from './utils.js';
        */
       on: (event, callback) => {
         if (typeof callback !== 'function') {
-          console.warn(`chatvia: 'on' requires a function callback`);
-          return () => { };
+          console.warn("chatvia: 'on' requires a function callback");
+          return () => {};
         }
 
         if (!eventListeners[event]) {
@@ -193,14 +193,21 @@ import { NAMESPACE } from './utils.js';
       // Legacy function-style API for backward compatibility
       __call: async (command, ...args) => {
         switch (command) {
-          case 'init': return api.init();
-          case 'open': return api.open();
-          case 'close': return api.close();
-          case 'toggle': return api.toggle();
+          case 'init':
+            return api.init();
+          case 'open':
+            return api.open();
+          case 'close':
+            return api.close();
+          case 'toggle':
+            return api.toggle();
           case 'send':
-          case 'sendMessage': return api.send(args[0]);
-          case 'newChat': return api.newChat();
-          case 'destroy': return api.destroy();
+          case 'sendMessage':
+            return api.send(args[0]);
+          case 'newChat':
+            return api.newChat();
+          case 'destroy':
+            return api.destroy();
           default:
             console.warn(`chatvia: Unknown command '${command}'`);
         }

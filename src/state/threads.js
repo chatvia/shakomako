@@ -104,9 +104,7 @@ export function getActiveThread(widget) {
  * Get current active thread ID
  */
 export function getCurrentActiveThreadId(widget) {
-  return widget.storageManager
-    ? widget.storageManager.getActiveThreadId()
-    : widget.activeThreadId;
+  return widget.storageManager ? widget.storageManager.getActiveThreadId() : widget.activeThreadId;
 }
 
 /**
@@ -131,7 +129,9 @@ export async function loadActiveThread(widget) {
       const messages = await widget.storageManager.getMessages(potentiallyNewActiveThread.id);
       widget.messageHistory = messages || [];
       potentiallyNewActiveThread.messages = widget.messageHistory;
-      console.log(`Loaded ${widget.messageHistory.length} messages for thread ${potentiallyNewActiveThread.id}`);
+      console.log(
+        `Loaded ${widget.messageHistory.length} messages for thread ${potentiallyNewActiveThread.id}`
+      );
       await widget.displayHistoryMessages();
       widget._updateThreadActionButtons();
       widget.scrollToBottom();
@@ -204,11 +204,7 @@ export async function startNewThread(widget) {
   const activeThread = getActiveThread(widget);
 
   // If current thread is already empty, just stay on it
-  if (
-    activeThread &&
-    Array.isArray(activeThread.messages) &&
-    activeThread.messages.length === 0
-  ) {
+  if (activeThread && Array.isArray(activeThread.messages) && activeThread.messages.length === 0) {
     widget.closeMenuDropdown();
     widget.chatInput?.focus();
     return;
@@ -387,9 +383,7 @@ function createThreadsContainer(widget, threads) {
     });
     container.appendChild(noThreadsMsg);
   } else {
-    const sortedThreads = [...threads].sort(
-      (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
-    );
+    const sortedThreads = [...threads].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     sortedThreads.forEach(thread => {
       const threadItem = createThreadItem(widget, thread);
       container.appendChild(threadItem);
@@ -410,7 +404,8 @@ function createThreadItem(widget, thread) {
   const contentContainer = createElement('div', { className: CSS_CLASSES.THREAD_CONTENT });
 
   const titleEl = createElement('div', { className: CSS_CLASSES.THREAD_TITLE });
-  titleEl.textContent = thread.title || getFirstUserMessage(widget, thread) || t('threads.new_conversation');
+  titleEl.textContent =
+    thread.title || getFirstUserMessage(widget, thread) || t('threads.new_conversation');
   contentContainer.appendChild(titleEl);
 
   const subtitleEl = createElement('div', { className: CSS_CLASSES.THREAD_SUBTITLE });
@@ -455,7 +450,8 @@ function getFirstUserMessage(widget, thread) {
   });
 
   return firstUserMessage
-    ? firstUserMessage.content.substring(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
+    ? firstUserMessage.content.substring(0, 50) +
+        (firstUserMessage.content.length > 50 ? '...' : '')
     : null;
 }
 
@@ -519,4 +515,3 @@ export function updateThreadActionButtons(widget) {
   setState(widget.clearCurrentOption, onlyEmptyThread);
   setState(widget.clearAllOption, onlyEmptyThread);
 }
-

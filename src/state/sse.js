@@ -46,7 +46,9 @@ export function setupSSE(widget) {
         if (!bubble || bubble.textContent.trim() === '') {
           leftover.remove();
         } else {
-          leftover.querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)?.classList.remove(CSS_CLASSES.STREAMING);
+          leftover
+            .querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)
+            ?.classList.remove(CSS_CLASSES.STREAMING);
           leftover.removeAttribute('id');
         }
       }
@@ -208,16 +210,17 @@ export async function handleReceivedMessage(widget, message) {
  * Remove connection error messages
  */
 export function removeConnectionErrorMessages(widget) {
-  widget.messagesContainer?.querySelectorAll(`.${CSS_CLASSES.MESSAGE}.${CSS_CLASSES.MESSAGE_SYSTEM}`).forEach(element => {
-    const bubble = element.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
-    if (
-      bubble &&
-      (bubble.textContent.includes('Unable to') ||
-        bubble.textContent.includes('Failed to') ||
-        bubble.textContent.includes('Connection lost'))
-    ) {
-      element.remove();
-    }
-  });
+  widget.messagesContainer
+    ?.querySelectorAll(`.${CSS_CLASSES.MESSAGE}.${CSS_CLASSES.MESSAGE_SYSTEM}`)
+    .forEach(element => {
+      const bubble = element.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
+      if (
+        bubble &&
+        (bubble.textContent.includes('Unable to') ||
+          bubble.textContent.includes('Failed to') ||
+          bubble.textContent.includes('Connection lost'))
+      ) {
+        element.remove();
+      }
+    });
 }
-

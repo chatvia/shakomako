@@ -13,7 +13,7 @@ export class SessionManager {
   /**
    * Initialize session and thread.
    * Always calls the backend to validate/create session and thread.
-   * 
+   *
    * @returns {Promise<{sessionId: string, threadId: string, isNewSession: boolean, isNewThread: boolean}>}
    */
   async startSession() {
@@ -56,9 +56,7 @@ export class SessionManager {
       // Update localStorage if session changed
       if (data.session_id !== existingSessionId) {
         console.log(
-          data.is_new_session
-            ? '✨ New session created:'
-            : '🔄 Session restored from server:',
+          data.is_new_session ? '✨ New session created:' : '🔄 Session restored from server:',
           data.session_id
         );
         this.persistenceManager.set(this.persistedSessionId, data.session_id);
@@ -71,9 +69,7 @@ export class SessionManager {
       if (data.thread_id) {
         if (data.thread_id !== existingThreadId) {
           console.log(
-            data.is_new_thread
-              ? '✨ New thread created:'
-              : '🔄 Thread restored from server:',
+            data.is_new_thread ? '✨ New thread created:' : '🔄 Thread restored from server:',
             data.thread_id
           );
         } else {
