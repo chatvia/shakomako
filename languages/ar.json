@@ -55,7 +55,11 @@
     "disconnected": "غادر الموظف المحادثة",
     "returned_to_bot": "تم إرجاع المحادثة للمساعد الآلي",
     "agent_typing": "{name} يكتب...",
-    "waiting_for_agent": "في انتظار موظف متاح..."
+    "waiting_for_agent": "في انتظار موظف متاح...",
+    "end_chat": "إنهاء المحادثة",
+    "end_live_chat_title": "إنهاء المحادثة المباشرة",
+    "end_live_chat_message": "هل أنت متأكد من أنك تريد إنهاء المحادثة مع الموظف؟",
+    "end_live_chat_tooltip": "إنهاء المحادثة المباشرة"
   },
   "tool": {
     "calling": "جاري استدعاء أداة خارجية..."

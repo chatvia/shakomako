@@ -55,7 +55,11 @@
     "disconnected": "Agent has left the conversation",
     "returned_to_bot": "Conversation returned to bot",
     "agent_typing": "{name} is typing...",
-    "waiting_for_agent": "Waiting for an available agent..."
+    "waiting_for_agent": "Waiting for an available agent...",
+    "end_chat": "End Chat",
+    "end_live_chat_title": "End Live Chat",
+    "end_live_chat_message": "Are you sure you want to end the conversation with the agent?",
+    "end_live_chat_tooltip": "End live chat"
   },
   "tool": {
     "calling": "Calling external tool..."

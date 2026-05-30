@@ -701,7 +701,12 @@ function handleTypingEvent(widget, data) {
 }
 
 /**
- * Show admin typing indicator - "is typing..." for human mode
+ * Show admin typing indicator - "is typing..." for human mode.
+ *
+ * The typing text contains the admin display name, which is operator-supplied
+ * and therefore untrusted. Build the DOM with createElement + textContent so
+ * the name can never reach the HTML parser; using innerHTML here would be an
+ * XSS sink the moment an admin sets their name to "<img onerror=...>".
  */
 function showAdminTyping(widget, agentName) {
   if (widget._adminTyping) return;
@@ -710,21 +715,30 @@ function showAdminTyping(widget, agentName) {
   // Remove any existing typing indicator
   hideAdminTypingElement(widget);
 
-  // Create simple "is typing..." indicator for human mode
   const typingIndicator = document.createElement('div');
   typingIndicator.className = 'chatvia-widget-human-typing';
-  typingIndicator.id = 'chatvia-human-typing-indicator';
+  // Per-widget id avoids collisions when multiple widgets are embedded on the
+  // same page. Read back via the same helper below.
+  typingIndicator.dataset.role = 'human-typing-indicator';
 
-  const typingText = widget.adminName ? t('handoff.agent_typing', { name: widget.adminName }) : t('handoff.connecting');
+  const typingText = widget.adminName
+    ? t('handoff.agent_typing', { name: widget.adminName })
+    : t('handoff.connecting');
 
-  typingIndicator.innerHTML = `
-    <span class="chatvia-widget-typing-text">${typingText}</span>
-    <span class="chatvia-widget-typing-dots">
-      <span class="chatvia-widget-typing-dot"></span>
-      <span class="chatvia-widget-typing-dot"></span>
-      <span class="chatvia-widget-typing-dot"></span>
-    </span>
-  `;
+  const textNode = document.createElement('span');
+  textNode.className = 'chatvia-widget-typing-text';
+  textNode.textContent = typingText;
+
+  const dots = document.createElement('span');
+  dots.className = 'chatvia-widget-typing-dots';
+  for (let i = 0; i < 3; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'chatvia-widget-typing-dot';
+    dots.appendChild(dot);
+  }
+
+  typingIndicator.appendChild(textNode);
+  typingIndicator.appendChild(dots);
 
   if (widget.messagesContainer) {
     widget.messagesContainer.appendChild(typingIndicator);
@@ -743,10 +757,15 @@ function hideAdminTyping(widget) {
 }
 
 /**
- * Remove the typing indicator element from DOM
+ * Remove the typing indicator element from DOM. Scoped to the widget's
+ * messages container so multiple widgets on the same page don't clobber
+ * each other.
  */
 function hideAdminTypingElement(widget) {
-  const existingIndicator = document.getElementById('chatvia-human-typing-indicator');
+  if (!widget.messagesContainer) return;
+  const existingIndicator = widget.messagesContainer.querySelector(
+    '[data-role="human-typing-indicator"]'
+  );
   if (existingIndicator) {
     existingIndicator.remove();
   }
@@ -948,11 +967,45 @@ function updateHandoffUI(widget, mode) {
   updateTalkToHumanButton(widget, mode);
 }
 
+// SVG path for the "end call" icon, kept as data because the rest of the file
+// builds icons inline. If this grows, move to ui.js alongside createIcon.
+const END_CHAT_ICON_PATH =
+  'M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91';
+
 /**
- * Add "End Chat" button to the header
+ * Build the "End Live Chat" SVG icon as DOM nodes (no innerHTML).
+ */
+function buildEndChatIcon() {
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('width', '14');
+  svg.setAttribute('height', '14');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+
+  const path = document.createElementNS(SVG_NS, 'path');
+  path.setAttribute('d', END_CHAT_ICON_PATH);
+  svg.appendChild(path);
+
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', '23');
+  line.setAttribute('y1', '1');
+  line.setAttribute('x2', '1');
+  line.setAttribute('y2', '23');
+  svg.appendChild(line);
+
+  return svg;
+}
+
+/**
+ * Add the "End Chat" button to the widget header. Scoped to the widget's
+ * container so multiple widgets on one page don't collide.
  */
 function addEndChatButton(widget) {
-  // Remove existing button if any
   removeEndChatButton(widget);
 
   const header = widget.chatWindow?.querySelector('.chatvia-widget-header');
@@ -960,33 +1013,25 @@ function addEndChatButton(widget) {
 
   const endChatBtn = document.createElement('button');
   endChatBtn.className = 'chatvia-widget-end-chat-btn';
-  endChatBtn.id = 'chatvia-end-chat-btn';
-  endChatBtn.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
-      <line x1="23" y1="1" x2="1" y2="23"/>
-    </svg>
-    <span>End Chat</span>
-  `;
-  endChatBtn.title = 'End live chat';
+  endChatBtn.dataset.role = 'end-chat-button';
+  endChatBtn.title = t('handoff.end_live_chat_tooltip');
 
-  endChatBtn.addEventListener('click', (e) => {
+  endChatBtn.appendChild(buildEndChatIcon());
+  const label = document.createElement('span');
+  label.textContent = t('handoff.end_chat');
+  endChatBtn.appendChild(label);
+
+  endChatBtn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
-
-    // Show confirmation dialog
     widget._showConfirmationDialog(
-      'End Live Chat',
-      'Are you sure you want to end the conversation with the agent?',
-      'End Chat',
-      async () => {
-        const { endLiveChat } = await import('./handoff.js');
-        await endLiveChat(widget);
-      }
+      t('handoff.end_live_chat_title'),
+      t('handoff.end_live_chat_message'),
+      t('handoff.end_chat'),
+      () => endLiveChat(widget)
     );
   });
 
-  // Insert before the close button or at the end
   const closeBtn = header.querySelector('.chatvia-widget-close-btn');
   if (closeBtn) {
     header.insertBefore(endChatBtn, closeBtn);
@@ -996,10 +1041,13 @@ function addEndChatButton(widget) {
 }
 
 /**
- * Remove "End Chat" button from the header
+ * Remove the "End Chat" button. Scoped to the widget's header so multiple
+ * widgets don't reach into each other's DOM.
  */
 function removeEndChatButton(widget) {
-  const existingBtn = document.getElementById('chatvia-end-chat-btn');
+  const header = widget.chatWindow?.querySelector('.chatvia-widget-header');
+  if (!header) return;
+  const existingBtn = header.querySelector('[data-role="end-chat-button"]');
   if (existingBtn) {
     existingBtn.remove();
   }
