@@ -199,11 +199,11 @@ export function createAvatar(widget, isHumanAgent = false) {
     return avatar;
   }
 
-  // AI assistant shows brand logo or default bot icon
-  const brandLogoUrl = widget.settings.branding?.logo_url;
-  if (brandLogoUrl) {
+  // AI assistant shows the agent's avatar or default bot icon
+  const avatarUrl = widget.settings.avatar_url;
+  if (avatarUrl) {
     const avatarImg = createElement('img', {
-      src: brandLogoUrl,
+      src: avatarUrl,
       alt: 'Assistant'
     });
     avatar.appendChild(avatarImg);
