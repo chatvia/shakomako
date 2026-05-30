@@ -177,12 +177,13 @@
   width: 60px;
   height: 60px;
   background-color: var(--chat-primary);
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--chat-primary) 100%, white) 0%, color-mix(in srgb, var(--chat-primary) 84%, black) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 28px -6px color-mix(in srgb, var(--chat-primary) 45%, transparent), 0 4px 12px rgba(0, 0, 0, 0.12);
   position: absolute;
   z-index: 10001;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -208,7 +209,7 @@
 /* Transition only on hover, not on initial load */
 .chatvia-widget .chatvia-widget-bubble:hover {
   transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), 0 6px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 16px 38px -6px color-mix(in srgb, var(--chat-primary) 52%, transparent), 0 6px 16px rgba(0, 0, 0, 0.14);
 }
 
 .chatvia-widget .chatvia-widget-bubble.chatvia-widget-active {
@@ -393,13 +394,18 @@
   padding: 16px 18px;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  background: #ffffff !important;
+  background: var(--chat-bg, #ffffff) !important;
   min-height: 100px;
 }
 
 /* Custom scrollbar for messages */
+.chatvia-widget .chatvia-widget-messages {
+  scrollbar-width: thin;
+  scrollbar-color: var(--chat-scrollbar-thumb) transparent;
+}
+
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar {
-  width: 4px;
+  width: 7px;
 }
 
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar-track {
@@ -407,12 +413,15 @@
 }
 
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
+  background: var(--chat-scrollbar-thumb);
+  border-radius: var(--chat-radius-full);
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 .chatvia-widget .chatvia-widget-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--chat-scrollbar-thumb-hover);
+  background-clip: content-box;
 }
 
 
@@ -440,10 +449,24 @@
   object-fit: cover;
 }
 
+/* Online presence dot on the header avatar (AI mode only) */
+.chatvia-widget .chatvia-widget-window:not(.chatvia-widget-pending-mode):not(.chatvia-widget-human-mode) .chatvia-widget-header::after {
+  content: '';
+  position: absolute;
+  left: 40px;
+  top: 38px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--chat-primary) 82%, black);
+  z-index: 3;
+}
+
 .chatvia-widget .chatvia-widget-header-title {
   flex-grow: 1;
   font-weight: 600;
-  font-size: 17px;
+  font-size: 16.5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -509,8 +532,8 @@
 }
 
 .chatvia-widget .chatvia-widget-message.chatvia-widget-assistant .chatvia-widget-bubble-content {
-  background-color: #f3f4f6 !important;
-  color: #1e293b !important;
+  background-color: var(--chat-assistant-bubble) !important;
+  color: var(--chat-assistant-text) !important;
   border-radius: var(--chat-radius-lg);
   border-bottom-left-radius: var(--chat-radius-sm);
   margin-right: auto;
@@ -519,19 +542,19 @@
   max-width: calc(100% - 36px);
   min-width: 0;
   position: relative;
-  padding: 12px 16px;
+  padding: 11px 15px;
   z-index: 1;
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   font-size: 14px;
   line-height: 1.65;
-  border: none;
+  border: 1px solid var(--chat-assistant-border);
   letter-spacing: -0.01em;
 }
 
 /* Human agent message styling - Subtle difference using primary color */
 .chatvia-widget .chatvia-widget-message.chatvia-widget-human-agent .chatvia-widget-bubble-content {
-  background-color: color-mix(in srgb, var(--chat-primary) 8%, #f3f4f6) !important;
-  color: #1e293b !important;
+  background-color: color-mix(in srgb, var(--chat-primary) 8%, var(--chat-assistant-bubble)) !important;
+  color: var(--chat-assistant-text) !important;
   border-left: 3px solid var(--chat-primary) !important;
 }
 
@@ -667,27 +690,42 @@
 .chatvia-widget .chatvia-widget-bubble-content pre,
 .chatvia-widget .chatvia-widget-bubble-content code {
   max-width: 100%;
-  white-space: pre-wrap;
-  overflow-x: hidden;
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: monospace;
-  font-size: 0.9em;
+  font-family: var(--chat-font-mono);
+}
+
+.chatvia-widget .chatvia-widget-bubble-content code {
+  background-color: var(--chat-code-bg);
+  border: 1px solid var(--chat-code-border);
+  color: var(--chat-code-text);
+  padding: 1.5px 5px;
+  border-radius: 5px;
+  font-size: 0.85em;
+  white-space: pre-wrap;
 }
 
 .chatvia-widget .chatvia-widget-bubble-content pre {
-  padding: 8px;
-  border-radius: 6px;
-  margin: 0.5em 0;
+  background-color: var(--chat-code-bg);
+  border: 1px solid var(--chat-code-border);
+  color: var(--chat-code-text);
+  padding: 12px 14px;
+  border-radius: var(--chat-radius-md);
+  margin: 0.6em 0;
+  overflow-x: auto;
+  white-space: pre;
+  font-size: 0.85em;
+  line-height: 1.55;
 }
 
 .chatvia-widget .chatvia-widget-bubble-content pre code {
   background-color: transparent;
+  border: none;
+  color: inherit;
   padding: 0;
+  font-size: 1em;
+  white-space: inherit;
 }
 
 /* Table styling for markdown tables */
@@ -942,6 +980,7 @@
   width: 20px;
   height: 20px;
   margin-right: 8px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -982,8 +1021,8 @@
 /* Tool activity: a transient "calling external tool" shimmer shown while a
    function/MCP call runs, then removed so the answer can stream in below. */
 .chatvia-widget .chatvia-widget-tool-activity {
-  padding-left: 28px;
-  /* align under the bubble: 20px avatar + 8px margin */
+  padding-left: 36px;
+  /* align under the bubble: 28px avatar + 8px margin */
   margin-bottom: 6px;
 }
 
@@ -1099,7 +1138,7 @@
   border-top: 1px solid var(--chat-border, #e5e7eb);
   padding: 14px 0;
   /* Keep zero horizontal padding */
-  background: #ffffff !important;
+  background: var(--chat-bg, #ffffff) !important;
   position: relative;
   width: 100%;
   box-sizing: border-box;
@@ -1119,11 +1158,11 @@
   max-height: 120px;
   min-height: 60px;
   height: 60px;
-  background-color: #f8f9fa;
+  background-color: var(--chat-input-bg);
   /* Consistent background */
   color: var(--chat-text);
   box-shadow: none;
-  transition: all 0.2s ease;
+  transition: background-color var(--chat-transition-fast);
   border: none;
   /* Remove all borders */
   width: 100%;
@@ -1131,9 +1170,8 @@
   line-height: 1.5;
 }
 
-.chatvia-widget .chatvia-widget-input:focus {
-  border-color: var(--chat-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--chat-primary) 20%, transparent);
+.chatvia-widget .chatvia-widget-input::placeholder {
+  color: var(--chat-text-muted);
 }
 
 .chatvia-widget .chatvia-widget-send-btn {
@@ -1191,6 +1229,15 @@
 .chatvia-widget .chatvia-widget-message.chatvia-widget-assistant a {
   color: var(--chat-primary);
   text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--chat-primary) 45%, transparent);
+  font-weight: 500;
+  transition: text-decoration-color var(--chat-transition-fast);
+}
+
+.chatvia-widget .chatvia-widget-message.chatvia-widget-assistant a:hover {
+  text-decoration-color: var(--chat-primary);
 }
 
 .chatvia-widget .chatvia-widget-message.chatvia-widget-assistant ul,
@@ -1236,9 +1283,9 @@
 
 .chatvia-widget .chatvia-widget-message.chatvia-widget-assistant blockquote {
   margin: 0.5em 0;
-  padding-left: 1em;
-  border-left: 3px solid var(--chat-border);
-  color: rgba(var(--chat-text-rgb), 0.8);
+  padding: 0.1em 0 0.1em 1em;
+  border-left: 3px solid color-mix(in srgb, var(--chat-primary) 40%, var(--chat-border-strong));
+  color: var(--chat-text-secondary);
 }
 
 .chatvia-widget .chatvia-widget-message.chatvia-widget-assistant h1,
@@ -1305,7 +1352,7 @@
   top: calc(100% + 8px);
   right: 40px;
   width: 210px;
-  background-color: #ffffff;
+  background-color: var(--chat-surface);
   border-radius: var(--chat-radius-lg);
   box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.2), 0 4px 16px -4px rgba(0, 0, 0, 0.12);
   overflow: hidden;
@@ -1332,14 +1379,14 @@
   gap: 10px;
   cursor: pointer;
   transition: all var(--chat-transition-fast);
-  color: #374151;
+  color: var(--chat-text);
   font-size: var(--chat-font-size-sm);
   font-weight: 500;
   border-radius: var(--chat-radius-sm);
 }
 
 .chatvia-widget .chatvia-widget-menu-option:hover {
-  background-color: #f1f5f9;
+  background-color: var(--chat-surface-hover);
 }
 
 .chatvia-widget .chatvia-widget-menu-option svg {
@@ -1935,34 +1982,39 @@
   padding: 16px;
   overflow: hidden;
   position: relative;
-  background: #ffffff !important;
+  background: var(--chat-bg, #ffffff) !important;
   z-index: 2;
   transition: height 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 .chatvia-widget .chatvia-widget-starter-btn {
-  background-color: #ffffff;
+  background-color: var(--chat-surface);
   color: var(--chat-primary);
-  border: 1px solid color-mix(in srgb, var(--chat-primary) 35%, transparent);
-  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--chat-primary) 30%, transparent);
+  border-radius: var(--chat-radius-full);
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: all var(--chat-transition-fast);
   text-align: center;
   line-height: 1.35;
   user-select: none;
   max-width: 90%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .chatvia-widget .chatvia-widget-starter-btn:hover {
-  background-color: color-mix(in srgb, var(--chat-primary) 8%, white);
+  background-color: color-mix(in srgb, var(--chat-primary) 8%, var(--chat-surface));
   border-color: color-mix(in srgb, var(--chat-primary) 50%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -2px color-mix(in srgb, var(--chat-primary) 22%, transparent);
 }
 
 .chatvia-widget .chatvia-widget-starter-btn:active {
-  background-color: color-mix(in srgb, var(--chat-primary) 12%, white);
+  background-color: color-mix(in srgb, var(--chat-primary) 12%, var(--chat-surface));
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Mobile responsiveness for starters */

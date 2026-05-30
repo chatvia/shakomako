@@ -310,29 +310,46 @@
   /* Primary color - set by JavaScript */
   --chat-primary: rgba(0,0,0,0);
   --chat-header-text: #ffffff;
-  
-  /* Background & Text */
+
+  /* Surfaces & Text */
   --chat-bg: #ffffff;
   --chat-bg-secondary: #ffffff;
+  --chat-surface: #ffffff;            /* menus, dialogs, cards */
+  --chat-surface-hover: #f1f5f9;
   --chat-text: #1e293b;
   --chat-text-secondary: #64748b;
   --chat-text-muted: #94a3b8;
-  
+  --chat-hover-bg: rgba(0, 0, 0, 0.04);
+
   /* Borders & Shadows */
   --chat-border: rgba(0, 0, 0, 0.06);
   --chat-border-subtle: rgba(0, 0, 0, 0.04);
-  --chat-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --chat-border-strong: rgba(0, 0, 0, 0.10);
+  --chat-focus-ring: color-mix(in srgb, var(--chat-primary) 16%, transparent);
+  --chat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --chat-shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.12);
-  --chat-shadow-lg: 0 25px 80px -12px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15);
+  --chat-shadow-lg: 0 24px 70px -15px rgba(0, 0, 0, 0.28), 0 10px 30px -10px rgba(0, 0, 0, 0.16);
   --chat-shadow-float: 0 0 0 1px rgba(0, 0, 0, 0.05);
-  
+
   /* Message bubbles */
   --chat-user-bubble: var(--chat-primary);
   --chat-user-text: #ffffff;
-  --chat-assistant-bubble: #f3f4f6;
+  --chat-assistant-bubble: #f4f4f5;
   --chat-assistant-text: #1e293b;
+  --chat-assistant-border: rgba(0, 0, 0, 0.045);
   --chat-system-bubble: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
   --chat-system-text: #854d0e;
+
+  /* Code & input surfaces */
+  --chat-code-bg: #f6f8fa;
+  --chat-code-border: rgba(0, 0, 0, 0.08);
+  --chat-code-text: #1f2937;
+  --chat-input-bg: #f7f8fa;
+  --chat-input-bg-focus: #ffffff;
+
+  /* Scrollbar */
+  --chat-scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --chat-scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
   
   /* Transitions */
   --chat-transition-fast: 0.15s ease;
