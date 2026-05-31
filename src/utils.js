@@ -73,6 +73,8 @@ export const CSS_CLASSES = {
   LOADING: 'chatvia-widget-loading',
   LOADING_DOTS: 'chatvia-widget-loading-dots',
   LOADING_DOT: 'chatvia-widget-dot',
+  FETCH_SPINNER: 'chatvia-widget-fetch-spinner',
+  FETCH_SPINNER_CIRCLE: 'chatvia-widget-fetch-spinner-circle',
   STARTERS_CONTAINER: 'chatvia-widget-starters',
   STARTER_BUTTON: 'chatvia-widget-starter-btn',
   INPUT_CONTAINER: 'chatvia-widget-input-container',

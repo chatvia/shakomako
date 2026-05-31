@@ -1028,6 +1028,40 @@
   }
 }
 
+/* Centered fetch spinner — shown while loading messages/threads/history.
+   Mounted into .chatvia-widget-window (position: fixed or relative),
+   so it stays centered regardless of message-list scroll. */
+.chatvia-widget .chatvia-widget-fetch-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-fetch-spinner {
+  background: rgba(17, 24, 39, 0.55);
+}
+
+.chatvia-widget .chatvia-widget-fetch-spinner-circle {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--chat-primary);
+  border-radius: 50%;
+  animation: chatvia-spin 0.7s linear infinite;
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-fetch-spinner-circle {
+  border-color: rgba(255, 255, 255, 0.15);
+  border-top-color: var(--chat-primary);
+}
+
 /* Avatar styling */
 .chatvia-widget .chatvia-widget-avatar {
   width: 20px;

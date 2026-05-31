@@ -487,6 +487,14 @@ export class ChatWidget {
     return controls.hideLoading(this);
   }
 
+  showFetchSpinner() {
+    return controls.showFetchSpinner(this);
+  }
+
+  hideFetchSpinner() {
+    return controls.hideFetchSpinner(this);
+  }
+
   autoResizeInput() {
     return controls.autoResizeInput(this);
   }
@@ -1000,6 +1008,24 @@ export class ChatWidget {
     return indicator;
   }
 
+  /**
+   * Centered fetch spinner shown over the chat window while we're loading
+   * messages, threads, or history from the server. Separate from the typing
+   * dots — those signal "agent is responding"; this signals "fetching data".
+   * Mounted on demand into `chatWindow`, which is the positioned ancestor
+   * (fixed in launcher modes, relative in flat mode) so the spinner stays
+   * centered regardless of message scroll position.
+   */
+  _createFetchSpinner() {
+    const overlay = createElement('div', {
+      className: CSS_CLASSES.FETCH_SPINNER,
+      role: 'status',
+      'aria-label': t('widget.loading')
+    });
+    overlay.appendChild(createElement('div', { className: CSS_CLASSES.FETCH_SPINNER_CIRCLE }));
+    return overlay;
+  }
+
   _createStartersContainer() {
     return createElement('div', {
       className: CSS_CLASSES.STARTERS_CONTAINER
@@ -1175,6 +1201,11 @@ export class ChatWidget {
     if (this._bootLoader) {
       this._bootLoader.remove();
       this._bootLoader = null;
+    }
+
+    if (this.fetchSpinner) {
+      this.fetchSpinner.remove();
+      this.fetchSpinner = null;
     }
     if (this._bootLoaderMountFixed) {
       this._bootLoaderMountFixed.style.position = '';

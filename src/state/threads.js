@@ -113,88 +113,93 @@ export function getCurrentActiveThreadId(widget) {
 export async function loadActiveThread(widget) {
   widget.clearMessages();
   if (widget.inputContainer) widget.inputContainer.style.display = 'flex';
+  widget.showFetchSpinner();
 
-  const activeThread = getActiveThread(widget);
+  try {
+    const activeThread = getActiveThread(widget);
 
-  if (!activeThread) {
-    console.warn('loadActiveThread called with no active thread. Re-initializing.');
-    try {
-      await initThreads(widget);
-      const potentiallyNewActiveThread = getActiveThread(widget);
-      if (!potentiallyNewActiveThread) {
-        console.error('Failed to establish an active thread even after re-init.');
+    if (!activeThread) {
+      console.warn('loadActiveThread called with no active thread. Re-initializing.');
+      try {
+        await initThreads(widget);
+        const potentiallyNewActiveThread = getActiveThread(widget);
+        if (!potentiallyNewActiveThread) {
+          console.error('Failed to establish an active thread even after re-init.');
+          await widget.disabledChat('Cannot load chat.');
+          return;
+        }
+        const messages = await widget.storageManager.getMessages(potentiallyNewActiveThread.id);
+        widget.messageHistory = messages || [];
+        potentiallyNewActiveThread.messages = widget.messageHistory;
+        console.log(
+          `Loaded ${widget.messageHistory.length} messages for thread ${potentiallyNewActiveThread.id}`
+        );
+        await widget.displayHistoryMessages();
+        widget._updateThreadActionButtons();
+        widget.scrollToBottom();
+        return;
+      } catch (error) {
+        console.error('Error during re-initialization in loadActiveThread:', error);
         await widget.disabledChat('Cannot load chat.');
         return;
       }
-      const messages = await widget.storageManager.getMessages(potentiallyNewActiveThread.id);
+    }
+
+    console.log(`Loading messages for active thread: ${activeThread.id}`);
+
+    try {
+      const messages = await widget.storageManager.getMessages(activeThread.id);
       widget.messageHistory = messages || [];
-      potentiallyNewActiveThread.messages = widget.messageHistory;
-      console.log(
-        `Loaded ${widget.messageHistory.length} messages for thread ${potentiallyNewActiveThread.id}`
-      );
+
+      activeThread.messages = widget.messageHistory;
+      console.log(`Loaded ${widget.messageHistory.length} messages for thread ${activeThread.id}`);
       await widget.displayHistoryMessages();
+
+      // Check if there are any user messages in the thread
+      const hasUserMessages = widget.messageHistory.some(message => {
+        const messageType = message.role ? mapRoleToMessageType(message.role) : message.type;
+        return messageType === CSS_CLASSES.MESSAGE_USER;
+      });
+
+      if (hasUserMessages || activeThread.hasUserInteraction) {
+        widget.hideStarters();
+      } else if (
+        !widget.messageHistory.length ||
+        (widget.messageHistory.length === 1 &&
+          (widget.messageHistory[0].role
+            ? mapRoleToMessageType(widget.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT
+            : widget.messageHistory[0].type === CSS_CLASSES.MESSAGE_AGENT))
+      ) {
+        widget.showStarters();
+      } else {
+        widget.hideStarters();
+      }
+
       widget._updateThreadActionButtons();
-      widget.scrollToBottom();
-      return;
+
+      // Clean up previous thread's handoff state and reset to AI mode
+      cleanupHandoff(widget);
+
+      // Re-setup SSE with the new thread ID (default mode)
+      if (widget.setupSSE) {
+        widget.setupSSE();
+      }
+
+      // Always subscribe to WebSocket for this conversation
+      // This ensures we receive handoff events even for threads without messages yet
+      await subscribeToConversation(widget);
     } catch (error) {
-      console.error('Error during re-initialization in loadActiveThread:', error);
-      await widget.disabledChat('Cannot load chat.');
-      return;
+      console.error(`Error loading messages for thread ${activeThread.id}:`, error);
+      await widget.addMessage(
+        CSS_CLASSES.MESSAGE_SYSTEM,
+        'Error loading messages for this chat.',
+        false
+      );
     }
+    widget.scrollToBottom();
+  } finally {
+    widget.hideFetchSpinner();
   }
-
-  console.log(`Loading messages for active thread: ${activeThread.id}`);
-
-  try {
-    const messages = await widget.storageManager.getMessages(activeThread.id);
-    widget.messageHistory = messages || [];
-
-    activeThread.messages = widget.messageHistory;
-    console.log(`Loaded ${widget.messageHistory.length} messages for thread ${activeThread.id}`);
-    await widget.displayHistoryMessages();
-
-    // Check if there are any user messages in the thread
-    const hasUserMessages = widget.messageHistory.some(message => {
-      const messageType = message.role ? mapRoleToMessageType(message.role) : message.type;
-      return messageType === CSS_CLASSES.MESSAGE_USER;
-    });
-
-    if (hasUserMessages || activeThread.hasUserInteraction) {
-      widget.hideStarters();
-    } else if (
-      !widget.messageHistory.length ||
-      (widget.messageHistory.length === 1 &&
-        (widget.messageHistory[0].role
-          ? mapRoleToMessageType(widget.messageHistory[0].role) === CSS_CLASSES.MESSAGE_AGENT
-          : widget.messageHistory[0].type === CSS_CLASSES.MESSAGE_AGENT))
-    ) {
-      widget.showStarters();
-    } else {
-      widget.hideStarters();
-    }
-
-    widget._updateThreadActionButtons();
-
-    // Clean up previous thread's handoff state and reset to AI mode
-    cleanupHandoff(widget);
-
-    // Re-setup SSE with the new thread ID (default mode)
-    if (widget.setupSSE) {
-      widget.setupSSE();
-    }
-
-    // Always subscribe to WebSocket for this conversation
-    // This ensures we receive handoff events even for threads without messages yet
-    await subscribeToConversation(widget);
-  } catch (error) {
-    console.error(`Error loading messages for thread ${activeThread.id}:`, error);
-    await widget.addMessage(
-      CSS_CLASSES.MESSAGE_SYSTEM,
-      'Error loading messages for this chat.',
-      false
-    );
-  }
-  widget.scrollToBottom();
 }
 
 /**
@@ -213,7 +218,7 @@ export async function startNewThread(widget) {
   console.log('Starting a new thread...');
   widget.closeMenuDropdown();
   widget.clearMessages();
-  widget.showLoading();
+  widget.showFetchSpinner();
 
   try {
     const newThread = await createNewThread(widget);
@@ -229,7 +234,7 @@ export async function startNewThread(widget) {
     console.error('Error starting new thread:', error);
     await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to start a new chat.', false);
   } finally {
-    widget.hideLoading();
+    widget.hideFetchSpinner();
   }
 }
 
@@ -239,23 +244,23 @@ export async function startNewThread(widget) {
 export async function loadChatHistory(widget) {
   widget.closeMenuDropdown();
   widget.clearMessages();
-  widget.showLoading();
+  widget.showFetchSpinner();
   if (widget.inputContainer) widget.inputContainer.style.display = 'none';
 
   try {
     const { threads } = await widget.storageManager.loadThreads();
     widget.threads = threads;
     widget.activeThreadId = widget.storageManager.getActiveThreadId();
-    widget.hideLoading();
     widget.hideStarters();
 
     const threadsContainer = createThreadsContainer(widget, threads);
     widget.messagesContainer?.appendChild(threadsContainer);
   } catch (error) {
-    widget.hideLoading();
     console.error('Error loading chat history:', error);
     await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, 'Could not load chat history.', false);
     if (widget.inputContainer) widget.inputContainer.style.display = 'flex';
+  } finally {
+    widget.hideFetchSpinner();
   }
 }
 
@@ -268,18 +273,18 @@ export async function deleteCurrentThread(widget, threadId) {
     return;
   }
   console.log(`Attempting to delete thread: ${threadId}`);
-  widget.showLoading();
+  widget.showFetchSpinner();
   try {
     const success = await widget.storageManager.deleteThread(threadId);
-    widget.hideLoading();
     if (success) {
       await showDeleteSuccess(widget, threadId);
     } else {
       console.error('Failed to delete thread via API.');
     }
   } catch (error) {
-    widget.hideLoading();
     console.error('Error deleting thread:', error);
+  } finally {
+    widget.hideFetchSpinner();
   }
 }
 
@@ -288,10 +293,9 @@ export async function deleteCurrentThread(widget, threadId) {
  */
 export async function deleteAllThreads(widget) {
   console.log('Attempting to delete all threads via API...');
-  widget.showLoading();
+  widget.showFetchSpinner();
   try {
     const success = await widget.storageManager.deleteAllThreads();
-    widget.hideLoading();
 
     if (success) {
       widget.threads = [];
@@ -303,8 +307,9 @@ export async function deleteAllThreads(widget) {
       console.error('Failed to delete all threads via API.');
     }
   } catch (error) {
-    widget.hideLoading();
     console.error('Error deleting all threads:', error);
+  } finally {
+    widget.hideFetchSpinner();
   }
 }
 

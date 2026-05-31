@@ -331,6 +331,36 @@ export function hideLoading(widget) {
 }
 
 /**
+ * Show a centered spinner over the chat window while fetching messages,
+ * threads, or history. Separate from the typing dots in `showLoading` —
+ * those mean "agent is responding"; this means "loading data from server".
+ * Lazily built on first use and mounted in chatWindow (positioned ancestor)
+ * so it stays centered regardless of message-list scroll.
+ */
+export function showFetchSpinner(widget) {
+  if (!widget.chatWindow) return;
+  if (!widget.fetchSpinner) {
+    widget.fetchSpinner = widget._createFetchSpinner();
+  }
+  if (widget.fetchSpinner.parentNode !== widget.chatWindow) {
+    widget.chatWindow.appendChild(widget.fetchSpinner);
+  }
+  widget.fetchSpinner.style.display = 'flex';
+}
+
+/**
+ * Hide the centered fetch spinner. Detaches from the DOM so subsequent
+ * inserts via showFetchSpinner stack correctly above any new content.
+ */
+export function hideFetchSpinner(widget) {
+  if (!widget.fetchSpinner) return;
+  if (widget.fetchSpinner.parentNode) {
+    widget.fetchSpinner.parentNode.removeChild(widget.fetchSpinner);
+  }
+  widget.fetchSpinner.style.display = 'none';
+}
+
+/**
  * Auto resize input textarea
  */
 export function autoResizeInput(widget) {
