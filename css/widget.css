@@ -1654,6 +1654,26 @@
   }
 }
 
+/* Disclaimer strip below the composer — populated from settings.chat_footer_text
+   (e.g. "AI can make mistakes…"). Hidden via inline style when unset. Visually
+   subordinate to the brand footer below it; no top border because the input
+   container already provides a divider. */
+.chatvia-widget .chatvia-widget-footer-text {
+  text-align: center;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  padding: 6px 14px 4px;
+  color: var(--chat-text-muted);
+  background: var(--chat-bg, #ffffff);
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-footer-text {
+  background: var(--chat-bg);
+  color: var(--chat-text-muted);
+}
+
 /* Chat brand footer */
 .chatvia-widget .chatvia-widget-footer {
   position: relative;

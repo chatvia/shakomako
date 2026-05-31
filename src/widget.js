@@ -671,8 +671,12 @@ export class ChatWidget {
       className: CSS_CLASSES.BAR_INPUT_WRAPPER
     });
 
+    // `composer_placeholder` is the input placeholder; `welcome_message` is a
+    // separate full-sentence greeting rendered as the first assistant message
+    // (see state/messages.js). Don't conflate them — surfacing a full greeting
+    // inside the tiny launcher input was the old bug.
     const placeholder =
-      this.settings.welcome_message || this.options.placeholder || t('widget.ask_question');
+      this.settings.composer_placeholder || this.options.placeholder || t('widget.ask_question');
 
     this.barInput = createElement('input', {
       className: CSS_CLASSES.BAR_INPUT,
@@ -791,15 +795,29 @@ export class ChatWidget {
     this.loadingIndicator = this._createLoadingIndicator();
     this.startersContainer = this._createStartersContainer();
     this.inputContainer = this._createInputContainer();
+    // Disclaimer line ("AI can make mistakes…") — sits between the input and
+    // the "Powered by" brand footer. Created up-front so applyConfiguration
+    // can swap its text in without an extra DOM insertion.
+    this.footerText = this._createFooterText();
     this.brandFooter = this._createBrandFooter();
 
     windowEl.appendChild(this.chatHeader);
     windowEl.appendChild(this.messagesContainer);
     windowEl.appendChild(this.startersContainer);
     windowEl.appendChild(this.inputContainer);
+    windowEl.appendChild(this.footerText);
     windowEl.appendChild(this.brandFooter);
 
     return windowEl;
+  }
+
+  _createFooterText() {
+    // Hidden by default; applyFooterText() reveals it when the agent has
+    // configured `chat_footer_text` in the dashboard.
+    return createElement('div', {
+      className: CSS_CLASSES.FOOTER_TEXT,
+      style: 'display:none;'
+    });
   }
 
   _createHeader() {
@@ -991,8 +1009,10 @@ export class ChatWidget {
   _createInputContainer() {
     const container = createElement('div', { className: CSS_CLASSES.INPUT_CONTAINER });
 
+    // See _createBar above — placeholder ≠ welcome_message. The latter is a
+    // greeting rendered as the first assistant message, not a placeholder hint.
     const placeholder =
-      this.settings?.welcome_message || this.options?.placeholder || t('widget.type_message');
+      this.settings?.composer_placeholder || this.options?.placeholder || t('widget.type_message');
 
     this.chatInput = createElement('textarea', {
       className: CSS_CLASSES.INPUT,

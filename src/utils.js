@@ -79,6 +79,9 @@ export const CSS_CLASSES = {
   INPUT: 'chatvia-widget-input',
   SEND_BUTTON: 'chatvia-widget-send-btn',
   BRAND_FOOTER: 'chatvia-widget-footer',
+  // Disclaimer strip below the composer (e.g. "AI can make mistakes…").
+  // Distinct from BRAND_FOOTER — that's the "Powered by Chatvia" line.
+  FOOTER_TEXT: 'chatvia-widget-footer-text',
   CONFIRM_DIALOG: 'chatvia-widget-confirm-dialog',
   CONFIRM_CONTENT: 'chatvia-widget-confirm-content',
   CONFIRM_BUTTONS: 'chatvia-widget-confirm-buttons',

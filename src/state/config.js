@@ -59,6 +59,7 @@ export function applyConfiguration(widget) {
   applyTitle(widget);
   applyBranding(widget);
   applyInputPlaceholder(widget);
+  applyFooterText(widget);
   widget._updateStartersContainer();
 }
 
@@ -378,11 +379,31 @@ export function applyBranding(widget) {
 }
 
 /**
- * Apply input placeholder from settings
+ * Apply the disclaimer text strip below the composer (e.g. "AI can make
+ * mistakes…"). When the agent hasn't configured one, hide the element so the
+ * input sits flush against the brand footer.
+ */
+export function applyFooterText(widget) {
+  if (!widget.footerText) return;
+  const text = widget.settings?.chat_footer_text;
+  if (typeof text === 'string' && text.trim() !== '') {
+    widget.footerText.textContent = text;
+    widget.footerText.style.display = '';
+  } else {
+    widget.footerText.textContent = '';
+    widget.footerText.style.display = 'none';
+  }
+}
+
+/**
+ * Apply input placeholder from settings.
+ * Pulls from `composer_placeholder` (configured in the dashboard's appearance
+ * group). `welcome_message` is intentionally NOT read here — it's the full
+ * greeting rendered as the first assistant message.
  */
 export function applyInputPlaceholder(widget) {
   const placeholder =
-    widget.settings?.welcome_message || widget.options?.placeholder || 'Type a message...';
+    widget.settings?.composer_placeholder || widget.options?.placeholder || 'Type a message...';
 
   if (widget.chatInput) {
     widget.chatInput.placeholder = placeholder;
