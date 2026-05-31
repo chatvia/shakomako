@@ -5,6 +5,7 @@
 
 import { CSS_CLASSES } from '../utils.js';
 import { matchesTrigger } from '../keyboardTrigger.js';
+import { updateScrollToBottomButton } from './controls.js';
 
 /**
  * Setup all event listeners
@@ -23,7 +24,33 @@ export function setupEventListeners(widget) {
   setupInputListeners(widget);
   setupHeaderButtonListeners(widget);
   setupGlobalListeners(widget);
+  setupScrollListener(widget);
   widget.autoResizeInput();
+}
+
+/**
+ * Track scroll position on the messages container so the floating
+ * scroll-to-bottom button can appear when the visitor reads earlier messages.
+ * Listener is on the container itself (element-scoped), so it dies with the
+ * DOM on destroy() — no need to register it on the global AbortController.
+ *
+ * `passive: true` because we never `preventDefault`; the browser can optimize
+ * scroll handling and we get the same callback rate without blocking.
+ */
+function setupScrollListener(widget) {
+  if (!widget.messagesContainer) return;
+  let raf = 0;
+  const onScroll = () => {
+    if (raf) return; // coalesce rapid scroll events to one frame
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      updateScrollToBottomButton(widget);
+    });
+  };
+  widget.messagesContainer.addEventListener('scroll', onScroll, { passive: true });
+  // Initial sync — if the chat opens with content already overflowing and the
+  // saved scroll position isn't at the bottom, show the button immediately.
+  updateScrollToBottomButton(widget);
 }
 
 /**

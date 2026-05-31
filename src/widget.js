@@ -471,8 +471,8 @@ export class ChatWidget {
     return controls.closeMenuDropdown(this);
   }
 
-  scrollToBottom() {
-    return controls.scrollToBottom(this);
+  scrollToBottom(smooth = false) {
+    return controls.scrollToBottom(this, smooth);
   }
 
   clearMessages() {
@@ -808,6 +808,10 @@ export class ChatWidget {
     // can swap its text in without an extra DOM insertion.
     this.footerText = this._createFooterText();
     this.brandFooter = this._createBrandFooter();
+    // Floating chevron-down button shown when the user has scrolled up away
+    // from the latest message. Absolutely positioned over the chat window so
+    // it floats above the input regardless of which message they're reading.
+    this.scrollToBottomBtn = this._createScrollToBottomButton();
 
     windowEl.appendChild(this.chatHeader);
     windowEl.appendChild(this.messagesContainer);
@@ -815,8 +819,33 @@ export class ChatWidget {
     windowEl.appendChild(this.inputContainer);
     windowEl.appendChild(this.footerText);
     windowEl.appendChild(this.brandFooter);
+    windowEl.appendChild(this.scrollToBottomBtn);
 
     return windowEl;
+  }
+
+  _createScrollToBottomButton() {
+    const btn = createElement(
+      'div',
+      {
+        className: CSS_CLASSES.SCROLL_TO_BOTTOM,
+        role: 'button',
+        'aria-label': t('widget.scroll_to_bottom'),
+        title: t('widget.scroll_to_bottom'),
+        tabIndex: 0
+      },
+      {
+        click: () => this.scrollToBottom(true),
+        keydown: e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.scrollToBottom(true);
+          }
+        }
+      }
+    );
+    btn.appendChild(createIcon('chevron-down'));
+    return btn;
   }
 
   _createFooterText() {

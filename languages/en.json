@@ -10,7 +10,8 @@
     "type_message": "Type a message...",
     "ask_question": "Ask a question...",
     "loading": "Loading",
-    "view_history": "View chat history"
+    "view_history": "View chat history",
+    "scroll_to_bottom": "Scroll to latest message"
   },
   "menu": {
     "new_chat": "Start new chat",

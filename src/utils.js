@@ -75,6 +75,11 @@ export const CSS_CLASSES = {
   LOADING_DOT: 'chatvia-widget-dot',
   FETCH_SPINNER: 'chatvia-widget-fetch-spinner',
   FETCH_SPINNER_CIRCLE: 'chatvia-widget-fetch-spinner-circle',
+  // Floating round button that appears when the user has scrolled up away from
+  // the latest message — click to smooth-scroll back to the bottom. `_VISIBLE`
+  // toggles the show/hide transition.
+  SCROLL_TO_BOTTOM: 'chatvia-widget-scroll-bottom',
+  SCROLL_TO_BOTTOM_VISIBLE: 'chatvia-widget-scroll-bottom-visible',
   STARTERS_CONTAINER: 'chatvia-widget-starters',
   STARTER_BUTTON: 'chatvia-widget-starter-btn',
   INPUT_CONTAINER: 'chatvia-widget-input-container',

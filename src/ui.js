@@ -34,7 +34,9 @@ const ICON_SVG_MAP = {
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
   plus: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
   trash:
-    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6L18.4 19.2A2 2 0 0 1 16.4 21H7.6A2 2 0 0 1 5.6 19.2L5 6"></path><path d="M10 11L10 17"></path><path d="M14 11L14 17"></path><path d="M15 6L15 4A2 2 0 0 0 13 2H11A2 2 0 0 0 9 4L9 6"></path></svg>'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6L18.4 19.2A2 2 0 0 1 16.4 21H7.6A2 2 0 0 1 5.6 19.2L5 6"></path><path d="M10 11L10 17"></path><path d="M14 11L14 17"></path><path d="M15 6L15 4A2 2 0 0 0 13 2H11A2 2 0 0 0 9 4L9 6"></path></svg>',
+  'chevron-down':
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'
 };
 
 export function createIcon(iconName) {

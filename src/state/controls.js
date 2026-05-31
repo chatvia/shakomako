@@ -245,21 +245,68 @@ export function closeMenuDropdown(widget) {
 }
 
 /**
- * Scroll to bottom of messages
+ * Scroll to bottom of messages.
+ * @param {object} widget
+ * @param {boolean} [smooth] — when true, animates the scroll (used by the
+ *   scroll-to-bottom button click). Auto-scroll calls during streaming/load
+ *   leave this false so the view jumps instantly without competing animations.
  */
-export function scrollToBottom(widget) {
+export function scrollToBottom(widget, smooth = false) {
   if (!widget.messagesContainer) return;
   if (widget._scrollRAF) cancelAnimationFrame(widget._scrollRAF);
   widget._scrollRAF = requestAnimationFrame(() => {
-    // Try scrollTop approach
-    widget.messagesContainer.scrollTop = widget.messagesContainer.scrollHeight;
-
-    // Also try scrollIntoView on the last child as backup
-    const lastMessage = widget.messagesContainer.lastElementChild;
-    if (lastMessage) {
-      lastMessage.scrollIntoView({ behavior: 'instant', block: 'end' });
+    const container = widget.messagesContainer;
+    if (smooth) {
+      // scrollTo() honors the `smooth` behavior; the browser animates the
+      // scroll over ~300ms. We can't fall back to scrollIntoView here because
+      // both methods racing produces a janky double-scroll.
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    } else {
+      // Direct scrollTop assignment is the most reliable instant-scroll path —
+      // works in every browser/embed context, including ones where
+      // `scrollTo({behavior:'instant'})` silently no-ops.
+      container.scrollTop = container.scrollHeight;
+      // Backup for deeply nested overflow contexts where scrollTop alone
+      // didn't move the viewport.
+      const lastMessage = container.lastElementChild;
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: 'instant', block: 'end' });
+      }
     }
   });
+  // Hide the scroll-to-bottom button immediately so it doesn't linger while
+  // the smooth scroll plays out — the scroll listener will recompute and
+  // re-show it only if needed.
+  hideScrollToBottomButton(widget);
+}
+
+/**
+ * Show/hide the floating scroll-to-bottom button based on scroll position.
+ * Visible when the user has scrolled up away from the bottom AND there's
+ * actually more content below to scroll to (i.e. the messages overflow).
+ */
+export function updateScrollToBottomButton(widget) {
+  if (!widget.scrollToBottomBtn || !widget.messagesContainer) return;
+  const el = widget.messagesContainer;
+  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+  // 40px threshold — small floating-point gaps when at-bottom shouldn't keep
+  // the button visible, but the visitor genuinely scrolling up by a line
+  // should reveal it.
+  const isScrolledUp = distanceFromBottom > 40;
+  const hasOverflow = el.scrollHeight > el.clientHeight;
+  if (isScrolledUp && hasOverflow) {
+    showScrollToBottomButton(widget);
+  } else {
+    hideScrollToBottomButton(widget);
+  }
+}
+
+export function showScrollToBottomButton(widget) {
+  widget.scrollToBottomBtn?.classList.add(CSS_CLASSES.SCROLL_TO_BOTTOM_VISIBLE);
+}
+
+export function hideScrollToBottomButton(widget) {
+  widget.scrollToBottomBtn?.classList.remove(CSS_CLASSES.SCROLL_TO_BOTTOM_VISIBLE);
 }
 
 /**

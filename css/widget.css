@@ -1298,6 +1298,78 @@
 
 
 
+/* Scroll-to-bottom floating button — appears when the visitor has scrolled
+   up away from the latest message. Anchored to the chat window (position:
+   fixed there), so it stays put as messages stream in. Lives just above the
+   composer so it doesn't cover any message content. Hidden by default;
+   `.chatvia-widget-scroll-bottom-visible` fades + scales it in.
+
+   Bottom offset accounts for the worst case: brand footer (~36px) + footer
+   text strip (~25px when present) + input container (~88px) + small gap =
+   ~155px. Sits ~6px above the footer text strip when present, or floats a
+   touch higher above the input when it's hidden — either way it never covers
+   message content or runs into the composer. */
+.chatvia-widget .chatvia-widget-scroll-bottom {
+  position: absolute;
+  bottom: 155px;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  background: rgba(17, 24, 39, 0.9);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.25), 0 2px 6px -1px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, 8px) scale(0.92);
+  transition: opacity var(--chat-transition-fast),
+    transform var(--chat-transition-fast),
+    visibility 0s linear 150ms,
+    background-color var(--chat-transition-fast);
+}
+
+.chatvia-widget .chatvia-widget-scroll-bottom.chatvia-widget-scroll-bottom-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, 0) scale(1);
+  transition: opacity var(--chat-transition-fast),
+    transform var(--chat-transition-fast),
+    visibility 0s linear 0s,
+    background-color var(--chat-transition-fast);
+}
+
+.chatvia-widget .chatvia-widget-scroll-bottom:hover {
+  background: rgba(17, 24, 39, 1);
+}
+
+.chatvia-widget .chatvia-widget-scroll-bottom:active {
+  transform: translate(-50%, 0) scale(0.94);
+}
+
+.chatvia-widget .chatvia-widget-scroll-bottom svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Dark mode — keep the same dark pill (matches chatvia design). Only the
+   shadow is softened so it stays visible against the dark background. */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-scroll-bottom {
+  background: rgba(248, 250, 252, 0.92);
+  color: #0f172a;
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.35);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-scroll-bottom:hover {
+  background: #f8fafc;
+}
+
 /* Message spacing and appearance - Intercom style */
 .chatvia-widget .chatvia-widget-message+.chatvia-widget-message {
   margin-top: 10px;
