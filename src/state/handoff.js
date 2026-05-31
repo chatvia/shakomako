@@ -5,6 +5,7 @@
 
 /* global __API_URL__, __DEV__, __REVERB_APP_KEY__, __REVERB_HOST__, __REVERB_PORT__, __REVERB_SCHEME__ */
 
+import Pusher from 'pusher-js';
 import { CSS_CLASSES } from '../utils.js';
 import { t } from '../i18n.js';
 import { authHeaders } from '../auth.js';
@@ -437,26 +438,12 @@ export async function endLiveChat(widget) {
 }
 
 /**
- * Load Pusher library dynamically
- */
-async function loadPusherLibrary() {
-  if (window.Pusher) {
-    return window.Pusher;
-  }
-
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://js.pusher.com/8.2.0/pusher.min.js';
-    script.async = true;
-    script.onload = () => resolve(window.Pusher);
-    script.onerror = () => reject(new Error('Failed to load Pusher library'));
-    document.head.appendChild(script);
-  });
-}
-
-/**
  * Connect to Pusher/Reverb WebSocket (connection only, no channel subscription)
  * Call subscribeToConversation() separately to subscribe to a channel
+ *
+ * Pusher is statically imported (bundled with the widget) rather than loaded
+ * from js.pusher.com — keeps the supply chain entirely under our own origin,
+ * no CDN-compromise / MITM blast radius for embedding customers.
  */
 export async function connectPusher(widget) {
   // Don't reconnect if already connected
@@ -465,8 +452,6 @@ export async function connectPusher(widget) {
   }
 
   try {
-    const Pusher = await loadPusherLibrary();
-
     // Dev fallbacks for local development with Laravel Herd
     const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : true;
     const devAppKey = 'laravel-herd';

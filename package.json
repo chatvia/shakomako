@@ -52,6 +52,7 @@
     "dotenv": "^16.5.0",
     "eslint-plugin-prettier": "^5.4.0",
     "marked": "^15.0.11",
+    "pusher-js": "^8.5.0",
     "rollup-plugin-dotenv": "^0.5.1"
   }
 }
