@@ -3,7 +3,12 @@
  * Handles message display, streaming, and markdown parsing
  */
 
-import { CSS_CLASSES, DEFAULT_AVATAR_SVG, STREAMING_FINALIZE_TIMEOUT, debug } from '../utils.js';
+import {
+  CSS_CLASSES,
+  STREAMING_FINALIZE_TIMEOUT,
+  debug,
+  safeImageUrl
+} from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
 import { t } from '../i18n.js';
@@ -30,7 +35,8 @@ export async function addMessage(widget, type, text, addToHistory = true, option
   const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
 
   if (type === CSS_CLASSES.MESSAGE_AGENT) {
-    contentWrapper.appendChild(createAvatar(widget, isHumanAgentMessage));
+    const avatar = createAvatar(widget, isHumanAgentMessage);
+    if (avatar) contentWrapper.appendChild(avatar);
   }
 
   const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
@@ -191,25 +197,27 @@ const HUMAN_AGENT_SVG = `
 `;
 
 export function createAvatar(widget, isHumanAgent = false) {
-  const avatar = createElement('div', { className: CSS_CLASSES.MESSAGE_AVATAR });
-
-  // Human agents always show person icon
+  // Human agents always show the person icon — the message needs a visual
+  // marker that distinguishes a live operator from the AI.
   if (isHumanAgent) {
+    const avatar = createElement('div', { className: CSS_CLASSES.MESSAGE_AVATAR });
     avatar.innerHTML = HUMAN_AGENT_SVG;
     return avatar;
   }
 
-  // AI assistant shows the agent's avatar or default bot icon
-  const avatarUrl = widget.settings.avatar_url;
-  if (avatarUrl) {
-    const avatarImg = createElement('img', {
-      src: avatarUrl,
-      alt: 'Assistant'
-    });
-    avatar.appendChild(avatarImg);
-  } else {
-    avatar.innerHTML = DEFAULT_AVATAR_SVG;
-  }
+  // AI assistant only renders an avatar when the operator has configured
+  // `settings.avatar_url`. No fallback icon — if the operator wants an icon,
+  // they set one in settings. Returning null tells callers to skip the slot.
+  const avatarUrl = safeImageUrl(widget.settings.avatar_url);
+  if (!avatarUrl) return null;
+
+  const avatar = createElement('div', { className: CSS_CLASSES.MESSAGE_AVATAR });
+  const avatarImg = createElement('img', {
+    src: avatarUrl,
+    alt: 'Assistant',
+    referrerpolicy: 'no-referrer'
+  });
+  avatar.appendChild(avatarImg);
   return avatar;
 }
 
@@ -559,8 +567,10 @@ export function startStreamingMessage(widget) {
   // its own with no empty avatar/bubble beneath it.
   contentWrapper.style.display = 'none';
   const avatar = createAvatar(widget);
-  avatar.classList.add(CSS_CLASSES.STREAMING); // drives the avatar typing pulse
-  contentWrapper.appendChild(avatar);
+  if (avatar) {
+    avatar.classList.add(CSS_CLASSES.STREAMING); // drives the avatar typing pulse
+    contentWrapper.appendChild(avatar);
+  }
   const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
   contentWrapper.appendChild(messageBubble);
 

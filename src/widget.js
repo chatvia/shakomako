@@ -10,7 +10,7 @@ import { AgentManager } from './agent.js';
 import { AuthManager } from './auth.js';
 import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
-import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug } from './utils.js';
+import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug, safeImageUrl } from './utils.js';
 import { createElement, createIcon } from './ui.js';
 import { initI18n, t } from './i18n.js';
 
@@ -586,12 +586,14 @@ export class ChatWidget {
       'aria-label': t('widget.open_chat'),
       tabIndex: 0
     });
-    const logoUrl = this.settings.logo_url || DEFAULT_LOGO_SVG;
+    const logoUrl = safeImageUrl(this.settings.logo_url) || DEFAULT_LOGO_SVG;
     this.bubbleLogo = createElement('img', {
       alt: 'Chat',
       src: logoUrl,
       width: '30',
       height: '30',
+      // referrerpolicy avoids leaking the embedding host's URL to the logo origin.
+      referrerpolicy: 'no-referrer',
       style: 'width: 30px; height: 30px; opacity: 1;'
     });
     bubble.appendChild(this.bubbleLogo);

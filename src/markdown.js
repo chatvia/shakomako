@@ -67,9 +67,14 @@ DOMPurify.addHook('afterSanitizeAttributes', node => {
   }
   if (node.tagName === 'IMG') {
     const src = node.getAttribute('src') || '';
-    // Allow https:// and data: only — http:// (beaconing) and javascript:
-    // are stripped outright.
-    if (!/^(https:\/\/|data:image\/)/i.test(src)) {
+    // Allow https:// and raster data: URIs only. We deliberately drop
+    // data:image/svg+xml here — even though <img>-loaded SVG can't execute
+    // scripts, it has historically been a hotbed of parser-mutation XSS via
+    // DOMPurify and a vector for fetching remote refs / leaking CSP signals.
+    // Operator-supplied logos go through safeImageUrl in utils.js where SVG
+    // is allowed (trusted source); LLM-emitted markdown gets the stricter
+    // policy here (untrusted source).
+    if (!/^(https:\/\/|data:image\/(png|jpe?g|gif|webp);base64,)/i.test(src)) {
       node.removeAttribute('src');
     }
     node.setAttribute('loading', 'lazy');

@@ -136,11 +136,31 @@ export const CSS_CLASSES = {
 export const STREAMING_DONE_MARKER = '[DONE]';
 export const STREAMING_FINALIZE_TIMEOUT = 5000; // ms
 
-export const DEFAULT_AVATAR_SVG = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-    <circle cx="12" cy="7" r="4"></circle>
-  </svg>
-`;
 export const DEFAULT_LOGO_SVG =
   'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yMCA0SDRjLTEuMSAwLTIgLjktMiAydjEwYzAgMS4xLjkgMiAyIDJoMTJsNCA0VjZjMC0xLjEtLjktMi0yLTJ6Ii8+PC9zdmc+';
+
+// Allowlist for operator-configured image URLs (logo_url, avatar_url, bubble
+// logo, etc.). We accept:
+//   - https:// — first-class case, no mixed content / passive beaconing.
+//   - data:image/{png,jpeg,gif,webp,svg+xml};base64 — inline assets including
+//     small SVG logos. SVG via <img src> can't execute scripts or load remote
+//     refs (browsers block both for image-loaded SVG), so this is contained.
+// We reject http:// (passive content beacons + mixed-content warnings on the
+// embedding HTTPS page), javascript:, file:, blob:, anything else.
+//
+// Callers should pair this with referrerpolicy="no-referrer" on the <img>
+// element so the embedding host's URL doesn't leak to the image's origin.
+const SAFE_IMAGE_URL_RE = /^(https:\/\/|data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,)/i;
+
+/**
+ * Return `url` when it passes the image URL allowlist, otherwise null.
+ * Callers should fall back to a hardcoded default (e.g. DEFAULT_LOGO_SVG)
+ * on null so a misconfigured / hostile setting doesn't break the render.
+ *
+ * @param {unknown} url
+ * @returns {string|null}
+ */
+export function safeImageUrl(url) {
+  if (typeof url !== 'string' || url === '') return null;
+  return SAFE_IMAGE_URL_RE.test(url) ? url : null;
+}

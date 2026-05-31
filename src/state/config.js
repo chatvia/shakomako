@@ -3,7 +3,7 @@
  * Handles configuration application and styling
  */
 
-import { CSS_CLASSES, DEFAULT_LOGO_SVG } from '../utils.js';
+import { CSS_CLASSES, DEFAULT_LOGO_SVG, safeImageUrl } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 
 const THEME_STORAGE_PREFIX = 'chatvia-theme:';
@@ -140,6 +140,15 @@ function applyDynamicHeightConstraint(widget) {
  * variable is declared as an indirection through `--chat-primary`, it must
  * also be re-bound here.
  */
+// Allowlists for the parts that get interpolated into a CSS custom-property
+// value. `colorTheme` is a Tailwind-style palette name ("blue", "red", "sky");
+// `colorShade` is a 50-950 numeric shade. Anything outside these shapes would
+// produce invalid CSS (silently dropped by the CSSOM) and shouldn't reach the
+// stylesheet — refuse and warn instead. Defence-in-depth even though the
+// CSSOM rejects break-out attempts; keeps the surface obviously inert.
+const COLOR_THEME_RE = /^[a-z]+$/;
+const COLOR_SHADE_RE = /^\d{1,4}$/;
+
 export function applyColors(widget) {
   if (!widget.container) return;
 
@@ -151,6 +160,15 @@ export function applyColors(widget) {
       'chatvia: agent settings missing color_theme and/or color_shade — ' +
         'the widget will render with the unset (transparent) sentinel. ' +
         'Backend must supply both fields.',
+      { color_theme: colorTheme, color_shade: colorShade }
+    );
+    return;
+  }
+
+  if (!COLOR_THEME_RE.test(String(colorTheme)) || !COLOR_SHADE_RE.test(String(colorShade))) {
+    console.warn(
+      'chatvia: rejected color_theme/color_shade with unexpected characters. ' +
+        'Expected lowercase letters and a numeric shade.',
       { color_theme: colorTheme, color_shade: colorShade }
     );
     return;
@@ -258,9 +276,13 @@ export function teardownAutoThemeListener(widget) {
  * Apply logos
  */
 export function applyLogos(widget) {
-  const logoUrl = widget.settings.logo_url || DEFAULT_LOGO_SVG;
+  const logoUrl = safeImageUrl(widget.settings.logo_url) || DEFAULT_LOGO_SVG;
   if (widget.headerLogo && !widget.headerLogo.src) {
     widget.headerLogo.src = logoUrl;
+    // Don't leak the embedding host's URL to the logo origin (set on the
+    // element rather than the createElement attrs because the element was
+    // built earlier in _createHeader without knowing the src).
+    widget.headerLogo.referrerPolicy = 'no-referrer';
   }
 }
 
@@ -286,7 +308,10 @@ export function applyBranding(widget) {
     const brandUrl = widget.settings.branding.url || '';
     const brandLogoUrl = widget.settings.branding.logo_url || '';
 
-    const isValidUrl = url => {
+    // For the brand link href we allow http: as well as https: — http brand
+    // sites are rare but legal, and a click-through doesn't beacon the visitor
+    // the way a passive <img src=http://…> would.
+    const isValidLinkUrl = url => {
       if (!url) return false;
       try {
         const parsed = new URL(url, window.location.origin);
@@ -297,7 +322,7 @@ export function applyBranding(widget) {
     };
 
     const container =
-      brandUrl && isValidUrl(brandUrl)
+      brandUrl && isValidLinkUrl(brandUrl)
         ? createElement('a', {
             href: brandUrl,
             target: '_blank',
@@ -305,11 +330,15 @@ export function applyBranding(widget) {
           })
         : createElement('span');
 
-    if (brandLogoUrl && isValidUrl(brandLogoUrl)) {
+    // Brand logo goes through the same image-URL allowlist as the agent
+    // logo/avatar — https or data:image only, never http.
+    const safeBrandLogo = safeImageUrl(brandLogoUrl);
+    if (safeBrandLogo) {
       const logo = createElement('img', {
-        src: brandLogoUrl,
+        src: safeBrandLogo,
         alt: 'Logo',
-        className: CSS_CLASSES.BRAND_LOGO
+        className: CSS_CLASSES.BRAND_LOGO,
+        referrerpolicy: 'no-referrer'
       });
       container.appendChild(logo);
     }
