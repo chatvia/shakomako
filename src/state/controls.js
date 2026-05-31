@@ -211,36 +211,21 @@ export function toggleMenuDropdown(widget) {
     console.log('Preventing menu open while streaming.');
     return;
   }
+  if (!widget.menuDropdown) return;
 
-  const isOpen = widget.menuDropdown?.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-
-  if (isOpen) {
+  // Hidden / shown is fully class-driven now — the CSS handles the fade-in
+  // and fade-out symmetrically via opacity + visibility. Don't poke inline
+  // styles here, or they'll override the class and the close transition
+  // won't run (you'll see the menu sit fully visible until display:none).
+  if (widget.menuDropdown.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN)) {
     widget.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-    const onTransitionEnd = e => {
-      if (e.propertyName === 'opacity') {
-        widget.menuDropdown.style.display = 'none';
-        widget.menuDropdown.removeEventListener('transitionend', onTransitionEnd);
-      }
-    };
-    widget.menuDropdown.addEventListener('transitionend', onTransitionEnd);
-    if (
-      widget.menuDropdown &&
-      !widget.menuDropdown.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN)
-    ) {
-      widget.menuDropdown.style.display = 'none';
-    }
-  } else if (widget.menuDropdown) {
-    // Update menu items state based on handoff mode before showing
-    if (widget._updateMenuForHandoffState) {
-      widget._updateMenuForHandoffState();
-    }
-
-    widget.menuDropdown.style.display = 'block';
-    void widget.menuDropdown.offsetWidth;
-    widget.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-    widget.menuDropdown.style.opacity = '1';
-    widget.menuDropdown.style.zIndex = '10001';
+    return;
   }
+
+  if (widget._updateMenuForHandoffState) {
+    widget._updateMenuForHandoffState();
+  }
+  widget.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
 }
 
 /**
@@ -256,18 +241,6 @@ export function menuDropdownIsOpened(widget) {
 export function closeMenuDropdown(widget) {
   if (menuDropdownIsOpened(widget)) {
     widget.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
-    const onTransitionEnd = e => {
-      if (e.propertyName === 'opacity') {
-        widget.menuDropdown.style.display = 'none';
-        widget.menuDropdown.removeEventListener('transitionend', onTransitionEnd);
-      }
-    };
-    widget.menuDropdown.addEventListener('transitionend', onTransitionEnd);
-    setTimeout(() => {
-      if (widget.menuDropdown && !menuDropdownIsOpened(widget)) {
-        widget.menuDropdown.style.display = 'none';
-      }
-    }, 300);
   }
 }
 

@@ -938,7 +938,6 @@ export class ChatWidget {
     );
     dropdown.appendChild(this.clearCurrentOption);
     dropdown.appendChild(this.clearAllOption);
-    dropdown.style.display = 'none';
     return dropdown;
   }
 

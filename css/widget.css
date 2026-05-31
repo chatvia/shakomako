@@ -1432,9 +1432,15 @@
   stroke: var(--chat-header-text);
 }
 
-/* Menu dropdown styling */
+/* Menu dropdown styling. Uses visibility + pointer-events for the hidden
+   state instead of display:none so the open ↔ close transition is symmetric.
+   visibility is delayed on close so the fade-out completes before the element
+   becomes inert. (We can't pull the visibility delay through
+   --chat-transition-fast — that var bundles duration + timing-function, which
+   would produce an invalid `visibility 0s linear 0.15s ease` shorthand and
+   the browser would drop the whole `transition` declaration. So the 150ms is
+   hard-coded here; keep it in sync with --chat-transition-fast.) */
 .chatvia-widget .chatvia-widget-menu-dropdown {
-  display: none;
   position: absolute;
   top: calc(100% + 8px);
   right: 40px;
@@ -1444,8 +1450,11 @@
   box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.2), 0 4px 16px -4px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   z-index: 10005;
-  transition: opacity var(--chat-transition-fast), transform var(--chat-transition-fast);
+  transition: opacity var(--chat-transition-fast), transform var(--chat-transition-fast),
+    visibility 0s linear 150ms;
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
   transform: translateY(-6px) scale(0.96);
   transform-origin: top right;
   max-height: 70vh;
@@ -1455,8 +1464,11 @@
 
 .chatvia-widget .chatvia-widget-menu-dropdown.chatvia-widget-dropdown-open {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
   transform: translateY(0) scale(1);
-  animation: menuFadeIn 0.2s ease-out;
+  transition: opacity var(--chat-transition-fast), transform var(--chat-transition-fast),
+    visibility 0s linear 0s;
 }
 
 .chatvia-widget .chatvia-widget-menu-option {
