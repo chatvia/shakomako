@@ -56,6 +56,12 @@ export class ChatWidget {
       this.options = options;
     }
 
+    // Internal event emitter wired in by main.js (closure-private listener
+    // registry). Defaults to a no-op so direct constructions of ChatWidget
+    // (tests, alternate entry points) don't crash when something tries to
+    // emit. The widget never reads listeners directly — it can only fire.
+    this._emit = typeof this.options.emit === 'function' ? this.options.emit : () => {};
+
     // Mode: 'bubble' (default chat bubble) or 'bar' (floating launcher bar).
     // embed.js validates the input attribute; this is a safety net for direct
     // callers that bypass the loader (e.g. the index.html / bar.html demos).

@@ -13,7 +13,26 @@ import { NAMESPACE } from './utils.js';
 
   const clientId = window[namespace].agentId;
   const commandQueue = window[namespace].q || [];
+  // Closure-private registry of host-page event subscriptions ('handoff',
+  // 'open', 'close', 'ready'). Was previously exposed on the public API as
+  // `_eventListeners` so internal modules could reach in via window.chatvia,
+  // but that also let any third-party script on the embedding page snoop on
+  // takeover events. Now nobody outside this closure can read or mutate it —
+  // the widget gets a write-only `emit` callback to fire events.
   const eventListeners = {};
+  const emitWidgetEvent = (event, data) => {
+    const cbs = eventListeners[event];
+    if (!cbs || cbs.length === 0) return;
+    // Copy so a listener that unsubscribes itself doesn't shift the array
+    // mid-iteration and skip the next listener.
+    for (const cb of cbs.slice()) {
+      try {
+        cb(data);
+      } catch (err) {
+        console.error(`chatvia: event listener for "${event}" threw:`, err);
+      }
+    }
+  };
 
   console.log(`chatvia: Instantiating ChatWidget from main.js for client ${clientId}`);
 
@@ -25,7 +44,10 @@ import { NAMESPACE } from './utils.js';
       language: window[namespace].language,
       theme: window[namespace].theme,
       auth: window[namespace].auth,
-      mode: window[namespace].mode || 'bubble'
+      mode: window[namespace].mode || 'bubble',
+      // Hook used by internal modules (handoff, etc.) to fan a single
+      // event out to host-page listeners. Closure-private — see comment above.
+      emit: emitWidgetEvent
     };
     const widgetInstance = new ChatWidget(clientId, options);
 
@@ -33,7 +55,6 @@ import { NAMESPACE } from './utils.js';
     const api = {
       // Properties
       agentId: clientId,
-      _eventListeners: eventListeners, // Expose for internal event emission
 
       /**
        * Initialize the widget
@@ -215,13 +236,8 @@ import { NAMESPACE } from './utils.js';
     };
 
     // Set up DOM event listeners to emit custom events
-    document.addEventListener('chat:opened', () => {
-      (eventListeners['open'] || []).forEach(cb => cb());
-    });
-
-    document.addEventListener('chat:closed', () => {
-      (eventListeners['close'] || []).forEach(cb => cb());
-    });
+    document.addEventListener('chat:opened', () => emitWidgetEvent('open'));
+    document.addEventListener('chat:closed', () => emitWidgetEvent('close'));
 
     // Make API callable as function for legacy support: chatbot('open')
     const proxyHandler = {
@@ -243,9 +259,7 @@ import { NAMESPACE } from './utils.js';
     }
 
     // Emit ready event
-    setTimeout(() => {
-      (eventListeners['ready'] || []).forEach(cb => cb());
-    }, 0);
+    setTimeout(() => emitWidgetEvent('ready'), 0);
 
     console.log('chatvia: Chat Widget setup complete.');
   } catch (error) {

@@ -312,13 +312,15 @@ export async function handleHandoffEvent(widget, data) {
 }
 
 /**
- * Emit handoff event to external listeners
+ * Emit handoff event to external listeners.
+ *
+ * Uses the widget's closure-private `_emit` hook (wired in by main.js)
+ * rather than reaching into `window.chatvia._eventListeners`. The old path
+ * leaked the listener registry on the public namespace so any third-party
+ * script on the embedding page could snoop on handoff/takeover events.
  */
 function emitHandoffEvent(widget, data) {
-  if (window.chatvia && window.chatvia._eventListeners) {
-    const listeners = window.chatvia._eventListeners['handoff'] || [];
-    listeners.forEach(cb => cb(data));
-  }
+  widget._emit?.('handoff', data);
 }
 
 /**
