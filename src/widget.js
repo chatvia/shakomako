@@ -29,6 +29,15 @@ import { startHeartbeat } from './state/handoff.js';
 export const VALID_MODES = ['bubble', 'bar'];
 const DEFAULT_MODE = 'bubble';
 
+/**
+ * Bar-mode placement values. Mirrors the chatvia validator at
+ * config/model-settings.php:189. `top` and `bottom` center the bar horizontally;
+ * the `-right` variants anchor to the viewport's right edge. Default is `top`,
+ * which matches the chatvia default in the same config file.
+ */
+export const VALID_BAR_PLACEMENTS = ['top', 'top-right', 'bottom', 'bottom-right'];
+const DEFAULT_BAR_PLACEMENT = 'top';
+
 export class ChatWidget {
   /**
    * @param {string} agentId — public agent id from `data-agent-id`.
@@ -164,6 +173,39 @@ export class ChatWidget {
       `chatvia: Invalid mode "${rawMode}". Expected ${VALID_MODES.join(' or ')}. Falling back to "${DEFAULT_MODE}".`
     );
     return DEFAULT_MODE;
+  }
+
+  /**
+   * Validate a bar placement string. Aligned with the chatvia backend
+   * validator at config/model-settings.php:189 — keep the two lists in lockstep.
+   */
+  static _validateBarPlacement(raw) {
+    if (VALID_BAR_PLACEMENTS.includes(raw)) return raw;
+    if (raw) {
+      console.warn(
+        `chatvia: Invalid bar placement "${raw}". Expected ${VALID_BAR_PLACEMENTS.join(' | ')}. Falling back to "${DEFAULT_BAR_PLACEMENT}".`
+      );
+    }
+    return DEFAULT_BAR_PLACEMENT;
+  }
+
+  /**
+   * Map a placement value to its CSS class. The class drives the CSS rules at
+   * the bottom of widget.css that position the bar in the right viewport corner.
+   */
+  static _barPlacementClass(placement) {
+    switch (placement) {
+      case 'top':
+        return CSS_CLASSES.BAR_POSITION_TOP;
+      case 'top-right':
+        return CSS_CLASSES.BAR_POSITION_TOP_RIGHT;
+      case 'bottom':
+        return CSS_CLASSES.BAR_POSITION_BOTTOM;
+      case 'bottom-right':
+        return CSS_CLASSES.BAR_POSITION_BOTTOM_RIGHT;
+      default:
+        return CSS_CLASSES.BAR_POSITION_TOP;
+    }
   }
 
   // ========================================
@@ -483,6 +525,10 @@ export class ChatWidget {
 
   _showBootLoader() {
     if (this._bootLoader) return;
+    // Bar mode renders a bottom-centered bar, not a bottom-right circle. Showing
+    // the circular boot spinner here would flash a bubble-shaped indicator that
+    // doesn't match where the bar lands — stay silent until the bar can mount.
+    if (this.mode === 'bar' && !this.isFlat) return;
 
     const loader = createElement('div', { className: 'chatvia-widget-boot' });
     loader.appendChild(createElement('div', { className: 'chatvia-widget-boot-spinner' }));
@@ -607,8 +653,16 @@ export class ChatWidget {
    * controls/events modules can wire interactions to them later.
    */
   _createBar() {
-    const positionClass =
-      this.barPosition === 'top' ? CSS_CLASSES.BAR_POSITION_TOP : CSS_CLASSES.BAR_POSITION_BOTTOM;
+    // Placement resolution chain:
+    //   1. programmatic override from the embedder (e.g. bar.html demo)
+    //   2. dashboard-configured bar.placement (served via settings API)
+    //   3. legacy constructor default ('bottom' for back-compat)
+    // Constrained to the 4 values the chatvia validator accepts; anything else
+    // falls back to 'top' (matching the chatvia default).
+    const resolved =
+      this.options.position || this.settings?.bar_placement || this.barPosition || 'top';
+    this.barPosition = ChatWidget._validateBarPlacement(resolved);
+    const positionClass = ChatWidget._barPlacementClass(this.barPosition);
     const barContainer = createElement('div', {
       className: `${CSS_CLASSES.BAR_CONTAINER} ${positionClass}`
     });

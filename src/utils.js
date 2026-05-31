@@ -110,8 +110,12 @@ export const CSS_CLASSES = {
   BAR_CONTAINER: 'chatvia-widget-bar-container',
   BAR_CONTAINER_EXPANDED: 'chatvia-widget-expanded',
   BAR_CONTAINER_HIDDEN: 'chatvia-widget-hidden',
+  // Bar placement classes. `top` and `bottom` center the bar horizontally;
+  // `-right` variants anchor to the viewport's right edge instead.
   BAR_POSITION_TOP: 'chatvia-widget-bar-top',
   BAR_POSITION_BOTTOM: 'chatvia-widget-bar-bottom',
+  BAR_POSITION_TOP_RIGHT: 'chatvia-widget-bar-top-right',
+  BAR_POSITION_BOTTOM_RIGHT: 'chatvia-widget-bar-bottom-right',
   BAR_INPUT_WRAPPER: 'chatvia-widget-bar-input-wrapper',
   BAR_INPUT: 'chatvia-widget-bar-input',
   BAR_SHORTCUT_HINT: 'chatvia-widget-shortcut-hint',

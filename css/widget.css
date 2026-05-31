@@ -2203,6 +2203,36 @@ body.chatvia-scroll-locked {
   bottom: 20px;
 }
 
+/* Right-anchored placements: undo the `left: 50%` + `translateX(-50%)` that
+   centers the default bar, and pin to the right edge instead. The hover/active
+   transforms on .chatvia-widget-bar-btn use plain translateY/scale so they
+   don't fight this transform reset. */
+.chatvia-widget-bar-container.chatvia-widget-bar-top-right {
+  top: 20px;
+  left: auto;
+  right: 20px;
+  transform: none;
+}
+
+.chatvia-widget-bar-container.chatvia-widget-bar-bottom-right {
+  bottom: 20px;
+  left: auto;
+  right: 20px;
+  transform: none;
+}
+
+/* Keep right-anchored bars from getting wider than they should when expanded
+   on a narrow viewport — the centered default uses max-width: 90vw which
+   re-centers via translateX, but right-anchored bars need a hard cap from the
+   right edge instead. */
+@media (max-width: 768px) {
+  .chatvia-widget-bar-container.chatvia-widget-bar-top-right,
+  .chatvia-widget-bar-container.chatvia-widget-bar-bottom-right {
+    right: 16px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
 /* Bar input wrapper */
 .chatvia-widget-bar-input-wrapper {
   display: flex;
