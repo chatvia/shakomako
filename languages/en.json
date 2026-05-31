@@ -72,10 +72,6 @@
     "message_send_failed": "Failed to send message. Please try again.",
     "response_failed": "Something went wrong while generating the response. Please try again.",
     "auth_required": "This chat requires sign-in."
-  },
-  "shortcuts": {
-    "mac": "⌘K",
-    "windows": "Ctrl+K"
   }
 }
 

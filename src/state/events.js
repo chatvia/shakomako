@@ -4,6 +4,7 @@
  */
 
 import { CSS_CLASSES } from '../utils.js';
+import { matchesTrigger } from '../keyboardTrigger.js';
 
 /**
  * Setup all event listeners
@@ -218,11 +219,31 @@ export function setupKeyboardShortcuts(widget) {
   document.addEventListener(
     'keydown',
     e => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+      // Configured launcher shortcut. Falls through to the platform default
+      // (cmd+k / ctrl+k) when the backend hasn't sent a `keyboard_trigger`
+      // (legacy widgets or a transient API gap).
+      const trigger = widget.settings?.keyboard_trigger;
 
-      // Cmd/Ctrl + K to toggle the bar/chat launcher
-      if (modifierKey && e.key.toLowerCase() === 'k') {
+      if (matchesTrigger(e, trigger)) {
+        // For the bare `/` / `?` triggers, don't hijack the key while the user
+        // is typing into the chat input or the bar's own input — that would
+        // make it impossible to actually type those characters into a message.
+        // The modifier triggers (cmd+…) are global because the modifier itself
+        // is the disambiguator.
+        const isBareKeyTrigger = trigger === '/' || trigger === 'shift+/';
+        if (isBareKeyTrigger) {
+          const active = document.activeElement;
+          const inWidgetInput = active === widget.chatInput || active === widget.barInput;
+          // Also bail when typing into any other text-entry field on the host
+          // page; the launcher should never steal slashes from the embedder.
+          const isHostTextField =
+            active &&
+            (active.tagName === 'INPUT' ||
+              active.tagName === 'TEXTAREA' ||
+              active.isContentEditable);
+          if (inWidgetInput || isHostTextField) return;
+        }
+
         e.preventDefault();
 
         if (widget.mode === 'bar') {

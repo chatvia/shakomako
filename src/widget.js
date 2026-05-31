@@ -12,7 +12,8 @@ import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug, safeImageUrl } from './utils.js';
 import { createElement, createIcon } from './ui.js';
-import { initI18n, t } from './i18n.js';
+import { initI18n, t, getDirection } from './i18n.js';
+import { triggerLabel } from './keyboardTrigger.js';
 
 // Import state modules
 import * as threads from './state/threads.js';
@@ -625,10 +626,12 @@ export class ChatWidget {
       placeholder: placeholder
     });
 
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    // Label reflects the trigger the dashboard configured (cmd+k / cmd+j / etc).
+    // triggerLabel() picks the platform glyph (⌘ on mac, Ctrl+ elsewhere) and
+    // falls back to the default when the setting is missing.
     const shortcutHint = createElement('span', {
       className: CSS_CLASSES.BAR_SHORTCUT_HINT,
-      textContent: isMac ? t('shortcuts.mac') : t('shortcuts.windows'),
+      textContent: triggerLabel(this.settings.keyboard_trigger),
       title: t('widget.open_chat')
     });
 
@@ -973,7 +976,12 @@ export class ChatWidget {
   // ========================================
 
   _showConfirmationDialog(title, message, confirmText, onConfirm) {
-    const dialog = createElement('div', { className: CSS_CLASSES.CONFIRM_DIALOG });
+    // Dialog lives at document.body, so dir is not inherited from the widget
+    // container — stamp it explicitly to flip text/button alignment in RTL.
+    const dialog = createElement('div', {
+      className: CSS_CLASSES.CONFIRM_DIALOG,
+      dir: getDirection()
+    });
 
     const content = createElement('div', { className: CSS_CLASSES.CONFIRM_CONTENT });
 
