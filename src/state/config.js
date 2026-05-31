@@ -5,6 +5,7 @@
 
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, safeImageUrl } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
+import { getDirection } from '../i18n.js';
 
 const THEME_STORAGE_PREFIX = 'chatvia-theme:';
 
@@ -50,6 +51,7 @@ export function applyConfiguration(widget) {
     if (widget.chatBubble) widget.chatBubble.style.display = 'none';
   }
 
+  applyDirection(widget);
   applyWindowSize(widget);
   applyColors(widget);
   applyTheme(widget);
@@ -58,6 +60,28 @@ export function applyConfiguration(widget) {
   applyBranding(widget);
   applyInputPlaceholder(widget);
   widget._updateStartersContainer();
+}
+
+/**
+ * Apply the text direction for the active language onto every top-level widget
+ * surface. `dir="rtl"` triggers the `[dir="rtl"]` overrides in widget.css that
+ * mirror padding/margin, send-button placement, dropdown anchoring, etc.
+ *
+ * We stamp `dir` on each surface independently because the bar launcher,
+ * floating bubble container, and chat window can all live outside `container`
+ * in different render modes — relying on inheritance alone would miss them.
+ */
+export function applyDirection(widget) {
+  const dir = getDirection();
+  const surfaces = [
+    widget.container,
+    widget.chatWindow,
+    widget.bar,
+    widget.messageBubblesContainer
+  ];
+  for (const el of surfaces) {
+    if (el) el.setAttribute('dir', dir);
+  }
 }
 
 /**

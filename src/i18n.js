@@ -21,6 +21,9 @@ let userSetLanguage = null; // Language explicitly set by user/config
 // Fallback to English
 const fallbackLanguage = 'en';
 
+// Languages that render right-to-left. Keep in sync with bundled translations.
+const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
+
 /**
  * Initialize i18n system
  * @param {Object} config - Configuration object
@@ -158,6 +161,23 @@ function replaceVars(str, vars) {
  */
 export function getCurrentLanguage() {
   return currentLanguage;
+}
+
+/**
+ * Whether the current language flows right-to-left.
+ * Used to set `dir="rtl"` on the widget container so direction-sensitive CSS
+ * (and the few `[dir="rtl"]` overrides in widget.css) flip into place.
+ */
+export function isRTL() {
+  return RTL_LANGUAGES.has(currentLanguage);
+}
+
+/**
+ * Resolve the current language's text direction.
+ * @returns {'rtl' | 'ltr'}
+ */
+export function getDirection() {
+  return isRTL() ? 'rtl' : 'ltr';
 }
 
 /**

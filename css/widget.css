@@ -2790,3 +2790,203 @@ body.chatvia-scroll-locked {
   border-radius: 8px;
   margin: 10px 0;
 }
+
+/* ============================================
+   RTL SUPPORT
+   Triggered by `dir="rtl"` on the widget container / chat window / bar /
+   confirm dialog (set from JS based on the active language).
+   Block scope: keep every override scoped under `[dir="rtl"]` so the LTR
+   default is untouched. Where a physical property has to flip, write a
+   logical replacement here rather than mutating the source rule above —
+   that keeps the diff readable and the LTR path untouched on rollback.
+   ============================================ */
+
+/* Header — logo, avatar margin, button gutters all mirror to the left side */
+.chatvia-widget[dir="rtl"] .chatvia-widget-header-logo,
+.chatvia-widget[dir="rtl"] .chatvia-widget-avatar {
+  margin-right: 0;
+  margin-left: 12px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-avatar {
+  margin-left: 8px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-menu-btn,
+.chatvia-widget[dir="rtl"] .chatvia-widget-expand-btn,
+.chatvia-widget[dir="rtl"] .chatvia-widget-delete-btn,
+.chatvia-widget[dir="rtl"] .chatvia-widget-theme-toggle {
+  margin-right: 0;
+  margin-left: 5px;
+}
+
+/* Message bubbles — flip side, mirror the corner-flat radius and avatar gutter */
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-assistant {
+  margin-right: 0;
+  margin-left: 50px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-assistant .chatvia-widget-bubble-content {
+  border-bottom-left-radius: var(--chat-radius-lg);
+  border-bottom-right-radius: var(--chat-radius-sm);
+  margin-right: 0;
+  margin-left: auto;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-user {
+  margin-left: 0;
+  margin-right: 10px;
+  padding-right: 0;
+  padding-left: 8px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-user .chatvia-widget-bubble-content {
+  border-bottom-right-radius: var(--chat-radius-lg);
+  border-bottom-left-radius: var(--chat-radius-sm);
+  margin-left: 0;
+  margin-right: auto;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-human-agent .chatvia-widget-bubble-content {
+  border-left: none !important;
+  border-right: 3px solid var(--chat-primary) !important;
+}
+
+/* Timestamps + action row mirror their alignment */
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-user > .chatvia-widget-message-time {
+  text-align: left;
+  margin-right: 0;
+  margin-left: 4px;
+  justify-content: flex-start;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-assistant > .chatvia-widget-message-time,
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-human-agent > .chatvia-widget-message-time {
+  text-align: right;
+  margin-left: 0;
+  margin-right: 36px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-actions {
+  margin-left: 0;
+  margin-right: 36px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-actions .chatvia-widget-message-time {
+  padding-left: 0;
+  padding-right: 8px;
+  margin-left: 0;
+  margin-right: 4px;
+  border-left: none;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-actions .chatvia-widget-message-time {
+  border-right-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Loading dots bubble + tool-activity gutter mirror to the right */
+.chatvia-widget[dir="rtl"] .chatvia-widget-loading {
+  justify-content: flex-end;
+  margin-left: 0;
+  margin-right: 36px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-loading-dots {
+  border-bottom-left-radius: var(--chat-radius-lg);
+  border-bottom-right-radius: var(--chat-radius-sm);
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-tool-activity {
+  padding-left: 0;
+  padding-right: 36px;
+}
+
+/* Markdown content inside assistant bubbles */
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-assistant ul,
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-assistant ol {
+  padding-left: 0;
+  padding-right: 1.5em;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-assistant blockquote {
+  padding: 0.1em 1em 0.1em 0;
+  border-left: none;
+  border-right: 3px solid color-mix(in srgb, var(--chat-primary) 40%, var(--chat-border-strong));
+}
+
+/* Input + send button: pull the send button to the left edge and re-pad the
+   textarea so text doesn't slide under it. */
+.chatvia-widget[dir="rtl"] .chatvia-widget-input {
+  padding: 14px 18px 14px 54px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-send-btn {
+  right: auto;
+  left: 12px;
+}
+/* Send-icon glyph points right by default; flip horizontally for RTL */
+.chatvia-widget[dir="rtl"] .chatvia-widget-send-btn svg {
+  transform: scaleX(-1);
+}
+
+/* Menu dropdown: anchor from the left side of the header */
+.chatvia-widget[dir="rtl"] .chatvia-widget-menu-dropdown {
+  right: auto;
+  left: 40px;
+  transform-origin: top left;
+}
+
+/* Thread list — hover-shift now moves into the writing direction (leftward) */
+.chatvia-widget[dir="rtl"] .chatvia-widget-thread-item:hover,
+.chatvia-widget[dir="rtl"] .chatvia-widget-thread-item:hover .chatvia-widget-thread-arrow {
+  transform: translateX(-2px);
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-thread-content {
+  padding-right: 0;
+  padding-left: 12px;
+}
+/* Arrow glyph points right in LTR — mirror it so it points into the writing
+   direction (left) in RTL */
+.chatvia-widget[dir="rtl"] .chatvia-widget-thread-arrow svg {
+  transform: scaleX(-1);
+}
+
+/* Starters: align to the left edge (logical start in RTL) */
+.chatvia-widget[dir="rtl"] .chatvia-widget-starters {
+  align-items: flex-start;
+}
+
+/* Brand footer: mirror logo gutter */
+.chatvia-widget[dir="rtl"] .chatvia-widget-footer .chatvia-widget-brand-logo {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+/* Floating bubbles container — anchor to the left when widget is positioned left.
+   For the default bottom-right position, leave it on the right; RTL doesn't
+   change the launcher placement (the host page decides via settings.position),
+   only the content direction. */
+
+/* Confirm dialog: button row alignment flips automatically because the JS
+   stamps dir="rtl" and flex-end resolves to the writing direction's end. */
+
+/* Pending mode pulse dot lives in the header — mirror to the left edge */
+.chatvia-widget[dir="rtl"] .chatvia-widget-window.chatvia-widget-pending-mode .chatvia-widget-header::before {
+  right: auto;
+  left: 60px;
+}
+
+/* End-chat button gutter mirrors */
+.chatvia-widget[dir="rtl"] .chatvia-widget-end-chat-btn {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+/* Human typing indicator — mirror the leading gutter */
+.chatvia-widget[dir="rtl"] .chatvia-widget-human-typing {
+  margin-left: 0;
+  margin-right: 28px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-typing-dots {
+  margin-left: 0;
+  margin-right: 1px;
+}
+
+/* Bar mode slider — slide in from the LEFT in RTL */
+.chatvia-widget[dir="rtl"] .chatvia-widget-window.chatvia-widget-slider-mode {
+  right: auto;
+  left: -100%;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  transition: left var(--chat-transition-slow);
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-window.chatvia-widget-slider-mode.chatvia-widget-open {
+  left: 0;
+  right: auto;
+}
