@@ -5,21 +5,21 @@ export class SessionManager {
   constructor(agentId) {
     this.agentId = agentId;
     this.persistedSessionId = 'chat-widget-session-id';
-    this.persistedThreadId = 'chat-widget-active-thread-id'; // Existing key used by StorageManager
+    this.persistedConversationId = 'chat-widget-active-conversation-id'; // Existing key used by StorageManager
 
     this.persistenceManager = new PersistenceManager(agentId);
   }
 
   /**
-   * Initialize session and thread.
-   * Always calls the backend to validate/create session and thread.
+   * Initialize session and conversation.
+   * Always calls the backend to validate/create session and conversation.
    *
-   * @returns {Promise<{sessionId: string, threadId: string, isNewSession: boolean, isNewThread: boolean}>}
+   * @returns {Promise<{sessionId: string, conversationId: string, isNewSession: boolean, isNewConversation: boolean}>}
    */
   async startSession() {
     try {
       const existingSessionId = this.getCurrentPersistedSessionId();
-      const existingThreadId = this.getCurrentPersistedThreadId();
+      const existingConversationId = this.getCurrentPersistedConversationId();
 
       const headers = {
         'X-AGENT-ID': this.agentId
@@ -31,10 +31,10 @@ export class SessionManager {
         console.log('Sending existing session ID for validation:', existingSessionId);
       }
 
-      // Include existing thread if we have one (for validation)
-      if (existingThreadId) {
-        headers['X-THREAD-ID'] = existingThreadId;
-        console.log('Sending existing thread ID for validation:', existingThreadId);
+      // Include existing conversation if we have one (for validation)
+      if (existingConversationId) {
+        headers['X-CONVERSATION-ID'] = existingConversationId;
+        console.log('Sending existing conversation ID for validation:', existingConversationId);
       }
 
       const response = await api({
@@ -64,24 +64,24 @@ export class SessionManager {
         console.log('✅ Session validated:', data.session_id);
       }
 
-      // Note: Thread ID persistence is handled by StorageManager.setActiveThreadId()
+      // Note: Conversation ID persistence is handled by StorageManager.setActiveConversationId()
       // We just log the status here
-      if (data.thread_id) {
-        if (data.thread_id !== existingThreadId) {
+      if (data.conversation_id) {
+        if (data.conversation_id !== existingConversationId) {
           console.log(
-            data.is_new_thread ? '✨ New thread created:' : '🔄 Thread restored from server:',
-            data.thread_id
+            data.is_new_conversation ? '✨ New conversation created:' : '🔄 Conversation restored from server:',
+            data.conversation_id
           );
         } else {
-          console.log('✅ Thread validated:', data.thread_id);
+          console.log('✅ Conversation validated:', data.conversation_id);
         }
       }
 
       return {
         sessionId: data.session_id,
-        threadId: data.thread_id,
+        conversationId: data.conversation_id,
         isNewSession: data.is_new_session || false,
-        isNewThread: data.is_new_thread || false
+        isNewConversation: data.is_new_conversation || false
       };
     } catch (error) {
       console.error('Error initializing session:', error);
@@ -93,7 +93,7 @@ export class SessionManager {
     return this.persistenceManager.get(this.persistedSessionId);
   }
 
-  getCurrentPersistedThreadId() {
-    return this.persistenceManager.get(this.persistedThreadId);
+  getCurrentPersistedConversationId() {
+    return this.persistenceManager.get(this.persistedConversationId);
   }
 }

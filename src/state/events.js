@@ -188,11 +188,11 @@ export function setupHeaderButtonListeners(widget) {
       widget.toggleExpand();
     }
   });
-  widget.deleteThreadButton?.addEventListener('click', () => widget.confirmDeleteThread());
-  widget.deleteThreadButton?.addEventListener('keydown', e => {
+  widget.deleteConversationButton?.addEventListener('click', () => widget.confirmDeleteConversation());
+  widget.deleteConversationButton?.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      widget.confirmDeleteThread();
+      widget.confirmDeleteConversation();
     }
   });
   widget.themeToggleButton?.addEventListener('click', () => widget.toggleTheme());
@@ -375,8 +375,8 @@ export function setupKeyboardShortcuts(widget) {
  * Get user message history
  */
 function getUserMessageHistory(widget) {
-  const activeThread = widget.getActiveThread();
-  if (!activeThread?.messages) return [];
+  const activeConversation = widget.getActiveConversation();
+  if (!activeConversation?.messages) return [];
 
-  return activeThread.messages.filter(m => m.role === 'user').map(m => m.content);
+  return activeConversation.messages.filter(m => m.role === 'user').map(m => m.content);
 }

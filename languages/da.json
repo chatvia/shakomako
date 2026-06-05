@@ -21,7 +21,7 @@
     "clear_all": "Ryd alle",
     "theme_toggle": "Skift tema"
   },
-  "threads": {
+  "conversations": {
     "no_history": "Ingen chathistorik tilgængelig.",
     "new_conversation": "Ny samtale",
     "unknown_date": "Ukendt dato",

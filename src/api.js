@@ -49,9 +49,9 @@ export default async function api({ endpoint, method, headers = {}, body = null 
  * than the JSON RPC default.
  *
  * @param {Object} options
- * @param {string} options.endpoint - e.g. 'threads/attachments'
+ * @param {string} options.endpoint - e.g. 'conversations/attachments'
  * @param {File} options.file - the File object to upload
- * @param {Object} options.headers - X-AGENT-ID, X-SESSION-ID, X-THREAD-ID, etc.
+ * @param {Object} options.headers - X-AGENT-ID, X-SESSION-ID, X-CONVERSATION-ID, etc.
  * @returns {Promise<Response>}
  */
 export async function uploadFile({ endpoint, file, headers = {} }) {

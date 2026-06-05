@@ -21,7 +21,7 @@
     "clear_all": "Tümünü temizle",
     "theme_toggle": "Temayı değiştir"
   },
-  "threads": {
+  "conversations": {
     "no_history": "Sohbet geçmişi bulunmuyor.",
     "new_conversation": "Yeni konuşma",
     "unknown_date": "Bilinmeyen tarih",

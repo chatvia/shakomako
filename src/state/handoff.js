@@ -77,7 +77,7 @@ export function stopHeartbeat(widget) {
  * Send a single heartbeat ping
  */
 async function sendHeartbeat(widget) {
-  const conversationId = widget.getCurrentActiveThreadId?.();
+  const conversationId = widget.getCurrentActiveConversationId?.();
   if (!conversationId || !widget.sessionId) {
     return;
   }
@@ -110,7 +110,7 @@ export async function markMessagesAsRead(widget) {
     return;
   }
 
-  const conversationId = widget.getCurrentActiveThreadId?.();
+  const conversationId = widget.getCurrentActiveConversationId?.();
   if (!conversationId || !widget.sessionId) {
     return;
   }
@@ -139,7 +139,7 @@ export async function markMessagesAsRead(widget) {
  */
 export async function checkHandoffStatus(widget) {
   try {
-    const conversationId = widget.getCurrentActiveThreadId();
+    const conversationId = widget.getCurrentActiveConversationId();
     if (!conversationId) {
       return null;
     }
@@ -150,7 +150,7 @@ export async function checkHandoffStatus(widget) {
         'Content-Type': 'application/json',
         'X-SESSION-ID': widget.sessionId,
         'X-AGENT-ID': widget.agentId,
-        'X-THREAD-ID': conversationId,
+        'X-CONVERSATION-ID': conversationId,
         ...authHeaders(widget.agentId)
       }
     });
@@ -189,7 +189,7 @@ async function syncHandoffState(widget, data) {
     console.log('[Handoff] Switching to HUMAN mode');
     widget.handoffMode = HANDOFF_MODE.HUMAN;
     widget.adminName = admin_name;
-    widget.conversationId = data.conversation_id || widget.getCurrentActiveThreadId();
+    widget.conversationId = data.conversation_id || widget.getCurrentActiveConversationId();
 
     // Connect to WebSocket if not already connected
     if (!widget.pusherClient) {
@@ -201,7 +201,7 @@ async function syncHandoffState(widget, data) {
   } else if (handoff_status === 'pending') {
     console.log('[Handoff] Switching to PENDING mode');
     widget.handoffMode = HANDOFF_MODE.PENDING;
-    widget.conversationId = data.conversation_id || widget.getCurrentActiveThreadId();
+    widget.conversationId = data.conversation_id || widget.getCurrentActiveConversationId();
 
     // Connect to WebSocket to listen for handoff acceptance
     if (!widget.pusherClient) {
@@ -226,7 +226,7 @@ async function syncHandoffState(widget, data) {
  * Called when a conversation exists on the server.
  */
 export async function subscribeToConversation(widget) {
-  const conversationId = widget.getCurrentActiveThreadId();
+  const conversationId = widget.getCurrentActiveConversationId();
   if (!conversationId) return;
 
   widget.conversationId = conversationId;
@@ -286,7 +286,7 @@ export async function switchToPendingMode(widget, serverMessage) {
  */
 export async function handleHandoffEvent(widget, data) {
   const { status, admin_name, admin_id, message } = data;
-  widget.conversationId = data.conversation_id || widget.getCurrentActiveThreadId();
+  widget.conversationId = data.conversation_id || widget.getCurrentActiveConversationId();
 
   switch (status) {
     case HANDOFF_STATUS.PENDING:
@@ -410,7 +410,7 @@ export async function endLiveChat(widget) {
   if (widget.handoffMode !== HANDOFF_MODE.HUMAN) return;
 
   try {
-    const conversationId = widget.conversationId || widget.getCurrentActiveThreadId();
+    const conversationId = widget.conversationId || widget.getCurrentActiveConversationId();
 
     // Notify backend that user ended the chat
     const response = await fetch(`${__API_URL__}/handoff/end`, {
@@ -544,7 +544,7 @@ export async function connectPusher(widget) {
  * Subscribe to the current conversation's presence channel
  */
 function subscribeToChannel(widget) {
-  const conversationId = widget.conversationId || widget.getCurrentActiveThreadId();
+  const conversationId = widget.conversationId || widget.getCurrentActiveConversationId();
   if (!conversationId || !widget.pusherClient) {
     console.warn('[Handoff] Cannot subscribe - no conversationId or pusherClient');
     return;
@@ -857,7 +857,7 @@ async function postTypingStatus(widget, isTyping) {
         ...authHeaders(widget.agentId)
       },
       body: JSON.stringify({
-        conversation_id: widget.conversationId || widget.getCurrentActiveThreadId(),
+        conversation_id: widget.conversationId || widget.getCurrentActiveConversationId(),
         is_typing: isTyping
       })
     });
@@ -879,13 +879,13 @@ export async function sendMessageInHumanMode(widget, text) {
         'Content-Type': 'application/json',
         'X-AGENT-ID': widget.agentId,
         'X-SESSION-ID': widget.sessionId,
-        'X-THREAD-ID': widget.getCurrentActiveThreadId(),
+        'X-CONVERSATION-ID': widget.getCurrentActiveConversationId(),
         ...authHeaders(widget.agentId)
       },
       body: JSON.stringify({
         agent_id: widget.agentId,
         session_id: widget.sessionId,
-        thread_id: widget.getCurrentActiveThreadId(),
+        conversation_id: widget.getCurrentActiveConversationId(),
         type: 'message',
         content: text,
         url: window.location.href,
@@ -1143,7 +1143,7 @@ export function createTalkToHumanButton(widget, onClick) {
 }
 
 /**
- * Cleanup handoff state (when switching threads)
+ * Cleanup handoff state (when switching conversations)
  * Note: We keep the Pusher client connected but unsubscribe from the current channel
  */
 export function cleanupHandoff(widget) {
@@ -1172,8 +1172,8 @@ export function cleanupHandoff(widget) {
 }
 
 /**
- * Initialize handoff state check when thread loads
- * Call this when a thread is loaded to sync handoff state
+ * Initialize handoff state check when conversation loads
+ * Call this when a conversation is loaded to sync handoff state
  */
 export async function checkAndSyncHandoffState(widget) {
   const status = await checkHandoffStatus(widget);

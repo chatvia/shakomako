@@ -118,11 +118,11 @@ import { NAMESPACE } from './utils.js';
       },
 
       /**
-       * Start a new chat thread
+       * Start a new chat conversation
        * @returns {Promise<void>}
        */
       newChat: async () => {
-        await widgetInstance.startNewThread();
+        await widgetInstance.startNewConversation();
       },
 
       /**

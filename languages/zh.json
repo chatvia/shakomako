@@ -21,7 +21,7 @@
     "clear_all": "全部清除",
     "theme_toggle": "切换主题"
   },
-  "threads": {
+  "conversations": {
     "no_history": "没有聊天记录。",
     "new_conversation": "新对话",
     "unknown_date": "未知日期",

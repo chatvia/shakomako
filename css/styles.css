@@ -1479,17 +1479,17 @@
   opacity: 0.7;
 }
 
-/* Thread list styling - Intercom style */
-.chatvia-widget .threads-container {
+/* Conversation list styling - Intercom style */
+.chatvia-widget .conversations-container {
   display: flex;
   flex-direction: column;
-  padding: 0; /* Full-width threads list */
+  padding: 0; /* Full-width conversations list */
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Thread item - Clean design */
-.chatvia-widget .threads-list .thread-item {
+/* Conversation item - Clean design */
+.chatvia-widget .conversations-list .conversation-item {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1502,25 +1502,25 @@
   box-sizing: border-box;
 }
 
-.chatvia-widget .thread-item:last-of-type {
+.chatvia-widget .conversation-item:last-of-type {
   border-bottom: none;
 }
 
 /* Hover effect */
-.chatvia-widget .thread-item:hover {
+.chatvia-widget .conversation-item:hover {
   background-color: #f8f9fa;
   transform: translateX(4px);
   box-shadow: -4px 0 0 0 var(--chat-primary);
 }
 
-/* Active thread */
-.chatvia-widget .thread-item.active {
+/* Active conversation */
+.chatvia-widget .conversation-item.active {
   background-color: color-mix(in srgb, var(--chat-primary) 8%, transparent);
   box-shadow: -4px 0 0 0 var(--chat-primary);
 }
 
-/* Thread content container */
-.chatvia-widget .thread-content {
+/* Conversation content container */
+.chatvia-widget .conversation-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1529,8 +1529,8 @@
   padding-right: 16px;
 }
 
-/* Thread title */
-.chatvia-widget .thread-title {
+/* Conversation title */
+.chatvia-widget .conversation-title {
   font-size: 15px;
   font-weight: 600;
   color: #1a202c;
@@ -1542,8 +1542,8 @@
   letter-spacing: -0.2px;
 }
 
-/* Thread subtitle container */
-.chatvia-widget .thread-subtitle {
+/* Conversation subtitle container */
+.chatvia-widget .conversation-subtitle {
   font-size: 13px;
   color: #718096;
   line-height: 1.3;
@@ -1553,14 +1553,14 @@
   white-space: nowrap;
 }
 
-/* Thread date */
-.chatvia-widget .thread-date {
+/* Conversation date */
+.chatvia-widget .conversation-date {
   font-size: 13px;
   color: #718096;
 }
 
 /* Arrow icon container */
-.chatvia-widget .thread-arrow-icon {
+.chatvia-widget .conversation-arrow-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1571,11 +1571,11 @@
   margin-top: 2px;
 }
 
-.chatvia-widget .thread-item:hover .thread-arrow-icon {
+.chatvia-widget .conversation-item:hover .conversation-arrow-icon {
   color: #a0aec0;
 }
 
-.chatvia-widget .no-threads-message {
+.chatvia-widget .no-conversations-message {
   text-align: center;
   color: var(--chat-text-light);
   padding: 20px 0;
@@ -1612,7 +1612,7 @@
   stroke: var(--chat-header-text);
 }
 
-/* Renamed from delete thread button to clean button */
+/* Renamed from delete conversation button to clean button */
 .chatvia-widget .chat-clean-button {
   display: flex;
   align-items: center;
@@ -2130,8 +2130,8 @@
   }
 }
 
-/* Thread actions (New / Delete) */
-.chatvia-widget .thread-actions-container {
+/* Conversation actions (New / Delete) */
+.chatvia-widget .conversation-actions-container {
   display: flex;
   gap: 8px;
   margin: 12px 0;
@@ -2180,13 +2180,13 @@
 }
 
 /* Centered actions container */
-.chatvia-widget .thread-actions-container {
+.chatvia-widget .conversation-actions-container {
   justify-content: center;
 }
 
-/* Unified sizing for action buttons within thread actions */
-.chatvia-widget .thread-actions-container .new-chat-button,
-.chatvia-widget .thread-actions-container .delete-all-button {
+/* Unified sizing for action buttons within conversation actions */
+.chatvia-widget .conversation-actions-container .new-chat-button,
+.chatvia-widget .conversation-actions-container .delete-all-button {
   height: 36px;
   padding: 0 16px;
   margin: 0; /* override earlier margin */

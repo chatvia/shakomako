@@ -16,7 +16,7 @@ import { initI18n, t, getDirection } from './i18n.js';
 import { triggerLabel } from './keyboardTrigger.js';
 
 // Import state modules
-import * as threads from './state/threads.js';
+import * as conversations from './state/conversations.js';
 import * as messages from './state/messages.js';
 import * as sse from './state/sse.js';
 import * as events from './state/events.js';
@@ -102,8 +102,8 @@ export class ChatWidget {
     this.isLocked = false;
 
     // State
-    this.threads = [];
-    this.activeThreadId = null;
+    this.conversations = [];
+    this.activeConversationId = null;
     this.messageHistory = [];
     this.isOpen = false;
     this.sseClient = null;
@@ -249,7 +249,7 @@ export class ChatWidget {
 
       this.storageManager = new StorageManager(this.agentId, this.sessionId);
       if (!this.isLocked) {
-        await this.initThreads();
+        await this.initConversations();
       }
 
       await this._createWidgetElements();
@@ -261,7 +261,7 @@ export class ChatWidget {
 
       this._setupEventListeners();
 
-      // Locked: skip session-bound wiring (SSE, threads, heartbeat) and leave
+      // Locked: skip session-bound wiring (SSE, conversations, heartbeat) and leave
       // the chat in its disabled sign-in state.
       if (this.isLocked) {
         await this.disabledChat(t('errors.auth_required'));
@@ -270,7 +270,7 @@ export class ChatWidget {
       }
 
       this.setupSSE();
-      await this.loadActiveThread();
+      await this.loadActiveConversation();
 
       // Start heartbeat to track online status
       startHeartbeat(this);
@@ -321,7 +321,7 @@ export class ChatWidget {
   }
 
   async _initializeSession() {
-    debug('Initializing session and thread...');
+    debug('Initializing session and conversation...');
     const initData = await this.sessionManager.startSession();
 
     if (!initData || !initData.sessionId) {
@@ -331,58 +331,58 @@ export class ChatWidget {
     }
 
     this.sessionId = initData.sessionId;
-    this.initialThreadId = initData.threadId;
+    this.initialConversationId = initData.conversationId;
 
     debug('Session initialized', {
       sessionId: initData.sessionId,
-      threadId: initData.threadId,
+      conversationId: initData.conversationId,
       isNewSession: initData.isNewSession,
-      isNewThread: initData.isNewThread
+      isNewConversation: initData.isNewConversation
     });
   }
 
   // ========================================
-  // Thread Management (delegated)
+  // Conversation Management (delegated)
   // ========================================
 
-  async initThreads() {
-    return threads.initThreads(this);
+  async initConversations() {
+    return conversations.initConversations(this);
   }
 
-  async createNewThread() {
-    return threads.createNewThread(this);
+  async createNewConversation() {
+    return conversations.createNewConversation(this);
   }
 
-  getActiveThread() {
-    return threads.getActiveThread(this);
+  getActiveConversation() {
+    return conversations.getActiveConversation(this);
   }
 
-  getCurrentActiveThreadId() {
-    return threads.getCurrentActiveThreadId(this);
+  getCurrentActiveConversationId() {
+    return conversations.getCurrentActiveConversationId(this);
   }
 
-  async loadActiveThread() {
-    return threads.loadActiveThread(this);
+  async loadActiveConversation() {
+    return conversations.loadActiveConversation(this);
   }
 
-  async startNewThread() {
-    return threads.startNewThread(this);
+  async startNewConversation() {
+    return conversations.startNewConversation(this);
   }
 
   async loadChatHistory() {
-    return threads.loadChatHistory(this);
+    return conversations.loadChatHistory(this);
   }
 
-  confirmDeleteThread() {
-    return threads.confirmDeleteThread(this);
+  confirmDeleteConversation() {
+    return conversations.confirmDeleteConversation(this);
   }
 
-  confirmClearAllThreads() {
-    return threads.confirmClearAllThreads(this);
+  confirmClearAllConversations() {
+    return conversations.confirmClearAllConversations(this);
   }
 
-  _updateThreadActionButtons() {
-    return threads.updateThreadActionButtons(this);
+  _updateConversationActionButtons() {
+    return conversations.updateConversationActionButtons(this);
   }
 
   // ========================================
@@ -872,12 +872,12 @@ export class ChatWidget {
       'aria-haspopup': 'true',
       'aria-expanded': 'false'
     });
-    this.deleteThreadButton = this._createHeaderButton(
+    this.deleteConversationButton = this._createHeaderButton(
       'delete',
       t('widget.clear_current_chat'),
       CSS_CLASSES.DELETE_BUTTON
     );
-    this.deleteThreadButton.style.display = 'none';
+    this.deleteConversationButton.style.display = 'none';
     this.themeToggleButton = this._createHeaderButton(
       'moon',
       t('menu.theme_toggle'),
@@ -897,7 +897,7 @@ export class ChatWidget {
 
     header.appendChild(this.headerLogo);
     header.appendChild(this.headerTitle);
-    header.appendChild(this.deleteThreadButton);
+    header.appendChild(this.deleteConversationButton);
     header.appendChild(this.themeToggleButton);
     header.appendChild(this.expandButton);
     header.appendChild(this.menuButton);
@@ -940,7 +940,7 @@ export class ChatWidget {
     this.newChatOption = this._createMenuOption(
       t('menu.new_chat'),
       'new-chat',
-      guardedAction(() => this.startNewThread())
+      guardedAction(() => this.startNewConversation())
     );
     this.historyOption = this._createMenuOption(
       t('menu.chat_history'),
@@ -950,12 +950,12 @@ export class ChatWidget {
     this.clearCurrentOption = this._createMenuOption(
       t('menu.clear_current'),
       'delete',
-      guardedAction(() => this.confirmDeleteThread())
+      guardedAction(() => this.confirmDeleteConversation())
     );
     this.clearAllOption = this._createMenuOption(
       t('menu.clear_all'),
       'clear-all',
-      guardedAction(() => this.confirmClearAllThreads())
+      guardedAction(() => this.confirmClearAllConversations())
     );
 
     dropdown.appendChild(this.newChatOption);
@@ -1038,7 +1038,7 @@ export class ChatWidget {
 
   /**
    * Centered fetch spinner shown over the chat window while we're loading
-   * messages, threads, or history from the server. Separate from the typing
+   * messages, conversations, or history from the server. Separate from the typing
    * dots — those signal "agent is responding"; this signals "fetching data".
    * Mounted on demand into `chatWindow`, which is the positioned ancestor
    * (fixed in launcher modes, relative in flat mode) so the spinner stays
@@ -1168,12 +1168,12 @@ export class ChatWidget {
     try {
       const { uploadFile } = await import('./api.js');
       const response = await uploadFile({
-        endpoint: 'threads/attachments',
+        endpoint: 'conversations/attachments',
         file,
         headers: {
           'X-AGENT-ID': agentId,
           'X-SESSION-ID': this.sessionId,
-          'X-THREAD-ID': this.getCurrentActiveThreadId()
+          'X-CONVERSATION-ID': this.getCurrentActiveConversationId()
         }
       });
 

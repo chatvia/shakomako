@@ -24,8 +24,8 @@ export function setupSSE(widget) {
     widget.sseClient.close();
   }
 
-  const currentActiveThreadId = widget.getCurrentActiveThreadId();
-  widget.sseClient = createSSEClient(widget.agentId, widget.sessionId, currentActiveThreadId, {
+  const currentActiveConversationId = widget.getCurrentActiveConversationId();
+  widget.sseClient = createSSEClient(widget.agentId, widget.sessionId, currentActiveConversationId, {
     onOpen: () => removeConnectionErrorMessages(widget),
     onClose: (info = {}) => {
       // Clear loading timeout to prevent race conditions

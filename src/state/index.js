@@ -3,7 +3,7 @@
  * Re-exports all state modules for convenient importing
  */
 
-export * from './threads.js';
+export * from './conversations.js';
 export * from './messages.js';
 export * from './sse.js';
 export * from './events.js';

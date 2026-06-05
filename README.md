@@ -57,7 +57,7 @@ The project uses environment variables for configuration, managed via `.env` fil
     
     # API endpoints will be appended to VITE_API_URL:
     # - Sessions: https://chatvia.test/api/widget/sessions
-    # - Threads: https://chatvia.test/api/widget/threads
+    # - Conversations: https://chatvia.test/api/widget/conversations
     # - Agent verification: https://chatvia.test/api/widget/agents/verify
     # - SSE Stream: https://chatvia.test/api/widget/stream
     ```
@@ -208,7 +208,7 @@ The widget exposes a JavaScript API that allows you to control the chat programm
 | `chatvia.toggle()` | Toggle chat open/closed. Returns new state | `const isOpen = chatvia.toggle()` |
 | `chatvia.isOpen()` | Check if chat is open | `if (chatvia.isOpen()) { ... }` |
 | `chatvia.send(message)` | Send a message to the chat | `chatvia.send('Hello!')` |
-| `chatvia.newChat()` | Start a new conversation thread | `chatvia.newChat()` |
+| `chatvia.newChat()` | Start a new conversation | `chatvia.newChat()` |
 | `chatvia.destroy()` | Remove widget and clean up resources | `chatvia.destroy()` |
 
 ### Events

@@ -21,7 +21,7 @@
     "clear_all": "सभी साफ़ करें",
     "theme_toggle": "थीम बदलें"
   },
-  "threads": {
+  "conversations": {
     "no_history": "कोई चैट इतिहास उपलब्ध नहीं है।",
     "new_conversation": "नई बातचीत",
     "unknown_date": "अज्ञात तिथि",

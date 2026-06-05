@@ -130,19 +130,19 @@ function formatMessageTime(timestamp) {
   const diffMs = now - date;
 
   // If negative or very small, it's "just now"
-  if (diffMs < 0) return t('threads.just_now');
+  if (diffMs < 0) return t('conversations.just_now');
 
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return t('threads.just_now');
-  if (diffMins === 1) return t('threads.minute_ago');
-  if (diffMins < 60) return t('threads.minutes_ago', { count: diffMins });
-  if (diffHours === 1) return t('threads.hour_ago');
-  if (diffHours < 24) return t('threads.hours_ago', { count: diffHours });
-  if (diffDays === 1) return t('threads.yesterday');
-  if (diffDays < 30) return t('threads.days_ago', { count: diffDays });
+  if (diffMins < 1) return t('conversations.just_now');
+  if (diffMins === 1) return t('conversations.minute_ago');
+  if (diffMins < 60) return t('conversations.minutes_ago', { count: diffMins });
+  if (diffHours === 1) return t('conversations.hour_ago');
+  if (diffHours < 24) return t('conversations.hours_ago', { count: diffHours });
+  if (diffDays === 1) return t('conversations.yesterday');
+  if (diffDays < 30) return t('conversations.days_ago', { count: diffDays });
 
   const diffMonths = Math.floor(diffDays / 30);
   if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
@@ -344,7 +344,7 @@ export async function handleFeedback(widget, messageId, isPositive, clickedButto
       headers: {
         'X-AGENT-ID': widget.agentId,
         'X-SESSION-ID': widget.sessionId,
-        'X-THREAD-ID': widget.getCurrentActiveThreadId(),
+        'X-CONVERSATION-ID': widget.getCurrentActiveConversationId(),
         'X-MESSAGE-ID': messageId
       },
       body: JSON.stringify({ feedback: isPositive })
@@ -443,15 +443,15 @@ function setMessageBubbleContent(bubble, type, text) {
 function addMessageToHistory(widget, type, text, options) {
   const messageData = { type, text, timestamp: new Date().toISOString(), options };
   widget.messageHistory.push(messageData);
-  const activeThread = widget.getActiveThread();
+  const activeConversation = widget.getActiveConversation();
 
-  if (activeThread) {
-    if (!Array.isArray(activeThread.messages)) activeThread.messages = [];
-    activeThread.messages.push(messageData);
+  if (activeConversation) {
+    if (!Array.isArray(activeConversation.messages)) activeConversation.messages = [];
+    activeConversation.messages.push(messageData);
 
     if (type === CSS_CLASSES.MESSAGE_USER) {
-      activeThread.hasUserInteraction = true;
-      widget._updateThreadActionButtons();
+      activeConversation.hasUserInteraction = true;
+      widget._updateConversationActionButtons();
     }
   }
 }
@@ -478,10 +478,10 @@ export async function sendUserMessage(widget, customText) {
 
   widget.hideStarters();
 
-  const activeThread = widget.getActiveThread();
-  if (activeThread) {
-    activeThread.hasUserInteraction = true;
-    widget._updateThreadActionButtons();
+  const activeConversation = widget.getActiveConversation();
+  if (activeConversation) {
+    activeConversation.hasUserInteraction = true;
+    widget._updateConversationActionButtons();
   }
 
   // Check if we're in human mode (handoff active)
@@ -543,7 +543,7 @@ export async function sendUserMessage(widget, customText) {
 
   const messagePayload = {
     session_id: widget.sessionId,
-    thread_id: widget.getCurrentActiveThreadId(),
+    conversation_id: widget.getCurrentActiveConversationId(),
     type: 'message',
     content: text,
     url: window.location.href,
@@ -556,7 +556,7 @@ export async function sendUserMessage(widget, customText) {
   }
 
   // Don't log full payload in production — it contains user content.
-  debug('Sending SSE message', { thread_id: messagePayload.thread_id });
+  debug('Sending SSE message', { conversation_id: messagePayload.conversation_id });
 
   // Reset per-turn stream flags used by the silent-close error guard.
   widget._streamHandled = false;
@@ -617,9 +617,9 @@ export async function displayHistoryMessages(widget) {
       });
     }
   } else if (widget.settings.welcome_message) {
-    const activeThread = widget.getActiveThread();
-    if (activeThread && !activeThread.welcomeShown) {
-      activeThread.welcomeShown = true;
+    const activeConversation = widget.getActiveConversation();
+    if (activeConversation && !activeConversation.welcomeShown) {
+      activeConversation.welcomeShown = true;
       // Tracked on the widget so destroy() can cancel it; the original code
       // leaked this 500ms timer if the widget was torn down during the gap.
       widget._welcomeMessageTimeout = setTimeout(async () => {

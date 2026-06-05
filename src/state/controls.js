@@ -352,7 +352,7 @@ export function hideLoading(widget) {
 
 /**
  * Show a centered spinner over the chat window while fetching messages,
- * threads, or history. Separate from the typing dots in `showLoading` —
+ * conversations, or history. Separate from the typing dots in `showLoading` —
  * those mean "agent is responding"; this means "loading data from server".
  * Lazily built on first use and mounted in chatWindow (positioned ancestor)
  * so it stays centered regardless of message-list scroll.
@@ -493,7 +493,7 @@ export function showStarters(widget) {
  *
  * Hides every interactive affordance that would either fail without a session
  * or mutate state the visitor can't reach: composer (textarea + send + attach),
- * menu dropdown (new chat / clear / history all need a thread). Header chrome
+ * menu dropdown (new chat / clear / history all need a conversation). Header chrome
  * the visitor *can* still use — close, expand, theme toggle — stays enabled so
  * they can dismiss the locked widget or flip the theme while reading the
  * sign-in notice. The `chatvia-widget-locked` class on the container lets CSS

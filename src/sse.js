@@ -1,7 +1,7 @@
 import { authHeaders } from './auth.js';
 import { debug } from './utils.js';
 
-export function createSSEClient(agent_id, session_id, thread_id, callbacks = {}) {
+export function createSSEClient(agent_id, session_id, conversation_id, callbacks = {}) {
   const sseCallbacks = {
     onOpen: () => {},
     onClose: () => {},
@@ -13,13 +13,13 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
   let isStreaming = false;
 
   function connect() {
-    debug('SSE client ready', { agent_id, session_id, thread_id });
+    debug('SSE client ready', { agent_id, session_id, conversation_id });
     sseCallbacks.onOpen();
   }
 
   function send(message) {
     // Never log full message content in production — gated via debug().
-    debug('SSE send', { thread_id, type: message?.type });
+    debug('SSE send', { conversation_id, type: message?.type });
 
     // Abort any existing connection
     if (abortController) {
@@ -43,7 +43,7 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
           Accept: 'text/event-stream',
           'X-AGENT-ID': agent_id,
           'X-SESSION-ID': session_id,
-          'X-THREAD-ID': thread_id,
+          'X-CONVERSATION-ID': conversation_id,
           ...authHeaders(agent_id)
         },
         body: JSON.stringify({
@@ -194,7 +194,7 @@ export function createSSEClient(agent_id, session_id, thread_id, callbacks = {})
       abortController = null;
     }
     isStreaming = false;
-    // Teardown (init, thread switch, new chat) — not a failed turn, so flag it
+    // Teardown (init, conversation switch, new chat) — not a failed turn, so flag it
     // aborted to keep the empty-close guard from surfacing a spurious error.
     sseCallbacks.onClose({ aborted: true });
   }

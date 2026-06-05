@@ -21,7 +21,7 @@
     "clear_all": "امسح الكل",
     "theme_toggle": "تبديل المظهر"
   },
-  "threads": {
+  "conversations": {
     "no_history": "لا يوجد سجل محادثات متاح.",
     "new_conversation": "محادثة جديدة",
     "unknown_date": "تاريخ غير معروف",

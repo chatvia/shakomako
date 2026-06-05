@@ -16,7 +16,7 @@ const DEBUG_BUILD = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
 
 /**
  * Debug logger. No-op in production builds; in dev, prefixed `chatvia:` log.
- * Use this for anything informational ("starting", "thread loaded", state dumps).
+ * Use this for anything informational ("starting", "conversation loaded", state dumps).
  * Use console.warn / console.error directly for things customers should see.
  */
 export function debug(...args) {
@@ -103,15 +103,15 @@ export const CSS_CLASSES = {
   CONFIRM_BUTTONS: 'chatvia-widget-confirm-buttons',
   CONFIRM_CANCEL: 'chatvia-widget-confirm-cancel',
   CONFIRM_DELETE: 'chatvia-widget-confirm-delete',
-  THREADS_CONTAINER: 'chatvia-widget-threads',
-  THREADS_LIST: 'chatvia-widget-threads-list',
-  THREADS_HEADER: 'chatvia-widget-threads-header',
+  CONVERSATIONS_CONTAINER: 'chatvia-widget-conversations',
+  CONVERSATIONS_LIST: 'chatvia-widget-conversations-list',
+  CONVERSATIONS_HEADER: 'chatvia-widget-conversations-header',
   NEW_CHAT_BUTTON: 'chatvia-widget-new-chat-btn',
-  NO_THREADS_MESSAGE: 'chatvia-widget-no-threads',
-  THREAD_ITEM: 'chatvia-widget-thread-item',
-  THREAD_ITEM_ACTIVE: 'chatvia-widget-thread-active',
-  THREAD_TITLE: 'chatvia-widget-thread-title',
-  THREAD_DATE: 'chatvia-widget-thread-date',
+  NO_CONVERSATIONS_MESSAGE: 'chatvia-widget-no-conversations',
+  CONVERSATION_ITEM: 'chatvia-widget-conversation-item',
+  CONVERSATION_ITEM_ACTIVE: 'chatvia-widget-conversation-active',
+  CONVERSATION_TITLE: 'chatvia-widget-conversation-title',
+  CONVERSATION_DATE: 'chatvia-widget-conversation-date',
   STREAMING_MESSAGE: 'chatvia-widget-streaming-msg',
   STREAMING_MESSAGE_CLASS:
     'chatvia-widget-message chatvia-widget-assistant chatvia-widget-streaming',
@@ -140,10 +140,10 @@ export const CSS_CLASSES = {
   BAR_SHORTCUT_HINT: 'chatvia-widget-shortcut-hint',
   BAR_BUTTON: 'chatvia-widget-bar-btn',
   BAR_HISTORY_BUTTON: 'chatvia-widget-bar-history-btn',
-  // Thread content classes
-  THREAD_CONTENT: 'chatvia-widget-thread-content',
-  THREAD_SUBTITLE: 'chatvia-widget-thread-subtitle',
-  THREAD_ARROW_ICON: 'chatvia-widget-thread-arrow',
+  // Conversation content classes
+  CONVERSATION_CONTENT: 'chatvia-widget-conversation-content',
+  CONVERSATION_SUBTITLE: 'chatvia-widget-conversation-subtitle',
+  CONVERSATION_ARROW_ICON: 'chatvia-widget-conversation-arrow',
   // Brand
   BRAND_LOGO: 'chatvia-widget-brand-logo',
   // Position and mode classes

@@ -21,7 +21,7 @@
     "clear_all": "پاک کردن همه",
     "theme_toggle": "تغییر تم"
   },
-  "threads": {
+  "conversations": {
     "no_history": "تاریخچه گفتگویی موجود نیست.",
     "new_conversation": "گفتگوی جدید",
     "unknown_date": "تاریخ نامشخص",

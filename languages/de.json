@@ -21,7 +21,7 @@
     "clear_all": "Alle löschen",
     "theme_toggle": "Design wechseln"
   },
-  "threads": {
+  "conversations": {
     "no_history": "Kein Chatverlauf verfügbar.",
     "new_conversation": "Neue Unterhaltung",
     "unknown_date": "Unbekanntes Datum",

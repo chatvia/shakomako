@@ -21,7 +21,7 @@
     "clear_all": "すべて消去",
     "theme_toggle": "テーマを切り替え"
   },
-  "threads": {
+  "conversations": {
     "no_history": "チャット履歴はありません。",
     "new_conversation": "新しい会話",
     "unknown_date": "日付不明",

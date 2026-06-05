@@ -21,7 +21,7 @@
     "clear_all": "Очистить всё",
     "theme_toggle": "Сменить тему"
   },
-  "threads": {
+  "conversations": {
     "no_history": "История чатов отсутствует.",
     "new_conversation": "Новая беседа",
     "unknown_date": "Неизвестная дата",

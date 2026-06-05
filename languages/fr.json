@@ -21,7 +21,7 @@
     "clear_all": "Tout effacer",
     "theme_toggle": "Changer de thème"
   },
-  "threads": {
+  "conversations": {
     "no_history": "Aucun historique de chat disponible.",
     "new_conversation": "Nouvelle conversation",
     "unknown_date": "Date inconnue",

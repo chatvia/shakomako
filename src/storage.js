@@ -7,21 +7,21 @@ export default class StorageManager {
     this.sessionId = sessionId;
 
     this.persistenceManager = new PersistenceManager(agentId);
-    this.activeThreadPersistedId = 'chat-widget-active-thread-id';
+    this.activeConversationPersistedId = 'chat-widget-active-conversation-id';
   }
 
-  getActiveThreadId() {
-    return this.persistenceManager.get(this.activeThreadPersistedId);
+  getActiveConversationId() {
+    return this.persistenceManager.get(this.activeConversationPersistedId);
   }
 
-  setActiveThreadId(threadId) {
-    this.persistenceManager.set(this.activeThreadPersistedId, threadId);
+  setActiveConversationId(conversationId) {
+    this.persistenceManager.set(this.activeConversationPersistedId, conversationId);
   }
 
-  async loadThreads() {
+  async loadConversations() {
     try {
       const response = await api({
-        endpoint: 'threads',
+        endpoint: 'conversations',
         method: 'GET',
         headers: {
           'X-AGENT-ID': this.agentId,
@@ -30,41 +30,41 @@ export default class StorageManager {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to load threads');
+        throw new Error('Failed to load conversations');
       }
 
       const data = await response.json();
 
-      // Prioritize locally stored active thread ID over server's
-      const localActiveThreadId = this.getActiveThreadId();
-      let activeThreadId = localActiveThreadId;
+      // Prioritize locally stored active conversation ID over server's
+      const localActiveConversationId = this.getActiveConversationId();
+      let activeConversationId = localActiveConversationId;
 
-      // Only use server's active thread ID if we don't have one locally
-      if (!activeThreadId && data.active_thread_id) {
-        activeThreadId = data.active_thread_id;
-        this.setActiveThreadId(activeThreadId);
+      // Only use server's active conversation ID if we don't have one locally
+      if (!activeConversationId && data.active_conversation_id) {
+        activeConversationId = data.active_conversation_id;
+        this.setActiveConversationId(activeConversationId);
       }
 
-      // If still no active thread ID, use the first thread
-      if (!activeThreadId && data.threads && data.threads.length > 0) {
-        activeThreadId = data.threads[0].id;
-        this.setActiveThreadId(activeThreadId);
+      // If still no active conversation ID, use the first conversation
+      if (!activeConversationId && data.conversations && data.conversations.length > 0) {
+        activeConversationId = data.conversations[0].id;
+        this.setActiveConversationId(activeConversationId);
       }
 
       return {
-        threads: data.threads || [],
-        activeThreadId: activeThreadId
+        conversations: data.conversations || [],
+        activeConversationId: activeConversationId
       };
     } catch (error) {
-      console.error('Error loading threads from API:', error);
-      return { threads: [], activeThreadId: null };
+      console.error('Error loading conversations from API:', error);
+      return { conversations: [], activeConversationId: null };
     }
   }
 
-  async createNewThread() {
+  async createNewConversation() {
     try {
       const response = await api({
-        endpoint: 'threads',
+        endpoint: 'conversations',
         method: 'POST',
         headers: {
           'X-AGENT-ID': this.agentId,
@@ -73,78 +73,78 @@ export default class StorageManager {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create new thread');
+        throw new Error('Failed to create new conversation');
       }
 
-      const newThread = await response.json();
+      const newConversation = await response.json();
 
-      if (newThread.id) {
-        this.setActiveThreadId(newThread.id);
-        console.log('New thread created and set as active:', newThread.id);
-        return newThread;
+      if (newConversation.id) {
+        this.setActiveConversationId(newConversation.id);
+        console.log('New conversation created and set as active:', newConversation.id);
+        return newConversation;
       } else {
-        throw new Error('Thread ID not found in create response.');
+        throw new Error('Conversation ID not found in create response.');
       }
     } catch (error) {
-      console.error('Error creating new thread:', error);
+      console.error('Error creating new conversation:', error);
       throw error;
     }
   }
 
-  async deleteThread(threadId) {
+  async deleteConversation(conversationId) {
     const response = await api({
-      endpoint: 'threads',
+      endpoint: 'conversations',
       method: 'DELETE',
       headers: {
         'X-AGENT-ID': this.agentId,
         'X-SESSION-ID': this.sessionId,
-        'X-THREAD-ID': threadId
+        'X-CONVERSATION-ID': conversationId
       }
     });
 
     if (!response.ok) {
-      console.error('Failed to delete thread:', threadId);
+      console.error('Failed to delete conversation:', conversationId);
       return false;
     }
 
-    console.log('Thread deleted successfully:', threadId);
+    console.log('Conversation deleted successfully:', conversationId);
 
-    // Clear the active thread ID if it was the deleted thread
-    const currentActiveThreadId = this.getActiveThreadId();
-    if (currentActiveThreadId === threadId) {
-      this.persistenceManager.remove(this.activeThreadPersistedId);
+    // Clear the active conversation ID if it was the deleted conversation
+    const currentActiveConversationId = this.getActiveConversationId();
+    if (currentActiveConversationId === conversationId) {
+      this.persistenceManager.remove(this.activeConversationPersistedId);
     }
 
     return true;
   }
 
-  async deleteAllThreads() {
+  async deleteAllConversations() {
     try {
       await api({
-        endpoint: 'threads',
+        endpoint: 'conversations',
         method: 'DELETE',
         headers: {
           'X-AGENT-ID': this.agentId,
           'X-SESSION-ID': this.sessionId
         }
       });
-      this.setActiveThreadId(null);
+      this.setActiveConversationId(null);
       return true;
     } catch (error) {
-      console.error('Error deleting all threads:', error);
+      console.error('Error deleting all conversations:', error);
       return false;
     }
   }
 
-  async getMessages(threadId) {
+  async getMessages(conversationId) {
     try {
       const response = await api({
-        endpoint: 'threads/messages',
+        endpoint: 'conversations/messages',
         method: 'GET',
         headers: {
           'X-AGENT-ID': this.agentId,
           'X-SESSION-ID': this.sessionId,
-          'X-THREAD-ID': threadId,
+          'X-CONVERSATION-ID': conversationId,
           'Cache-Control': 'no-cache'
         }
       });
@@ -155,7 +155,7 @@ export default class StorageManager {
 
       return await response.json();
     } catch (error) {
-      console.error(`Error loading messages for thread ${threadId}:`, error);
+      console.error(`Error loading messages for conversation ${conversationId}:`, error);
       return [];
     }
   }

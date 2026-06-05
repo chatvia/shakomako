@@ -21,7 +21,7 @@
     "clear_all": "모두 지우기",
     "theme_toggle": "테마 전환"
   },
-  "threads": {
+  "conversations": {
     "no_history": "채팅 기록이 없습니다.",
     "new_conversation": "새 대화",
     "unknown_date": "알 수 없는 날짜",
