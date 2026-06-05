@@ -42,3 +42,36 @@ export default async function api({ endpoint, method, headers = {}, body = null 
     throw error;
   }
 }
+
+/**
+ * Multipart file upload — separate from api() because Content-Type must be
+ * unset so the browser fills in the boundary, and we need a longer timeout
+ * than the JSON RPC default.
+ *
+ * @param {Object} options
+ * @param {string} options.endpoint - e.g. 'threads/attachments'
+ * @param {File} options.file - the File object to upload
+ * @param {Object} options.headers - X-AGENT-ID, X-SESSION-ID, X-THREAD-ID, etc.
+ * @returns {Promise<Response>}
+ */
+export async function uploadFile({ endpoint, file, headers = {} }) {
+  const mergedHeaders = { Accept: 'application/json', ...headers };
+  Object.assign(mergedHeaders, authHeaders(mergedHeaders['X-AGENT-ID']));
+  // Let fetch derive the multipart boundary.
+  delete mergedHeaders['Content-Type'];
+
+  const form = new FormData();
+  form.append('file', file);
+
+  /* global __API_URL__ */
+  const apiUrl = __API_URL__;
+
+  const response = await fetch(`${apiUrl}/${endpoint}`, {
+    method: 'POST',
+    headers: mergedHeaders,
+    body: form,
+    signal: AbortSignal.timeout ? AbortSignal.timeout(120000) : undefined
+  });
+
+  return response;
+}

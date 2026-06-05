@@ -39,9 +39,27 @@ export async function addMessage(widget, type, text, addToHistory = true, option
     if (avatar) contentWrapper.appendChild(avatar);
   }
 
-  const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
-  await setMessageBubbleContent(bubble, type, text);
-  contentWrapper.appendChild(bubble);
+  // For attachment-only user turns, skip the empty bubble entirely so the
+  // chips don't sit next to a hollow bubble.
+  const attachmentList = Array.isArray(options.attachments) ? options.attachments : [];
+  if (text || type !== CSS_CLASSES.MESSAGE_USER || attachmentList.length === 0) {
+    const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
+    await setMessageBubbleContent(bubble, type, text);
+    contentWrapper.appendChild(bubble);
+  }
+
+  // Render attachment chips BELOW the bubble for user messages — keeps the
+  // chips visually attached to the message that introduced them (history
+  // reload pulls `message.attachments` from the server; the just-sent turn
+  // gets them via options.attachments).
+  if (type === CSS_CLASSES.MESSAGE_USER && attachmentList.length > 0) {
+    const strip = createElement('div', { className: CSS_CLASSES.ATTACHMENTS_STRIP });
+    for (const att of attachmentList) {
+      strip.appendChild(_renderAttachmentChipLink(att));
+    }
+    contentWrapper.appendChild(strip);
+  }
+
   message.appendChild(contentWrapper);
 
   // Add action buttons for AI assistant messages only (not human agent messages)
@@ -350,6 +368,67 @@ export async function handleFeedback(widget, messageId, isPositive, clickedButto
 /**
  * Set message bubble content
  */
+/**
+ * Render a clickable file chip for a persisted attachment. Clicking opens
+ * the public URL in a new tab so the visitor can re-download what they sent.
+ * Icon comes from `<__API_URL_HOST__>/images/icons/files/<ext>.svg` — drop a
+ * new SVG in there and the chip picks it up automatically.
+ */
+function _renderAttachmentChipLink(att) {
+  const link = createElement('a', {
+    className: CSS_CLASSES.ATTACHMENT_CHIP,
+    href: att.url,
+    target: '_blank',
+    rel: 'noopener noreferrer'
+  });
+
+  const iconEl = createElement('img', {
+    src: _iconUrlFor(att),
+    alt: att.mime_type || '',
+    className: CSS_CLASSES.ATTACHMENT_CHIP_ICON
+  });
+  link.appendChild(iconEl);
+
+  const meta = createElement('div', { className: CSS_CLASSES.ATTACHMENT_CHIP_META });
+
+  const nameEl = createElement('span', {
+    className: CSS_CLASSES.ATTACHMENT_CHIP_NAME,
+    textContent: att.filename || 'attachment'
+  });
+  meta.appendChild(nameEl);
+
+  if (att.size_bytes) {
+    const sizeEl = createElement('span', {
+      className: CSS_CLASSES.ATTACHMENT_CHIP_SIZE,
+      textContent: _formatBytesShort(att.size_bytes)
+    });
+    meta.appendChild(sizeEl);
+  }
+
+  link.appendChild(meta);
+  return link;
+}
+
+const _KNOWN_FILE_EXTENSIONS = new Set(['pdf']);
+
+function _iconUrlFor(att) {
+  const ext = (att.filename || '').split('.').pop()?.toLowerCase();
+  /* global __API_URL__ */
+  const origin = new URL(__API_URL__).origin;
+  if (ext && _KNOWN_FILE_EXTENSIONS.has(ext)) {
+    return origin + '/images/icons/files/' + ext + '.svg';
+  }
+  if (att.mime_type === 'application/pdf') return origin + '/images/icons/files/pdf.svg';
+  return origin + '/images/icons/files/file.svg';
+}
+
+function _formatBytesShort(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
 function setMessageBubbleContent(bubble, type, text) {
   if (type === CSS_CLASSES.MESSAGE_AGENT) {
     bubble.innerHTML = parseMarkdown(text);
@@ -382,9 +461,15 @@ function addMessageToHistory(widget, type, text, options) {
  */
 export async function sendUserMessage(widget, customText) {
   const text = customText || widget.chatInput.value.trim();
-  if (!text) return;
+  // Allow attachment-only messages — the user can attach a PDF and hit send
+  // without typing anything; the LLM still gets the URL through the notice
+  // appended server-side.
+  const pendingAttachments = Array.isArray(widget.attachments) ? [...widget.attachments] : [];
+  if (!text && pendingAttachments.length === 0) return;
 
-  await addMessage(widget, CSS_CLASSES.MESSAGE_USER, text, true);
+  await addMessage(widget, CSS_CLASSES.MESSAGE_USER, text, true, {
+    attachments: pendingAttachments
+  });
 
   if (!customText) {
     widget.chatInput.value = '';
@@ -452,14 +537,23 @@ export async function sendUserMessage(widget, customText) {
     return;
   }
 
+  // Snapshot attachments at send time; the strip is cleared right after so
+  // the user can attach again for the next turn.
+  const attachments = Array.isArray(widget.attachments) ? [...widget.attachments] : [];
+
   const messagePayload = {
     session_id: widget.sessionId,
     thread_id: widget.getCurrentActiveThreadId(),
     type: 'message',
     content: text,
     url: window.location.href,
-    referrer: document.referrer || ''
+    referrer: document.referrer || '',
+    attachments
   };
+
+  if (typeof widget._clearAttachments === 'function') {
+    widget._clearAttachments();
+  }
 
   // Don't log full payload in production — it contains user content.
   debug('Sending SSE message', { thread_id: messagePayload.thread_id });
@@ -518,7 +612,8 @@ export async function displayHistoryMessages(widget) {
         hideActions: isWelcomeMessage,
         isHuman: isHumanAgent,
         timestamp: message.created_at || message.timestamp,
-        readAt: message.read_at
+        readAt: message.read_at,
+        attachments: message.attachments || message.metadata?.attachments || []
       });
     }
   } else if (widget.settings.welcome_message) {

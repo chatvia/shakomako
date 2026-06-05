@@ -11,7 +11,8 @@
     "ask_question": "اطرح سؤالاً...",
     "loading": "جاري التحميل",
     "view_history": "عرض سجل المحادثات",
-    "scroll_to_bottom": "الانتقال إلى آخر رسالة"
+    "scroll_to_bottom": "الانتقال إلى آخر رسالة",
+    "upload_failed": "فشل تحميل الملف."
   },
   "menu": {
     "new_chat": "ابدأ محادثة جديدة",

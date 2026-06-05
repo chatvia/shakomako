@@ -620,7 +620,12 @@
 }
 
 .chatvia-widget .chatvia-widget-message.chatvia-widget-user .chatvia-widget-content-wrapper {
-  justify-content: flex-end;
+  /* Stack the bubble + any attachment chips vertically. Without this, the
+     default row-flex layout puts the attachments strip beside the bubble.
+     `align-items: flex-end` keeps both pinned to the user's side (right in
+     LTR, left in RTL — the cross axis flips with `dir`). */
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .chatvia-widget .chatvia-widget-message.chatvia-widget-user .chatvia-widget-bubble-content {
@@ -1222,9 +1227,9 @@
 /* Chat input styling - Intercom style */
 .chatvia-widget .chatvia-widget-input-container {
   display: flex;
+  flex-direction: column;
   border-top: 1px solid var(--chat-border, #e5e7eb);
-  padding: 14px 0;
-  /* Keep zero horizontal padding */
+  padding: 0;
   background: var(--chat-bg, #ffffff) !important;
   position: relative;
   width: 100%;
@@ -1233,9 +1238,145 @@
   z-index: 2;
 }
 
+.chatvia-widget .chatvia-widget-attachments-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  /* Equal top + bottom padding so chips have breathing room against the
+     attach/send button row that sits directly beneath. Previously had 0
+     bottom, which made chips touch the composer underneath. */
+  padding: 10px 14px;
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 8px;
+  background: color-mix(in srgb, var(--chat-text) 8%, transparent);
+  color: var(--chat-text);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  max-width: 240px;
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--chat-text-muted);
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-uploading svg {
+  animation: chatvia-widget-spin 1s linear infinite;
+}
+
+@keyframes chatvia-widget-spin {
+  to { transform: rotate(360deg); }
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-size {
+  color: var(--chat-text-muted);
+  font-size: 11px;
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-remove {
+  background: none;
+  border: 0;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--chat-text-muted);
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-remove:hover {
+  background: color-mix(in srgb, var(--chat-text) 12%, transparent);
+  color: var(--chat-text);
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-remove svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Persisted attachment chips on user message bubbles — rendered BELOW the
+   bubble by addMessage when message.attachments is non-empty. Differs from
+   the composer strip in that the chips are anchor links, align to the right
+   (user side), and use a custom file-type icon + two-line label. */
+.chatvia-widget .chatvia-widget-user .chatvia-widget-attachments-strip {
+  padding: 6px 0 0 0;
+  justify-content: flex-end;
+}
+
+.chatvia-widget .chatvia-widget-user .chatvia-widget-attachment-chip {
+  text-decoration: none;
+  padding: 8px 10px;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--chat-text) 10%, transparent);
+  background: var(--chat-bg);
+}
+
+.chatvia-widget .chatvia-widget-user .chatvia-widget-attachment-chip:hover {
+  background: color-mix(in srgb, var(--chat-text) 6%, var(--chat-bg));
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.chatvia-widget .chatvia-widget-attachment-chip-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.chatvia-widget .chatvia-widget-attach-btn {
+  position: absolute;
+  right: 56px;
+  /* Anchor to the bottom of the input-container and center inside the
+     60px-tall textarea (input-container height = strip + input; using
+     `bottom: 50%` would mis-center the moment the attachments strip
+     appears above and grows the container). 13px = (60 - 34) / 2. */
+  bottom: 13px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--chat-text-muted);
+  transition: background 0.2s, color 0.2s;
+  z-index: 1;
+}
+
+.chatvia-widget .chatvia-widget-attach-btn:hover {
+  background: color-mix(in srgb, var(--chat-text) 8%, transparent);
+  color: var(--chat-text);
+}
+
+.chatvia-widget .chatvia-widget-attach-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 .chatvia-widget .chatvia-widget-input {
   flex-grow: 1;
-  padding: 14px 54px 14px 18px;
+  padding: 14px 100px 14px 18px;
   border-radius: 0;
   outline: none;
   resize: none;
@@ -1264,9 +1405,9 @@
 .chatvia-widget .chatvia-widget-send-btn {
   position: absolute;
   right: 12px;
-  /* Adjust right position */
-  bottom: 50%;
-  transform: translateY(50%);
+  /* Same reasoning as .chatvia-widget-attach-btn — anchor to the bottom and
+     center inside the 60px textarea row. 11px = (60 - 38) / 2. */
+  bottom: 11px;
   width: 38px;
   height: 38px;
   background: linear-gradient(135deg, var(--chat-primary) 0%, color-mix(in srgb, var(--chat-primary) 90%, black) 100%);
@@ -1281,12 +1422,12 @@
 }
 
 .chatvia-widget .chatvia-widget-send-btn:hover {
-  transform: translateY(50%) scale(1.08);
+  transform: scale(1.08);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .chatvia-widget .chatvia-widget-send-btn:active {
-  transform: translateY(50%) scale(0.95);
+  transform: scale(0.95);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
@@ -3070,14 +3211,20 @@ body.chatvia-scroll-locked {
   border-right: 3px solid color-mix(in srgb, var(--chat-primary) 40%, var(--chat-border-strong));
 }
 
-/* Input + send button: pull the send button to the left edge and re-pad the
-   textarea so text doesn't slide under it. */
+/* Input + send + attach buttons: in RTL the action cluster lives on the LEFT
+   (the visual "end" of the textarea). Mirrors the LTR layout exactly — send
+   at 12px, attach at 56px, and the textarea reserves 100px on the active side
+   so neither button overlaps the placeholder/typed text. */
 .chatvia-widget[dir="rtl"] .chatvia-widget-input {
-  padding: 14px 18px 14px 54px;
+  padding: 14px 18px 14px 100px;
 }
 .chatvia-widget[dir="rtl"] .chatvia-widget-send-btn {
   right: auto;
   left: 12px;
+}
+.chatvia-widget[dir="rtl"] .chatvia-widget-attach-btn {
+  right: auto;
+  left: 56px;
 }
 /* Send-icon glyph points right by default; flip horizontally for RTL */
 .chatvia-widget[dir="rtl"] .chatvia-widget-send-btn svg {

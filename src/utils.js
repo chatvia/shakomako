@@ -85,6 +85,15 @@ export const CSS_CLASSES = {
   INPUT_CONTAINER: 'chatvia-widget-input-container',
   INPUT: 'chatvia-widget-input',
   SEND_BUTTON: 'chatvia-widget-send-btn',
+  ATTACH_BUTTON: 'chatvia-widget-attach-btn',
+  ATTACHMENTS_STRIP: 'chatvia-widget-attachments-strip',
+  ATTACHMENT_CHIP: 'chatvia-widget-attachment-chip',
+  ATTACHMENT_CHIP_ICON: 'chatvia-widget-attachment-chip-icon',
+  ATTACHMENT_CHIP_META: 'chatvia-widget-attachment-chip-meta',
+  ATTACHMENT_CHIP_NAME: 'chatvia-widget-attachment-chip-name',
+  ATTACHMENT_CHIP_SIZE: 'chatvia-widget-attachment-chip-size',
+  ATTACHMENT_CHIP_REMOVE: 'chatvia-widget-attachment-chip-remove',
+  ATTACHMENT_CHIP_UPLOADING: 'chatvia-widget-attachment-chip-uploading',
   BRAND_FOOTER: 'chatvia-widget-footer',
   // Disclaimer strip below the composer (e.g. "AI can make mistakes…").
   // Distinct from BRAND_FOOTER — that's the "Powered by Chatvia" line.

@@ -11,7 +11,8 @@
     "ask_question": "Ask a question...",
     "loading": "Loading",
     "view_history": "View chat history",
-    "scroll_to_bottom": "Scroll to latest message"
+    "scroll_to_bottom": "Scroll to latest message",
+    "upload_failed": "Upload failed."
   },
   "menu": {
     "new_chat": "Start new chat",

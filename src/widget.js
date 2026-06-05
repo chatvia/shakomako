@@ -1063,6 +1063,12 @@ export class ChatWidget {
   _createInputContainer() {
     const container = createElement('div', { className: CSS_CLASSES.INPUT_CONTAINER });
 
+    // Attachment chips appear ABOVE the textarea — populated as files upload.
+    this.attachments = [];
+    this.attachmentsStrip = createElement('div', { className: CSS_CLASSES.ATTACHMENTS_STRIP });
+    this.attachmentsStrip.style.display = 'none';
+    container.appendChild(this.attachmentsStrip);
+
     // See _createBar above — placeholder ≠ welcome_message. The latter is a
     // greeting rendered as the first assistant message, not a placeholder hint.
     const placeholder =
@@ -1077,6 +1083,31 @@ export class ChatWidget {
       autocorrect: 'on',
       spellcheck: 'true'
     });
+
+    // Hidden native file picker — triggered by the paperclip button.
+    this.fileInput = createElement('input', {
+      type: 'file',
+      accept: 'application/pdf'
+    });
+    this.fileInput.style.display = 'none';
+    this.fileInput.addEventListener('change', (e) => this._handleFileSelected(e));
+
+    this.attachButton = createElement('div', {
+      className: CSS_CLASSES.ATTACH_BUTTON,
+      role: 'button',
+      'aria-label': 'Attach a PDF',
+      title: 'Attach a PDF',
+      tabIndex: 0
+    });
+    this.attachButton.appendChild(createIcon('paperclip'));
+    this.attachButton.addEventListener('click', () => this.fileInput.click());
+    this.attachButton.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.fileInput.click();
+      }
+    });
+
     this.sendButton = createElement('div', {
       className: CSS_CLASSES.SEND_BUTTON,
       role: 'button',
@@ -1086,8 +1117,169 @@ export class ChatWidget {
     this.sendButton.appendChild(createIcon('send'));
 
     container.appendChild(this.chatInput);
+    container.appendChild(this.attachButton);
+    container.appendChild(this.fileInput);
     container.appendChild(this.sendButton);
     return container;
+  }
+
+  async _handleFileSelected(event) {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+
+    // Resolve the agentId from a fallback chain — defensive because production
+    // reports have shown `this.agentId` going undefined on the upload path
+    // while sibling props (sessionId) survive on the same instance. AgentManager
+    // and AuthManager each capture agentId in their own constructors, so as
+    // long as one is intact the upload still reaches the right tenant. If all
+    // three are gone we surface a clear failure instead of POSTing the string
+    // "undefined" and getting a confusing 403 back.
+    const agentId =
+      this.agentId ||
+      this.agentManager?.agentId ||
+      this.authManager?.agentId ||
+      (typeof window !== 'undefined' && window.chatvia && window.chatvia.agentId) ||
+      null;
+
+    if (!agentId) {
+      console.error('chatvia: cannot upload — no agent id resolvable on the widget instance', {
+        'this.agentId': this.agentId,
+        'agentManager.agentId': this.agentManager?.agentId,
+        'authManager.agentId': this.authManager?.agentId,
+        'window.chatvia.agentId': typeof window !== 'undefined' ? window.chatvia?.agentId : null
+      });
+      const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('widget.upload_failed'), false);
+      el?.classList.add('error');
+      return;
+    }
+
+    // Optimistic chip — flips from "uploading" to "ready" once the URL is back.
+    const tempId = 'tmp-' + Date.now();
+    const chip = this._addAttachmentChip({
+      id: tempId,
+      filename: file.name,
+      size_bytes: file.size,
+      mime_type: file.type,
+      url: '',
+      uploading: true
+    });
+
+    try {
+      const { uploadFile } = await import('./api.js');
+      const response = await uploadFile({
+        endpoint: 'threads/attachments',
+        file,
+        headers: {
+          'X-AGENT-ID': agentId,
+          'X-SESSION-ID': this.sessionId,
+          'X-THREAD-ID': this.getCurrentActiveThreadId()
+        }
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const msg =
+          (errorBody?.errors?.file && errorBody.errors.file[0]) ||
+          errorBody?.message ||
+          t('widget.upload_failed');
+        this._removeAttachment(tempId);
+        chip.remove();
+        const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, msg, false);
+        el?.classList.add('error');
+        return;
+      }
+
+      const body = await response.json();
+      const att = body.data;
+      // Swap the temp entry for the server's authoritative attachment record.
+      this.attachments = this.attachments.filter((a) => a.id !== tempId);
+      this.attachments.push(att);
+      this._updateAttachmentChip(chip, att);
+    } catch (err) {
+      console.error('Attachment upload failed:', err);
+      this._removeAttachment(tempId);
+      chip.remove();
+      const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('widget.upload_failed'), false);
+      el?.classList.add('error');
+    } finally {
+      if (this.attachments.length === 0) {
+        this.attachmentsStrip.style.display = 'none';
+      }
+    }
+  }
+
+  _addAttachmentChip({ id, filename, size_bytes, mime_type, url, uploading = false }) {
+    this.attachments.push({ id, filename, size_bytes, mime_type, url });
+    this.attachmentsStrip.style.display = 'flex';
+
+    const chip = createElement('div', { className: CSS_CLASSES.ATTACHMENT_CHIP });
+    if (uploading) chip.classList.add(CSS_CLASSES.ATTACHMENT_CHIP_UPLOADING);
+    chip.dataset.attachmentId = id;
+
+    chip.appendChild(createIcon(uploading ? 'spinner' : 'file-text'));
+
+    const nameEl = createElement('span', {
+      className: CSS_CLASSES.ATTACHMENT_CHIP_NAME,
+      textContent: filename
+    });
+    chip.appendChild(nameEl);
+
+    const sizeEl = createElement('span', {
+      className: CSS_CLASSES.ATTACHMENT_CHIP_SIZE,
+      textContent: this._formatBytes(size_bytes)
+    });
+    chip.appendChild(sizeEl);
+
+    const removeBtn = createElement(
+      'button',
+      {
+        className: CSS_CLASSES.ATTACHMENT_CHIP_REMOVE,
+        'aria-label': 'Remove attachment',
+        type: 'button'
+      },
+      {
+        click: () => {
+          this._removeAttachment(id);
+          chip.remove();
+          if (this.attachments.length === 0) {
+            this.attachmentsStrip.style.display = 'none';
+          }
+        }
+      }
+    );
+    removeBtn.appendChild(createIcon('x'));
+    chip.appendChild(removeBtn);
+
+    this.attachmentsStrip.appendChild(chip);
+    return chip;
+  }
+
+  _updateAttachmentChip(chip, att) {
+    chip.dataset.attachmentId = att.id;
+    chip.classList.remove(CSS_CLASSES.ATTACHMENT_CHIP_UPLOADING);
+    // Swap spinner icon for file-text icon.
+    const oldIcon = chip.querySelector('svg');
+    if (oldIcon) oldIcon.replaceWith(createIcon('file-text'));
+  }
+
+  _removeAttachment(id) {
+    this.attachments = this.attachments.filter((a) => a.id !== id);
+  }
+
+  _formatBytes(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  _clearAttachments() {
+    this.attachments = [];
+    if (this.attachmentsStrip) {
+      this.attachmentsStrip.innerHTML = '';
+      this.attachmentsStrip.style.display = 'none';
+    }
   }
 
   _createBrandFooter() {
