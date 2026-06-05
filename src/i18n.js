@@ -6,11 +6,39 @@
 // Import language files directly (bundled with the widget)
 import enTranslations from '../languages/en.json';
 import arTranslations from '../languages/ar.json';
+import daTranslations from '../languages/da.json';
+import deTranslations from '../languages/de.json';
+import esTranslations from '../languages/es.json';
+import faTranslations from '../languages/fa.json';
+import frTranslations from '../languages/fr.json';
+import hiTranslations from '../languages/hi.json';
+import idTranslations from '../languages/id.json';
+import jaTranslations from '../languages/ja.json';
+import koTranslations from '../languages/ko.json';
+import ptTranslations from '../languages/pt.json';
+import ruTranslations from '../languages/ru.json';
+import trTranslations from '../languages/tr.json';
+import viTranslations from '../languages/vi.json';
+import zhTranslations from '../languages/zh.json';
 
 // Available translations (bundled)
 const availableTranslations = {
   en: enTranslations,
-  ar: arTranslations
+  ar: arTranslations,
+  da: daTranslations,
+  de: deTranslations,
+  es: esTranslations,
+  fa: faTranslations,
+  fr: frTranslations,
+  hi: hiTranslations,
+  id: idTranslations,
+  ja: jaTranslations,
+  ko: koTranslations,
+  pt: ptTranslations,
+  ru: ruTranslations,
+  tr: trTranslations,
+  vi: viTranslations,
+  zh: zhTranslations
 };
 
 // Translation cache
@@ -205,7 +233,12 @@ export function getAvailableLanguages() {
   return Object.keys(availableTranslations).map(code => {
     const languageNames = {
       en: { name: 'English', nativeName: 'English' },
-      ar: { name: 'Arabic', nativeName: 'العربية' }
+      ar: { name: 'Arabic', nativeName: 'العربية' },
+      da: { name: 'Danish', nativeName: 'Dansk' },
+      de: { name: 'German', nativeName: 'Deutsch' },
+      fr: { name: 'French', nativeName: 'Français' },
+      es: { name: 'Spanish', nativeName: 'Español' },
+      pt: { name: 'Portuguese', nativeName: 'Português' }
     };
     return {
       code,
