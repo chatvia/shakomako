@@ -814,8 +814,6 @@
   align-items: center;
   gap: 2px;
   margin-top: 6px;
-  margin-left: 36px;
-  /* Align with message bubble (avatar width) */
 }
 
 /* Hide action buttons during streaming */
@@ -3165,10 +3163,6 @@ body.chatvia-scroll-locked {
 .chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-assistant > .chatvia-widget-message-time,
 .chatvia-widget[dir="rtl"] .chatvia-widget-message.chatvia-widget-human-agent > .chatvia-widget-message-time {
   text-align: right;
-  margin-left: 0;
-  margin-right: 36px;
-}
-.chatvia-widget[dir="rtl"] .chatvia-widget-actions {
   margin-left: 0;
   margin-right: 36px;
 }

@@ -757,10 +757,13 @@ export async function finalizeStreamingMessage(widget) {
       await updateMessageBubbleContent(messageBubble, finalMessage);
     }
 
+    const finalizedAt = new Date().toISOString();
     const actionsContainer = createMessageActions(
       widget,
       finalMessage,
-      widget.currentStreamedMessageId
+      widget.currentStreamedMessageId,
+      undefined,
+      finalizedAt
     );
     streamingMsgElement.appendChild(actionsContainer);
 
@@ -770,7 +773,8 @@ export async function finalizeStreamingMessage(widget) {
     streamingMsgElement.removeAttribute('id');
 
     addMessageToHistory(widget, CSS_CLASSES.MESSAGE_AGENT, finalMessage, {
-      messageId: widget.currentStreamedMessageId
+      messageId: widget.currentStreamedMessageId,
+      timestamp: finalizedAt
     });
   } else if (streamingMsgElement) {
     streamingMsgElement.remove();
