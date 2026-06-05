@@ -490,6 +490,14 @@ export function showStarters(widget) {
 
 /**
  * Disable chat
+ *
+ * Hides every interactive affordance that would either fail without a session
+ * or mutate state the visitor can't reach: composer (textarea + send + attach),
+ * menu dropdown (new chat / clear / history all need a thread). Header chrome
+ * the visitor *can* still use — close, expand, theme toggle — stays enabled so
+ * they can dismiss the locked widget or flip the theme while reading the
+ * sign-in notice. The `chatvia-widget-locked` class on the container lets CSS
+ * dim the disabled controls in one place.
  */
 export async function disabledChat(widget, message = 'Chat disabled') {
   if (widget.sendButton) {
@@ -498,6 +506,23 @@ export async function disabledChat(widget, message = 'Chat disabled') {
   if (widget.chatInput) {
     widget.chatInput.disabled = true;
     widget.chatInput.placeholder = message;
+  }
+  // `<div role="button">` buttons (attach, menu) can't use the native
+  // `disabled` attribute, so mark them via aria-disabled + tabindex=-1 and
+  // let the locked class handle the visual + pointer-events lockout.
+  for (const btn of [widget.attachButton, widget.menuButton]) {
+    if (!btn) continue;
+    btn.setAttribute('aria-disabled', 'true');
+    btn.setAttribute('tabindex', '-1');
+  }
+  // If the menu happens to be open when we lock, close it so its items
+  // aren't sitting on top of the disabled widget.
+  if (widget.menuDropdown) {
+    widget.menuDropdown.style.display = 'none';
+    widget.menuButton?.setAttribute('aria-expanded', 'false');
+  }
+  if (widget.container) {
+    widget.container.classList.add('chatvia-widget-locked');
   }
   clearMessages(widget);
   await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, message, false);

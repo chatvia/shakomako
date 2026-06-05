@@ -3299,3 +3299,26 @@ body.chatvia-scroll-locked {
   left: 0;
   right: auto;
 }
+
+/* ─── Locked state ─────────────────────────────────────────────────────────
+   Set by controls.disabledChat when the widget can't accept input — protected
+   agent with a missing/expired bootstrap token, init failure, session
+   failure. The locked class lives on `.chatvia-widget`; close, expand, and
+   theme toggle stay interactive (the visitor can dismiss / resize / re-theme
+   the locked shell). Composer + paperclip + menu get visually dimmed AND
+   click-blocked. Native disabled controls (textarea, sendButton) are already
+   handled by `[disabled]` — these rules cover the `<div role="button">`
+   buttons that can't use that attribute. */
+.chatvia-widget.chatvia-widget-locked .chatvia-widget-attach-btn,
+.chatvia-widget.chatvia-widget-locked .chatvia-widget-menu-btn,
+.chatvia-widget.chatvia-widget-locked .chatvia-widget-input,
+.chatvia-widget.chatvia-widget-locked .chatvia-widget-send-btn {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* If the menu dropdown was open at the moment we locked, keep it hidden. */
+.chatvia-widget.chatvia-widget-locked .chatvia-widget-menu-dropdown {
+  display: none !important;
+}
