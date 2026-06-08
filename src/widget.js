@@ -1100,11 +1100,26 @@ export class ChatWidget {
       tabIndex: 0
     });
     this.attachButton.appendChild(createIcon('paperclip'));
-    this.attachButton.addEventListener('click', () => this.fileInput.click());
+    // Gate the picker on the per-chat upload ceiling. Settings carry
+    // `max_files_per_chat` (config: agent.files.upload.max_files); _handleFileSelected
+    // re-checks as a defence-in-depth, but stopping the picker from opening
+    // gives the user the chip-style "limit reached" message instead of a
+    // confusing native dialog that goes nowhere on submit.
+    const tryOpenFilePicker = async () => {
+      const max = this.settings?.max_files_per_chat ?? 2;
+      if (this.attachments.length >= max) {
+        const msg = t('widget.upload_limit_reached', { count: max }) || `You can attach up to ${max} files.`;
+        const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, msg, false);
+        el?.classList.add('error');
+        return;
+      }
+      this.fileInput.click();
+    };
+    this.attachButton.addEventListener('click', tryOpenFilePicker);
     this.attachButton.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        this.fileInput.click();
+        tryOpenFilePicker();
       }
     });
 
@@ -1127,6 +1142,18 @@ export class ChatWidget {
     const file = event.target.files && event.target.files[0];
     event.target.value = '';
     if (!file) return;
+
+    // Re-check the per-chat upload ceiling — the click handler already
+    // gates this, but a race (multi-select OS dialog, concurrent picker)
+    // could slip past. Server enforces the same value via
+    // MaxConversationAttachments so a forged request still 422s.
+    const maxFiles = this.settings?.max_files_per_chat ?? 2;
+    if (this.attachments.length >= maxFiles) {
+      const msg = t('widget.upload_limit_reached', { count: maxFiles }) || `You can attach up to ${maxFiles} files.`;
+      const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, msg, false);
+      el?.classList.add('error');
+      return;
+    }
 
     // Resolve the agentId from a fallback chain — defensive because production
     // reports have shown `this.agentId` going undefined on the upload path

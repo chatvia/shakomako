@@ -12,7 +12,8 @@
     "loading": "Loading",
     "view_history": "View chat history",
     "scroll_to_bottom": "Scroll to latest message",
-    "upload_failed": "Upload failed."
+    "upload_failed": "Upload failed.",
+    "upload_limit_reached": "You can attach up to {count} files per chat."
   },
   "menu": {
     "new_chat": "Start new chat",
