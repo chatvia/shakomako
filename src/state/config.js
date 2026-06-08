@@ -325,7 +325,12 @@ export function applyTitle(widget) {
  */
 export function applyBranding(widget) {
   if (!widget.brandFooter) return;
-  const showBranding = widget.settings.branding?.enabled;
+  // `chatvia_branding` is the workspace-wide gate: the "remove branding"
+  // add-on subscription sets it to false. Absent (older payloads) → treat as
+  // true and fall back to the legacy branding.enabled flag, which the backend
+  // now drives from the same value.
+  const chatviaVisible = widget.settings.chatvia_branding !== false;
+  const showBranding = chatviaVisible && widget.settings.branding?.enabled;
   if (showBranding) {
     widget.brandFooter.innerHTML = '';
 
