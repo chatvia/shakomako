@@ -99,6 +99,19 @@ export function parseMarkdown(text) {
 }
 
 /**
+ * Reduce arbitrary (possibly HTML/markdown) text to its plain-text content,
+ * safely. Used by the copy-to-clipboard action, which must not round-trip
+ * untrusted assistant output through `element.innerHTML` — doing so on even a
+ * detached node triggers resource loads (e.g. `<img onerror>`), a DOM-XSS sink.
+ * DOMPurify with an empty tag allowlist strips all markup in an inert document
+ * and returns the text content, with no live parsing side effects.
+ */
+export function htmlToText(input) {
+  if (input === null || input === undefined) return '';
+  return DOMPurify.sanitize(String(input), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+}
+
+/**
  * Escape HTML entities — fallback for unsafe input or parser failures.
  */
 export function escapeHtml(text) {

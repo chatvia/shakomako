@@ -14,7 +14,7 @@ import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from '
 import { t } from '../i18n.js';
 // Canonical markdown impl lives in markdown.js. Import for local use, and
 // re-export so existing call sites that go through messages.js keep working.
-import { parseMarkdown, escapeHtml } from '../markdown.js';
+import { parseMarkdown, escapeHtml, htmlToText } from '../markdown.js';
 export { parseMarkdown, escapeHtml };
 
 /**
@@ -313,9 +313,9 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
  */
 export async function handleCopyMessage(text, button) {
   try {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = text;
-    const plainText = tempDiv.textContent || tempDiv.innerText || text;
+    // Strip any markup to plain text WITHOUT routing untrusted assistant
+    // output through element.innerHTML (a DOM-XSS sink — see htmlToText).
+    const plainText = htmlToText(text) || text;
 
     await navigator.clipboard.writeText(plainText);
 
