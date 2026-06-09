@@ -128,6 +128,33 @@ export class ChatWidget {
     handoff.initHandoff(this);
   }
 
+  /**
+   * Active conversation id — a single source of truth backed by the
+   * StorageManager (localStorage), which the backend treats as authoritative
+   * (the conversations endpoint returns no active id; see storage.js). Before
+   * the StorageManager exists (construction), fall back to a private field.
+   *
+   * Previously this was a plain instance field tracked in parallel with
+   * `storageManager`'s persisted value AND handoff's `conversationId`, so the
+   * three could silently drift. Routing every read/write of
+   * `widget.activeConversationId` through the store keeps the in-memory view
+   * and the persisted value identical by construction — existing call sites
+   * (`widget.activeConversationId = id`) keep working unchanged.
+   */
+  get activeConversationId() {
+    return this.storageManager
+      ? this.storageManager.getActiveConversationId()
+      : (this._activeConversationId ?? null);
+  }
+
+  set activeConversationId(value) {
+    if (this.storageManager) {
+      this.storageManager.setActiveConversationId(value);
+    } else {
+      this._activeConversationId = value;
+    }
+  }
+
   _detectMobile() {
     const mobileRegex = /Mobile|Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i;
     if (mobileRegex.test(navigator.userAgent)) {
