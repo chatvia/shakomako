@@ -52,7 +52,7 @@ export async function initConversations(widget) {
     console.log(`Active conversation ID: ${widget.activeConversationId}`);
   } catch (error) {
     console.error('Error initializing conversations:', error);
-    await widget.disabledChat('Could not load chat conversations.');
+    await widget.disabledChat(t('errors.conversations_load_failed'));
     throw error;
   }
 }
@@ -87,12 +87,12 @@ export async function createNewConversation(widget) {
       return newConversation;
     } else {
       console.error('API did not return a new conversation object.');
-      await widget.disabledChat('Failed to create new chat.');
+      await widget.disabledChat(t('errors.new_chat_failed'));
       return null;
     }
   } catch (error) {
     console.error('Failed to create new conversation:', error);
-    await widget.disabledChat('Error creating new chat.');
+    await widget.disabledChat(t('errors.new_chat_error'));
     return null;
   }
 }
@@ -134,7 +134,7 @@ export async function loadActiveConversation(widget) {
         const potentiallyNewActiveConversation = getActiveConversation(widget);
         if (!potentiallyNewActiveConversation) {
           console.error('Failed to establish an active conversation even after re-init.');
-          await widget.disabledChat('Cannot load chat.');
+          await widget.disabledChat(t('errors.load_chat_failed'));
           return;
         }
         const messages = await widget.storageManager.getMessages(
@@ -151,7 +151,7 @@ export async function loadActiveConversation(widget) {
         return;
       } catch (error) {
         console.error('Error during re-initialization in loadActiveConversation:', error);
-        await widget.disabledChat('Cannot load chat.');
+        await widget.disabledChat(t('errors.load_chat_failed'));
         return;
       }
     }
@@ -203,11 +203,7 @@ export async function loadActiveConversation(widget) {
       await subscribeToConversation(widget);
     } catch (error) {
       console.error(`Error loading messages for conversation ${activeConversation.id}:`, error);
-      await widget.addMessage(
-        CSS_CLASSES.MESSAGE_SYSTEM,
-        'Error loading messages for this chat.',
-        false
-      );
+      await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('errors.messages_load_failed'), false);
     }
     widget.scrollToBottom();
   } finally {
@@ -249,7 +245,7 @@ export async function startNewConversation(widget) {
     }
   } catch (error) {
     console.error('Error starting new conversation:', error);
-    await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, 'Failed to start a new chat.', false);
+    await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('errors.start_chat_failed'), false);
   } finally {
     widget.hideFetchSpinner();
   }
@@ -274,7 +270,7 @@ export async function loadChatHistory(widget) {
     widget.messagesContainer?.appendChild(conversationsContainer);
   } catch (error) {
     console.error('Error loading chat history:', error);
-    await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, 'Could not load chat history.', false);
+    await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('errors.history_load_failed'), false);
     if (widget.inputContainer) widget.inputContainer.style.display = 'flex';
   } finally {
     widget.hideFetchSpinner();
@@ -496,9 +492,11 @@ export function formatTimestamp(timestamp) {
   const isYesterday = date.toDateString() === yesterday.toDateString();
 
   if (isToday) {
-    return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return t('conversations.today_at', { time });
   } else if (isYesterday) {
-    return `Yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return t('conversations.yesterday_at', { time });
   } else {
     return date.toLocaleDateString([], {
       month: 'short',

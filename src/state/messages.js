@@ -145,10 +145,16 @@ function formatMessageTime(timestamp) {
   if (diffDays < 30) return t('conversations.days_ago', { count: diffDays });
 
   const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  if (diffMonths < 12) {
+    return diffMonths === 1
+      ? t('conversations.month_ago')
+      : t('conversations.months_ago', { count: diffMonths });
+  }
 
   const diffYears = Math.floor(diffDays / 365);
-  return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
+  return diffYears === 1
+    ? t('conversations.year_ago')
+    : t('conversations.years_ago', { count: diffYears });
 }
 
 /**
@@ -198,7 +204,7 @@ function createReadStatusIndicator(readAt) {
   `;
 
   container.innerHTML = checkSvg;
-  container.title = readAt ? 'Read' : 'Sent';
+  container.title = readAt ? t('messages.read') : t('messages.sent');
 
   return container;
 }
@@ -494,7 +500,7 @@ export async function sendUserMessage(widget, customText) {
       const el = await addMessage(
         widget,
         CSS_CLASSES.MESSAGE_SYSTEM,
-        'Failed to send message. Please try again.',
+        t('errors.message_send_failed'),
         false,
         {
           retryText: text
@@ -527,7 +533,7 @@ export async function sendUserMessage(widget, customText) {
     const el = await addMessage(
       widget,
       CSS_CLASSES.MESSAGE_SYSTEM,
-      'SSE client error. Cannot send message.',
+      t('errors.connection_unavailable'),
       false,
       {
         retryText: text
@@ -571,7 +577,7 @@ export async function sendUserMessage(widget, customText) {
     const el = await addMessage(
       widget,
       CSS_CLASSES.MESSAGE_SYSTEM,
-      'Failed to send message. Please try again.',
+      t('errors.message_send_failed'),
       false,
       {
         retryText: text

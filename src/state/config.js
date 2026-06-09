@@ -5,7 +5,7 @@
 
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, safeImageUrl } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
-import { getDirection } from '../i18n.js';
+import { getDirection, t } from '../i18n.js';
 
 const THEME_STORAGE_PREFIX = 'chatvia-theme:';
 
@@ -263,7 +263,7 @@ export function updateThemeToggleButton(widget) {
   if (!btn) return;
 
   const isDark = widget.settings.theme === 'dark';
-  const label = isDark ? 'Switch to light theme' : 'Switch to dark theme';
+  const label = isDark ? t('menu.switch_to_light') : t('menu.switch_to_dark');
   btn.setAttribute('aria-label', label);
   btn.title = label;
   btn.innerHTML = '';
@@ -408,7 +408,9 @@ export function applyFooterText(widget) {
  */
 export function applyInputPlaceholder(widget) {
   const placeholder =
-    widget.settings?.composer_placeholder || widget.options?.placeholder || 'Type a message...';
+    widget.settings?.composer_placeholder ||
+    widget.options?.placeholder ||
+    t('widget.type_message');
 
   if (widget.chatInput) {
     widget.chatInput.placeholder = placeholder;

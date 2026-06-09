@@ -267,8 +267,7 @@ export async function switchToPendingMode(widget, serverMessage) {
   widget.handoffMode = HANDOFF_MODE.PENDING;
 
   // Show notification message
-  const notificationMessage =
-    serverMessage || 'Your request has been sent. Please wait for an agent to connect.';
+  const notificationMessage = serverMessage || t('handoff.request_sent');
   await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, notificationMessage, false);
 
   // Connect to WebSocket to listen for handoff event
@@ -332,8 +331,11 @@ export async function switchToHumanMode(widget, adminName, adminId, serverMessag
   widget.adminName = adminName;
 
   // Show notification message - use server message if provided
-  const agentDisplay = adminName || 'a human agent';
-  const notificationMessage = serverMessage || `You are now connected with ${agentDisplay}.`;
+  const notificationMessage =
+    serverMessage ||
+    (adminName
+      ? t('handoff.connected_with', { name: adminName })
+      : t('handoff.connected_with_agent'));
   await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, notificationMessage, false);
 
   // Connect Pusher if not already connected (might be connected from pending state)
@@ -381,7 +383,7 @@ export async function switchToAIMode(widget, serverMessage) {
   }
 
   // Show notification message - use server message if provided
-  const notificationMessage = serverMessage || "You're back with our AI assistant.";
+  const notificationMessage = serverMessage || t('handoff.back_with_ai');
   await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, notificationMessage, false);
 
   // Update UI to indicate AI mode
@@ -431,11 +433,11 @@ export async function endLiveChat(widget) {
     }
 
     // Switch back to AI mode
-    await switchToAIMode(widget, "You ended the live chat. You're now back with our AI assistant.");
+    await switchToAIMode(widget, t('handoff.ended_by_you'));
   } catch (error) {
     console.error('Error ending live chat:', error);
     // Still switch to AI mode even if the request failed
-    await switchToAIMode(widget, "Connection ended. You're now back with our AI assistant.");
+    await switchToAIMode(widget, t('handoff.connection_ended'));
   }
 }
 
@@ -940,11 +942,11 @@ function updateHandoffUI(widget, mode) {
       chatWindow.classList.add(CSS_CLASSES.HUMAN_MODE);
       console.log('[Handoff] Added human mode class. Classes now:', chatWindow.className);
       if (widget.chatInput) {
-        const agentName = widget.adminName || 'agent';
-        widget.chatInput.placeholder = `Message ${agentName}...`;
+        const agentName = widget.adminName || t('handoff.default_agent_name');
+        widget.chatInput.placeholder = t('handoff.message_agent', { name: agentName });
       }
       if (headerTitle) {
-        headerTitle.textContent = `${originalTitle} (Live)`;
+        headerTitle.textContent = t('handoff.live_title', { title: originalTitle });
       }
       addEndChatButton(widget);
       hideMenuButton(widget);
@@ -953,7 +955,10 @@ function updateHandoffUI(widget, mode) {
     case 'ai':
     default:
       if (widget.chatInput) {
-        widget.chatInput.placeholder = widget.settings?.input_placeholder || 'Type a message...';
+        // Mirror applyInputPlaceholder (config.js), which keys off
+        // composer_placeholder — not the stale `input_placeholder`.
+        widget.chatInput.placeholder =
+          widget.settings?.composer_placeholder || t('widget.type_message');
       }
       if (headerTitle) {
         headerTitle.textContent = originalTitle;
@@ -1125,9 +1130,13 @@ export function createTalkToHumanButton(widget, onClick) {
       <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
     </svg>
-    <span>Talk to Human</span>
+    <span></span>
   `;
-  button.title = 'Request human assistance';
+  // Untrusted? No — the label is our own i18n string. Set as textContent on the
+  // span (not via the template) to keep the SVG markup but avoid interpolating
+  // into innerHTML.
+  button.querySelector('span').textContent = t('handoff.talk_to_human');
+  button.title = t('handoff.request_human');
   button.type = 'button';
 
   button.addEventListener('click', async e => {

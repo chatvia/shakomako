@@ -20,7 +20,9 @@
     "chat_history": "Chat history",
     "clear_current": "Clear current chat",
     "clear_all": "Clear all",
-    "theme_toggle": "Toggle theme"
+    "theme_toggle": "Toggle theme",
+    "switch_to_light": "Switch to light theme",
+    "switch_to_dark": "Switch to dark theme"
   },
   "conversations": {
     "no_history": "No chat history available.",
@@ -32,7 +34,13 @@
     "hour_ago": "1 hour ago",
     "hours_ago": "{count} hours ago",
     "yesterday": "Yesterday",
-    "days_ago": "{count} days ago"
+    "days_ago": "{count} days ago",
+    "month_ago": "1 month ago",
+    "months_ago": "{count} months ago",
+    "year_ago": "1 year ago",
+    "years_ago": "{count} years ago",
+    "today_at": "Today at {time}",
+    "yesterday_at": "Yesterday at {time}"
   },
   "confirm": {
     "delete_chat_title": "Delete Chat",
@@ -49,12 +57,24 @@
     "good_response": "Good response",
     "bad_response": "Bad response",
     "retry": "Retry",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "read": "Read",
+    "sent": "Sent"
   },
   "handoff": {
     "talk_to_human": "Talk to a human",
+    "request_human": "Request human assistance",
     "connecting": "Connecting you to an agent...",
     "connected": "Connected to {name}",
+    "connected_with": "You are now connected with {name}.",
+    "connected_with_agent": "You are now connected with a human agent.",
+    "request_sent": "Your request has been sent. Please wait for an agent to connect.",
+    "back_with_ai": "You're back with our AI assistant.",
+    "ended_by_you": "You ended the live chat. You're now back with our AI assistant.",
+    "connection_ended": "Connection ended. You're now back with our AI assistant.",
+    "live_title": "{title} (Live)",
+    "message_agent": "Message {name}...",
+    "default_agent_name": "agent",
     "disconnected": "Agent has left the conversation",
     "returned_to_bot": "Conversation returned to bot",
     "agent_typing": "{name} is typing...",
@@ -74,7 +94,15 @@
     "connection_error": "Connection error. Please check your internet connection.",
     "message_send_failed": "Failed to send message. Please try again.",
     "response_failed": "Something went wrong while generating the response. Please try again.",
-    "auth_required": "This chat requires sign-in."
+    "auth_required": "This chat requires sign-in.",
+    "chat_disabled": "Chat disabled",
+    "connection_unavailable": "Connection unavailable. Cannot send message.",
+    "conversations_load_failed": "Could not load chat conversations.",
+    "new_chat_failed": "Failed to create new chat.",
+    "new_chat_error": "Error creating new chat.",
+    "load_chat_failed": "Cannot load chat.",
+    "messages_load_failed": "Error loading messages for this chat.",
+    "start_chat_failed": "Failed to start a new chat.",
+    "history_load_failed": "Could not load chat history."
   }
 }
-

@@ -143,34 +143,49 @@ async function loadLanguage(languageCode) {
 }
 
 /**
- * Get translation for a key
- * @param {string} key - Translation key in dot notation (e.g., 'widget.open_chat')
- * @param {Object} vars - Variables to replace in translation (e.g., {count: 5})
- * @returns {string} - Translated string
+ * Walk a dot-notation key into a translation dictionary.
+ * @returns {string|undefined} the string at that path, or undefined if absent
+ *   or non-string.
  */
-export function t(key, vars = {}) {
-  // Split the key by dots to navigate the object
-  const keys = key.split('.');
-  let value = translations;
-
-  // Navigate through the translation object
+function lookupKey(dict, keys) {
+  let value = dict;
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
     } else {
-      // Key not found, return the key itself as fallback
-      console.warn(`i18n: Translation key not found: ${key}`);
-      return key;
+      return undefined;
     }
   }
+  return typeof value === 'string' ? value : undefined;
+}
 
-  // If value is not a string, return the key
-  if (typeof value !== 'string') {
-    console.warn(`i18n: Translation value is not a string: ${key}`);
+/**
+ * Get translation for a key
+ * @param {string} key - Translation key in dot notation (e.g., 'widget.open_chat')
+ * @param {Object} vars - Variables to replace in translation (e.g., {count: 5})
+ * @returns {string} - Translated string
+ *
+ * Resolution order: current language → English fallback → the key itself.
+ * The English fallback means a string only present in en.json still renders in
+ * English for a not-yet-translated language, instead of leaking the raw key.
+ * That's what makes it safe to route every user-facing string through t():
+ * untranslated locales degrade to English rather than to "handoff.connected".
+ */
+export function t(key, vars = {}) {
+  const keys = key.split('.');
+
+  let value = lookupKey(translations, keys);
+
+  // Fall back to bundled English before giving up on the key entirely.
+  if (value === undefined && translations !== availableTranslations[fallbackLanguage]) {
+    value = lookupKey(availableTranslations[fallbackLanguage], keys);
+  }
+
+  if (value === undefined) {
+    console.warn(`i18n: Translation key not found: ${key}`);
     return key;
   }
 
-  // Replace variables in the string
   return replaceVars(value, vars);
 }
 

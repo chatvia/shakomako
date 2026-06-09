@@ -1361,7 +1361,7 @@ export class ChatWidget {
 
     const cancelButton = createElement('button', {
       className: CSS_CLASSES.CONFIRM_CANCEL,
-      textContent: 'Cancel'
+      textContent: t('confirm.cancel')
     });
 
     const deleteButton = createElement('button', {

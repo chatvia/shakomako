@@ -7,6 +7,7 @@ import { CSS_CLASSES } from '../utils.js';
 import { createIcon } from '../ui.js';
 import { markMessagesAsRead, HANDOFF_MODE } from './handoff.js';
 import { applyTheme, writeStoredTheme } from './config.js';
+import { t } from '../i18n.js';
 
 /**
  * Toggle chat open/close
@@ -98,7 +99,7 @@ export function toggleExpand(widget) {
     widget._previousWindowSize = widget.settings.window_size;
     widget.settings.window_size = CSS_CLASSES.WINDOW_LARGE;
     widget.isWidthExpanded = true;
-    widget.expandButton.title = 'Collapse chat';
+    widget.expandButton.title = t('widget.collapse_chat');
     widget.expandButton.innerHTML = '';
     widget.expandButton.appendChild(createIcon('collapse'));
 
@@ -110,7 +111,7 @@ export function toggleExpand(widget) {
     widget.settings.window_size = widget._previousWindowSize || CSS_CLASSES.WINDOW_MEDIUM;
     widget._previousWindowSize = null;
     widget.isWidthExpanded = false;
-    widget.expandButton.title = 'Expand chat';
+    widget.expandButton.title = t('widget.expand_chat');
     widget.expandButton.innerHTML = '';
     widget.expandButton.appendChild(createIcon('expand'));
 
@@ -509,7 +510,7 @@ export function showStarters(widget) {
  * sign-in notice. The `chatvia-widget-locked` class on the container lets CSS
  * dim the disabled controls in one place.
  */
-export async function disabledChat(widget, message = 'Chat disabled') {
+export async function disabledChat(widget, message = t('errors.chat_disabled')) {
   if (widget.sendButton) {
     widget.sendButton.disabled = true;
   }
