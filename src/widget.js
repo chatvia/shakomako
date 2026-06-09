@@ -1086,44 +1086,55 @@ export class ChatWidget {
       spellcheck: 'true'
     });
 
-    // Hidden native file picker — triggered by the paperclip button.
-    this.fileInput = createElement('input', {
-      type: 'file',
-      accept: 'application/pdf'
-    });
-    this.fileInput.style.display = 'none';
-    this.fileInput.addEventListener('change', (e) => this._handleFileSelected(e));
+    // The paperclip/attach button only exists when the agent owner allows
+    // uploads (dashboard "Allow file uploads" → settings.allow_file_uploads).
+    // Backend defaults this to true, so treat a missing flag as enabled and
+    // only hide when it's explicitly false. When off we skip the button AND
+    // the hidden file input entirely — there's no other entry point to the
+    // picker, so uploads are fully disabled, not just visually hidden.
+    const allowUploads = this.settings?.allow_file_uploads !== false;
+    if (allowUploads) {
+      // Hidden native file picker — triggered by the paperclip button.
+      this.fileInput = createElement('input', {
+        type: 'file',
+        accept: 'application/pdf'
+      });
+      this.fileInput.style.display = 'none';
+      this.fileInput.addEventListener('change', e => this._handleFileSelected(e));
 
-    this.attachButton = createElement('div', {
-      className: CSS_CLASSES.ATTACH_BUTTON,
-      role: 'button',
-      'aria-label': 'Attach a PDF',
-      title: 'Attach a PDF',
-      tabIndex: 0
-    });
-    this.attachButton.appendChild(createIcon('paperclip'));
-    // Gate the picker on the per-chat upload ceiling. Settings carry
-    // `max_files_per_chat` (config: agent.files.upload.max_files); _handleFileSelected
-    // re-checks as a defence-in-depth, but stopping the picker from opening
-    // gives the user the chip-style "limit reached" message instead of a
-    // confusing native dialog that goes nowhere on submit.
-    const tryOpenFilePicker = async () => {
-      const max = this.settings?.max_files_per_chat ?? 2;
-      if (this.attachments.length >= max) {
-        const msg = t('widget.upload_limit_reached', { count: max }) || `You can attach up to ${max} files.`;
-        const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, msg, false);
-        el?.classList.add('error');
-        return;
-      }
-      this.fileInput.click();
-    };
-    this.attachButton.addEventListener('click', tryOpenFilePicker);
-    this.attachButton.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        tryOpenFilePicker();
-      }
-    });
+      this.attachButton = createElement('div', {
+        className: CSS_CLASSES.ATTACH_BUTTON,
+        role: 'button',
+        'aria-label': t('widget.attach_pdf'),
+        title: t('widget.attach_pdf'),
+        tabIndex: 0
+      });
+      this.attachButton.appendChild(createIcon('paperclip'));
+      // Gate the picker on the per-chat upload ceiling. Settings carry
+      // `max_files_per_chat` (config: agent.files.upload.max_files); _handleFileSelected
+      // re-checks as a defence-in-depth, but stopping the picker from opening
+      // gives the user the chip-style "limit reached" message instead of a
+      // confusing native dialog that goes nowhere on submit.
+      const tryOpenFilePicker = async () => {
+        const max = this.settings?.max_files_per_chat ?? 2;
+        if (this.attachments.length >= max) {
+          const msg =
+            t('widget.upload_limit_reached', { count: max }) ||
+            `You can attach up to ${max} files.`;
+          const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, msg, false);
+          el?.classList.add('error');
+          return;
+        }
+        this.fileInput.click();
+      };
+      this.attachButton.addEventListener('click', tryOpenFilePicker);
+      this.attachButton.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          tryOpenFilePicker();
+        }
+      });
+    }
 
     this.sendButton = createElement('div', {
       className: CSS_CLASSES.SEND_BUTTON,
@@ -1139,9 +1150,9 @@ export class ChatWidget {
     // aligned no matter what height autoResizeInput() gives the textarea, so
     // the composer looks correct on first paint instead of only after typing.
     const inputRow = createElement('div', { className: CSS_CLASSES.INPUT_ROW });
-    inputRow.appendChild(this.attachButton);
+    if (this.attachButton) inputRow.appendChild(this.attachButton);
     inputRow.appendChild(this.chatInput);
-    inputRow.appendChild(this.fileInput);
+    if (this.fileInput) inputRow.appendChild(this.fileInput);
     inputRow.appendChild(this.sendButton);
     container.appendChild(inputRow);
     return container;
@@ -1281,7 +1292,7 @@ export class ChatWidget {
       'button',
       {
         className: CSS_CLASSES.ATTACHMENT_CHIP_REMOVE,
-        'aria-label': 'Remove attachment',
+        'aria-label': t('widget.remove_attachment'),
         type: 'button'
       },
       {

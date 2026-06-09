@@ -13,7 +13,9 @@
     "view_history": "View chat history",
     "scroll_to_bottom": "Scroll to latest message",
     "upload_failed": "Upload failed.",
-    "upload_limit_reached": "You can attach up to {count} files per chat."
+    "upload_limit_reached": "You can attach up to {count} files per chat.",
+    "attach_pdf": "Attach a PDF",
+    "remove_attachment": "Remove attachment"
   },
   "menu": {
     "new_chat": "Start new chat",
