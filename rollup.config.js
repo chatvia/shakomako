@@ -91,7 +91,12 @@ const commonPlugins = [
         comments: false
       },
       compress: {
-        drop_console: true,
+        // Do NOT drop_console here. The `strip` plugin above already removes
+        // console.log/debug/info, and we intentionally KEEP console.warn /
+        // console.error in production for diagnosing live issues. Setting
+        // drop_console:true would silently remove warn/error too, defeating
+        // that intent (and the warn()/error() helpers in utils.js).
+        drop_console: false,
         pure_getters: true,
         unsafe: true,
         unsafe_comps: true,
@@ -107,7 +112,15 @@ const mainBundleConfig = {
   input: 'src/main.js',
   output: {
     dir: `dist/${appVersion}`,
-    format: 'es',
+    // IIFE (classic script), NOT 'es'. embed.js injects this bundle with a
+    // plain <script type="text/javascript">, so it must not contain top-level
+    // import/export — those throw "export declarations may only appear at top
+    // level of a module" when a non-module script is parsed.
+    format: 'iife',
+    name: 'chatviaWidget',
+    // IIFE can't code-split; inline the dynamic import() of api.js
+    // (src/widget.js, src/state/messages.js) into the single bundle.
+    inlineDynamicImports: true,
     sourcemap: false,
     compact: true,
     entryFileNames: 'widget.min.js',
@@ -142,7 +155,12 @@ const embedScriptConfig = {
   input: 'src/embed.js',
   output: {
     dir: 'dist',
-    format: 'es',
+    // Embedding sites load this directly via <script src=".../embed.js">, a
+    // classic (non-module) script. Must be IIFE so the bundle carries no
+    // top-level export/import — otherwise the browser throws "export
+    // declarations may only appear at top level of a module".
+    format: 'iife',
+    name: 'chatviaEmbed',
     sourcemap: false,
     compact: true,
     entryFileNames: 'embed.js',
