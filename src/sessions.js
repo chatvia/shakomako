@@ -69,7 +69,9 @@ export class SessionManager {
       if (data.conversation_id) {
         if (data.conversation_id !== existingConversationId) {
           console.log(
-            data.is_new_conversation ? '✨ New conversation created:' : '🔄 Conversation restored from server:',
+            data.is_new_conversation
+              ? '✨ New conversation created:'
+              : '🔄 Conversation restored from server:',
             data.conversation_id
           );
         } else {

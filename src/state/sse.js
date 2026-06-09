@@ -25,49 +25,54 @@ export function setupSSE(widget) {
   }
 
   const currentActiveConversationId = widget.getCurrentActiveConversationId();
-  widget.sseClient = createSSEClient(widget.agentId, widget.sessionId, currentActiveConversationId, {
-    onOpen: () => removeConnectionErrorMessages(widget),
-    onClose: (info = {}) => {
-      // Clear loading timeout to prevent race conditions
-      if (widget._loadingTimeout) {
-        clearTimeout(widget._loadingTimeout);
-        widget._loadingTimeout = null;
-      }
-      widget.hideLoading();
-      finalizeStreamingMessage(widget);
-
-      // Tool-only turn that produced no text: finalize bails early (isStreaming
-      // false), leaving an empty placeholder whose avatar/bubble row is still
-      // hidden. Drop it entirely so no blank assistant message lingers;
-      // otherwise just clear the streaming marker + avatar pulse.
-      const leftover = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-      if (leftover) {
-        const bubble = leftover.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
-        if (!bubble || bubble.textContent.trim() === '') {
-          leftover.remove();
-        } else {
-          leftover
-            .querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)
-            ?.classList.remove(CSS_CLASSES.STREAMING);
-          leftover.removeAttribute('id');
+  widget.sseClient = createSSEClient(
+    widget.agentId,
+    widget.sessionId,
+    currentActiveConversationId,
+    {
+      onOpen: () => removeConnectionErrorMessages(widget),
+      onClose: (info = {}) => {
+        // Clear loading timeout to prevent race conditions
+        if (widget._loadingTimeout) {
+          clearTimeout(widget._loadingTimeout);
+          widget._loadingTimeout = null;
         }
-      }
+        widget.hideLoading();
+        finalizeStreamingMessage(widget);
 
-      // Stream closed cleanly but nothing was rendered and no error was
-      // shown — surface a generic failure instead of a silent dead turn.
-      // Skip when aborted (teardown/supersede): that's not a failed turn.
-      if (!info.aborted && !widget._streamHandled && !widget._streamErrorShown) {
-        renderStreamError(widget);
-      }
-      widget._streamHandled = false;
-      widget._streamErrorShown = false;
+        // Tool-only turn that produced no text: finalize bails early (isStreaming
+        // false), leaving an empty placeholder whose avatar/bubble row is still
+        // hidden. Drop it entirely so no blank assistant message lingers;
+        // otherwise just clear the streaming marker + avatar pulse.
+        const leftover = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
+        if (leftover) {
+          const bubble = leftover.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
+          if (!bubble || bubble.textContent.trim() === '') {
+            leftover.remove();
+          } else {
+            leftover
+              .querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)
+              ?.classList.remove(CSS_CLASSES.STREAMING);
+            leftover.removeAttribute('id');
+          }
+        }
 
-      // Re-enable input on close
-      if (widget.chatInput) widget.chatInput.disabled = false;
-      if (widget.sendButton) widget.sendButton.disabled = false;
-    },
-    onMessage: data => handleSSEMessage(widget, data)
-  });
+        // Stream closed cleanly but nothing was rendered and no error was
+        // shown — surface a generic failure instead of a silent dead turn.
+        // Skip when aborted (teardown/supersede): that's not a failed turn.
+        if (!info.aborted && !widget._streamHandled && !widget._streamErrorShown) {
+          renderStreamError(widget);
+        }
+        widget._streamHandled = false;
+        widget._streamErrorShown = false;
+
+        // Re-enable input on close
+        if (widget.chatInput) widget.chatInput.disabled = false;
+        if (widget.sendButton) widget.sendButton.disabled = false;
+      },
+      onMessage: data => handleSSEMessage(widget, data)
+    }
+  );
 }
 
 /**

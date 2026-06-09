@@ -1158,7 +1158,9 @@ export class ChatWidget {
     // MaxConversationAttachments so a forged request still 422s.
     const maxFiles = this.settings?.max_files_per_chat ?? 2;
     if (this.attachments.length >= maxFiles) {
-      const msg = t('widget.upload_limit_reached', { count: maxFiles }) || `You can attach up to ${maxFiles} files.`;
+      const msg =
+        t('widget.upload_limit_reached', { count: maxFiles }) ||
+        `You can attach up to ${maxFiles} files.`;
       const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, msg, false);
       el?.classList.add('error');
       return;
@@ -1185,7 +1187,11 @@ export class ChatWidget {
         'authManager.agentId': this.authManager?.agentId,
         'window.chatvia.agentId': typeof window !== 'undefined' ? window.chatvia?.agentId : null
       });
-      const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('widget.upload_failed'), false);
+      const el = await this.addMessage(
+        CSS_CLASSES.MESSAGE_SYSTEM,
+        t('widget.upload_failed'),
+        false
+      );
       el?.classList.add('error');
       return;
     }
@@ -1229,14 +1235,18 @@ export class ChatWidget {
       const body = await response.json();
       const att = body.data;
       // Swap the temp entry for the server's authoritative attachment record.
-      this.attachments = this.attachments.filter((a) => a.id !== tempId);
+      this.attachments = this.attachments.filter(a => a.id !== tempId);
       this.attachments.push(att);
       this._updateAttachmentChip(chip, att);
     } catch (err) {
       console.error('Attachment upload failed:', err);
       this._removeAttachment(tempId);
       chip.remove();
-      const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('widget.upload_failed'), false);
+      const el = await this.addMessage(
+        CSS_CLASSES.MESSAGE_SYSTEM,
+        t('widget.upload_failed'),
+        false
+      );
       el?.classList.add('error');
     } finally {
       if (this.attachments.length === 0) {

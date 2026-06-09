@@ -16,7 +16,12 @@ export async function initConversations(widget) {
   console.log('Initializing conversations...');
   try {
     const { conversations, activeConversationId } = await widget.storageManager.loadConversations();
-    console.log('Loaded conversations from API:', conversations, 'Active ID:', activeConversationId);
+    console.log(
+      'Loaded conversations from API:',
+      conversations,
+      'Active ID:',
+      activeConversationId
+    );
 
     widget.conversations = conversations || [];
 
@@ -31,7 +36,9 @@ export async function initConversations(widget) {
 
     // Check if the stored active conversation ID actually exists in the conversations list
     if (widget.activeConversationId && widget.conversations.length > 0) {
-      const activeConversationExists = widget.conversations.find(c => c.id === widget.activeConversationId);
+      const activeConversationExists = widget.conversations.find(
+        c => c.id === widget.activeConversationId
+      );
       if (!activeConversationExists) {
         console.log('Active conversation no longer exists on server, will create new one');
         widget.activeConversationId = null;
@@ -97,14 +104,16 @@ export function getActiveConversation(widget) {
   const storedActiveConversationId = widget.storageManager
     ? widget.storageManager.getActiveConversationId()
     : widget.activeConversationId;
-  return widget.conversations.find(t => t.id === storedActiveConversationId);
+  return widget.conversations.find(c => c.id === storedActiveConversationId);
 }
 
 /**
  * Get current active conversation ID
  */
 export function getCurrentActiveConversationId(widget) {
-  return widget.storageManager ? widget.storageManager.getActiveConversationId() : widget.activeConversationId;
+  return widget.storageManager
+    ? widget.storageManager.getActiveConversationId()
+    : widget.activeConversationId;
 }
 
 /**
@@ -128,7 +137,9 @@ export async function loadActiveConversation(widget) {
           await widget.disabledChat('Cannot load chat.');
           return;
         }
-        const messages = await widget.storageManager.getMessages(potentiallyNewActiveConversation.id);
+        const messages = await widget.storageManager.getMessages(
+          potentiallyNewActiveConversation.id
+        );
         widget.messageHistory = messages || [];
         potentiallyNewActiveConversation.messages = widget.messageHistory;
         console.log(
@@ -152,7 +163,9 @@ export async function loadActiveConversation(widget) {
       widget.messageHistory = messages || [];
 
       activeConversation.messages = widget.messageHistory;
-      console.log(`Loaded ${widget.messageHistory.length} messages for conversation ${activeConversation.id}`);
+      console.log(
+        `Loaded ${widget.messageHistory.length} messages for conversation ${activeConversation.id}`
+      );
       await widget.displayHistoryMessages();
 
       // Check if there are any user messages in the conversation
@@ -209,7 +222,11 @@ export async function startNewConversation(widget) {
   const activeConversation = getActiveConversation(widget);
 
   // If current conversation is already empty, just stay on it
-  if (activeConversation && Array.isArray(activeConversation.messages) && activeConversation.messages.length === 0) {
+  if (
+    activeConversation &&
+    Array.isArray(activeConversation.messages) &&
+    activeConversation.messages.length === 0
+  ) {
     widget.closeMenuDropdown();
     widget.chatInput?.focus();
     return;
@@ -317,7 +334,7 @@ export async function deleteAllConversations(widget) {
  * Show success after deleting a conversation
  */
 export async function showDeleteSuccess(widget, deletedConversationId) {
-  widget.conversations = widget.conversations.filter(t => t.id !== deletedConversationId);
+  widget.conversations = widget.conversations.filter(c => c.id !== deletedConversationId);
 
   if (widget.conversations.length > 0) {
     const sortedConversations = [...widget.conversations].sort(
@@ -346,7 +363,7 @@ export function confirmDeleteConversation(widget) {
   }
 
   const conversationIdToDelete = widget.storageManager.getActiveConversationId();
-  const conversationToDelete = widget.conversations.find(t => t.id === conversationIdToDelete);
+  const conversationToDelete = widget.conversations.find(c => c.id === conversationIdToDelete);
   if (!conversationToDelete) {
     console.log('No active chat to delete.');
     return;
@@ -388,7 +405,9 @@ function createConversationsContainer(widget, conversations) {
     });
     container.appendChild(noConversationsMsg);
   } else {
-    const sortedConversations = [...conversations].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    const sortedConversations = [...conversations].sort(
+      (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
+    );
     sortedConversations.forEach(conversation => {
       const conversationItem = createConversationItem(widget, conversation);
       container.appendChild(conversationItem);
@@ -410,7 +429,9 @@ function createConversationItem(widget, conversation) {
 
   const titleEl = createElement('div', { className: CSS_CLASSES.CONVERSATION_TITLE });
   titleEl.textContent =
-    conversation.title || getFirstUserMessage(widget, conversation) || t('conversations.new_conversation');
+    conversation.title ||
+    getFirstUserMessage(widget, conversation) ||
+    t('conversations.new_conversation');
   contentContainer.appendChild(titleEl);
 
   const subtitleEl = createElement('div', { className: CSS_CLASSES.CONVERSATION_SUBTITLE });
@@ -505,7 +526,9 @@ export function updateConversationActionButtons(widget) {
 
   const onlyEmptyConversation =
     widget.conversations.length === 1 &&
-    (!activeConversation || !activeConversation.messages || activeConversation.messages.length === 0);
+    (!activeConversation ||
+      !activeConversation.messages ||
+      activeConversation.messages.length === 0);
 
   const setState = (el, disabled) => {
     if (!el) return;

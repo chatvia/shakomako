@@ -188,7 +188,9 @@ export function setupHeaderButtonListeners(widget) {
       widget.toggleExpand();
     }
   });
-  widget.deleteConversationButton?.addEventListener('click', () => widget.confirmDeleteConversation());
+  widget.deleteConversationButton?.addEventListener('click', () =>
+    widget.confirmDeleteConversation()
+  );
   widget.deleteConversationButton?.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
