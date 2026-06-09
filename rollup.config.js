@@ -11,7 +11,9 @@ import postcssImport from 'postcss-import';
 import { brotliCompressSync } from 'zlib';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// dotenv v17 prints an informational banner on config() by default; keep the
+// Rollup build output clean with quiet: true.
+dotenv.config({ quiet: true });
 
 const isProduction = process.env.NODE_ENV === 'production';
 const appVersion = process.env.VITE_APP_VERSION;
