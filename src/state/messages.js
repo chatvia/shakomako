@@ -446,8 +446,23 @@ function setMessageBubbleContent(bubble, type, text) {
 /**
  * Add message to history
  */
-function addMessageToHistory(widget, type, text, options) {
-  const messageData = { type, text, timestamp: new Date().toISOString(), options };
+function addMessageToHistory(widget, type, text, options = {}) {
+  const nowIso = new Date().toISOString();
+  // Store the SAME shape the server returns ({ role, content, id, created_at })
+  // alongside the legacy { type, text } fields. Without `role`/`content`,
+  // readers like getUserMessageHistory (Arrow-Up recall) and the history
+  // re-render silently skipped messages added during the current session.
+  const messageData = {
+    type,
+    text,
+    role: mapMessageTypeToRole(type),
+    content: text,
+    id: options.messageId,
+    feedback: options.feedback,
+    timestamp: nowIso,
+    created_at: options.timestamp || nowIso,
+    options
+  };
   widget.messageHistory.push(messageData);
   const activeConversation = widget.getActiveConversation();
 
@@ -900,5 +915,23 @@ export function mapRoleToMessageType(role) {
       return CSS_CLASSES.MESSAGE_SYSTEM;
     default:
       return CSS_CLASSES.MESSAGE_AGENT;
+  }
+}
+
+/**
+ * Inverse of {@link mapRoleToMessageType}: map a widget message-type CSS class
+ * back to the canonical server role. Lets locally-appended history entries
+ * carry the same `{ role, content }` shape the server returns, so every reader
+ * (history recall, conversation titles, re-render) sees one shape.
+ */
+export function mapMessageTypeToRole(type) {
+  switch (type) {
+    case CSS_CLASSES.MESSAGE_USER:
+      return 'user';
+    case CSS_CLASSES.MESSAGE_SYSTEM:
+      return 'system';
+    case CSS_CLASSES.MESSAGE_AGENT:
+    default:
+      return 'assistant';
   }
 }
