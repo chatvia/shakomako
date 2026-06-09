@@ -1226,14 +1226,39 @@
 .chatvia-widget .chatvia-widget-input-container {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--chat-border, #e5e7eb);
+  /* Floating pill composer — a single rounded, bordered surface that sits with
+     breathing room above the window's bottom edge (Intercom/Chatbase style)
+     instead of a flush full-width bar. The paperclip and send button are
+     absolutely positioned inside it (left/right); the textarea reserves room
+     for both via its horizontal padding. */
+  border: 1px solid var(--chat-border-strong);
+  border-radius: 26px;
+  margin: 10px 16px 14px;
   padding: 0;
   background: var(--chat-bg, #ffffff) !important;
   position: relative;
-  width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  /* NOT overflow:hidden — the round send/attach buttons sit near the pill's
+     rounded corners, and clipping would slice them. The textarea + strip have
+     transparent backgrounds, so nothing pokes out of the rounded border. */
+  overflow: visible;
   z-index: 2;
+  transition: border-color var(--chat-transition-fast), box-shadow var(--chat-transition-fast);
+}
+
+.chatvia-widget .chatvia-widget-input-container:focus-within {
+  border-color: color-mix(in srgb, var(--chat-primary) 45%, var(--chat-border-strong));
+  box-shadow: 0 0 0 3px var(--chat-focus-ring);
+}
+
+/* Composer row — paperclip, textarea, send as flex siblings. align-items:
+   flex-end keeps the buttons pinned to the bottom line as the textarea grows. */
+.chatvia-widget .chatvia-widget-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 10px;
+  box-sizing: border-box;
 }
 
 .chatvia-widget .chatvia-widget-attachments-strip {
@@ -1343,13 +1368,8 @@
 }
 
 .chatvia-widget .chatvia-widget-attach-btn {
-  position: absolute;
-  right: 56px;
-  /* Anchor to the bottom of the input-container and center inside the
-     60px-tall textarea (input-container height = strip + input; using
-     `bottom: 50%` would mis-center the moment the attachments strip
-     appears above and grows the container). 13px = (60 - 34) / 2. */
-  bottom: 13px;
+  position: static;
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -1373,8 +1393,11 @@
 }
 
 .chatvia-widget .chatvia-widget-input {
-  flex-grow: 1;
-  padding: 14px 100px 14px 18px;
+  /* Flex child of .chatvia-widget-input-row. min-width:0 lets it shrink so the
+     buttons never get pushed out of the pill. */
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 4px;
   border-radius: 0;
   outline: none;
   resize: none;
@@ -1382,18 +1405,17 @@
   font-size: 16px;
   /* Minimum 16px to prevent mobile zoom */
   max-height: 120px;
-  min-height: 60px;
-  height: 60px;
-  background-color: var(--chat-input-bg);
-  /* Consistent background */
+  min-height: 22px;
+  height: 36px;
+  /* Transparent so the pill container provides the surface. */
+  background-color: transparent;
   color: var(--chat-text);
   box-shadow: none;
   transition: background-color var(--chat-transition-fast);
   border: none;
   /* Remove all borders */
-  width: 100%;
   box-sizing: border-box;
-  line-height: 1.5;
+  line-height: 1.375;
 }
 
 .chatvia-widget .chatvia-widget-input::placeholder {
@@ -1401,14 +1423,11 @@
 }
 
 .chatvia-widget .chatvia-widget-send-btn {
-  position: absolute;
-  right: 12px;
-  /* Same reasoning as .chatvia-widget-attach-btn — anchor to the bottom and
-     center inside the 60px textarea row. 11px = (60 - 38) / 2. */
-  bottom: 11px;
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, var(--chat-primary) 0%, color-mix(in srgb, var(--chat-primary) 90%, black) 100%);
+  position: static;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: var(--chat-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1447,10 +1466,11 @@
    text strip (~25px when present) + input container (~88px) + small gap =
    ~155px. Sits ~6px above the footer text strip when present, or floats a
    touch higher above the input when it's hidden — either way it never covers
-   message content or runs into the composer. */
+   message content or runs into the composer. The composer is the bottom-most
+   element now (~74px tall incl. margins), so the button floats just above it. */
 .chatvia-widget .chatvia-widget-scroll-bottom {
   position: absolute;
-  bottom: 155px;
+  bottom: 92px;
   left: 50%;
   width: 36px;
   height: 36px;
@@ -1936,10 +1956,11 @@
   position: relative;
   text-align: center;
   font-size: 0.72rem;
-  padding: 10px 14px;
+  /* Sits just above the floating composer on the plain window background — no
+     divider or fill, so it reads as a quiet caption rather than a toolbar. */
+  padding: 8px 14px 2px;
   color: var(--chat-text-muted);
-  background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
-  border-top: 1px solid var(--chat-border-subtle);
+  background: transparent;
   z-index: 1;
   flex-shrink: 0;
 }
@@ -2998,9 +3019,10 @@ body.chatvia-scroll-locked {
   background-color: var(--chat-bg);
 }
 
-/* Footer */
+/* Footer — transparent like light mode; it sits above the composer on the
+   plain window background, so no fill/divider. */
 .chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-footer {
-  background: linear-gradient(180deg, #131c2e 0%, #0f172a 100%);
+  background: transparent;
 }
 
 .chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-footer a,
@@ -3205,22 +3227,9 @@ body.chatvia-scroll-locked {
   border-right: 3px solid color-mix(in srgb, var(--chat-primary) 40%, var(--chat-border-strong));
 }
 
-/* Input + send + attach buttons: in RTL the action cluster lives on the LEFT
-   (the visual "end" of the textarea). Mirrors the LTR layout exactly — send
-   at 12px, attach at 56px, and the textarea reserves 100px on the active side
-   so neither button overlaps the placeholder/typed text. */
-.chatvia-widget[dir="rtl"] .chatvia-widget-input {
-  padding: 14px 18px 14px 100px;
-}
-.chatvia-widget[dir="rtl"] .chatvia-widget-send-btn {
-  right: auto;
-  left: 12px;
-}
-.chatvia-widget[dir="rtl"] .chatvia-widget-attach-btn {
-  right: auto;
-  left: 56px;
-}
-/* Send-icon glyph points right by default; flip horizontally for RTL */
+/* Composer: the flex row auto-mirrors in RTL (paperclip moves to the right,
+   send to the left) because flexbox honors `dir`, so no position overrides are
+   needed — only the send glyph gets an explicit horizontal flip. */
 .chatvia-widget[dir="rtl"] .chatvia-widget-send-btn svg {
   transform: scaleX(-1);
 }

@@ -389,7 +389,17 @@ export function autoResizeInput(widget) {
   if (widget._resizeRAF) cancelAnimationFrame(widget._resizeRAF);
   widget._resizeRAF = requestAnimationFrame(() => {
     widget.chatInput.style.height = 'auto';
-    const newHeight = Math.min(widget.chatInput.scrollHeight, 120);
+    const scrollH = widget.chatInput.scrollHeight;
+    // When the widget is closed (its window is display:none) the textarea has
+    // no layout, so scrollHeight is 0. Writing `height: 0px` here would pin the
+    // composer to its min-height and leave the text sitting low until the first
+    // keystroke re-runs this while visible. Bail and let the CSS height stand;
+    // this runs again on open/input once the element is actually laid out.
+    if (scrollH === 0) {
+      widget.chatInput.style.height = '';
+      return;
+    }
+    const newHeight = Math.min(scrollH, 120);
     widget.chatInput.style.height = `${newHeight}px`;
 
     const inputHeight = widget.inputContainer.offsetHeight;

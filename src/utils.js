@@ -83,6 +83,7 @@ export const CSS_CLASSES = {
   STARTERS_CONTAINER: 'chatvia-widget-starters',
   STARTER_BUTTON: 'chatvia-widget-starter-btn',
   INPUT_CONTAINER: 'chatvia-widget-input-container',
+  INPUT_ROW: 'chatvia-widget-input-row',
   INPUT: 'chatvia-widget-input',
   SEND_BUTTON: 'chatvia-widget-send-btn',
   ATTACH_BUTTON: 'chatvia-widget-attach-btn',

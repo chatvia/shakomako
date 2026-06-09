@@ -816,9 +816,11 @@ export class ChatWidget {
     windowEl.appendChild(this.chatHeader);
     windowEl.appendChild(this.messagesContainer);
     windowEl.appendChild(this.startersContainer);
+    // "Powered by" sits directly above the floating composer (it reads as a
+    // quiet caption for the input), with the optional disclaimer strip below.
+    windowEl.appendChild(this.brandFooter);
     windowEl.appendChild(this.inputContainer);
     windowEl.appendChild(this.footerText);
-    windowEl.appendChild(this.brandFooter);
     windowEl.appendChild(this.scrollToBottomBtn);
 
     return windowEl;
@@ -1131,10 +1133,17 @@ export class ChatWidget {
     });
     this.sendButton.appendChild(createIcon('send'));
 
-    container.appendChild(this.chatInput);
-    container.appendChild(this.attachButton);
-    container.appendChild(this.fileInput);
-    container.appendChild(this.sendButton);
+    // Paperclip + textarea + send laid out as one flex row (align-items:
+    // flex-end). Keeping them as flex siblings — rather than absolutely
+    // positioning the buttons over the textarea — means they stay vertically
+    // aligned no matter what height autoResizeInput() gives the textarea, so
+    // the composer looks correct on first paint instead of only after typing.
+    const inputRow = createElement('div', { className: CSS_CLASSES.INPUT_ROW });
+    inputRow.appendChild(this.attachButton);
+    inputRow.appendChild(this.chatInput);
+    inputRow.appendChild(this.fileInput);
+    inputRow.appendChild(this.sendButton);
+    container.appendChild(inputRow);
     return container;
   }
 
