@@ -7,7 +7,8 @@ import {
   CSS_CLASSES,
   STREAMING_FINALIZE_TIMEOUT,
   debug,
-  safeImageUrl
+  safeImageUrl,
+  formatBytes
 } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
@@ -107,24 +108,31 @@ export async function addMessage(widget, type, text, addToHistory = true, option
 }
 
 /**
+ * Normalize a timestamp (Unix seconds, Unix ms, or ISO string) into a valid
+ * Date, or null when it's missing/unparseable/implausible (before year 2000).
+ * Single source of truth for the date parsing both formatters previously
+ * duplicated.
+ */
+function parseTimestamp(timestamp) {
+  if (!timestamp) return null;
+
+  // Unix timestamp in seconds — a number below the year-3000 second count is
+  // treated as seconds and scaled to ms; larger numbers are already ms.
+  const date =
+    typeof timestamp === 'number' && timestamp < 32503680000
+      ? new Date(timestamp * 1000)
+      : new Date(timestamp);
+
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return null;
+  return date;
+}
+
+/**
  * Format timestamp for display
  */
 function formatMessageTime(timestamp) {
-  if (!timestamp) return '';
-
-  let date;
-
-  // Handle Unix timestamp (seconds) - if it's a number less than year 3000 in seconds
-  if (typeof timestamp === 'number' && timestamp < 32503680000) {
-    date = new Date(timestamp * 1000); // Convert seconds to milliseconds
-  } else {
-    date = new Date(timestamp);
-  }
-
-  // Check if date is valid and reasonable (not before year 2000)
-  if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
-    return '';
-  }
+  const date = parseTimestamp(timestamp);
+  if (!date) return '';
 
   const now = new Date();
   const diffMs = now - date;
@@ -161,21 +169,8 @@ function formatMessageTime(timestamp) {
  * Format full date for tooltip
  */
 function formatFullDate(timestamp) {
-  if (!timestamp) return '';
-
-  let date;
-
-  // Handle Unix timestamp (seconds) - if it's a number less than year 3000 in seconds
-  if (typeof timestamp === 'number' && timestamp < 32503680000) {
-    date = new Date(timestamp * 1000); // Convert seconds to milliseconds
-  } else {
-    date = new Date(timestamp);
-  }
-
-  // Check if date is valid and reasonable
-  if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
-    return '';
-  }
+  const date = parseTimestamp(timestamp);
+  if (!date) return '';
 
   return date.toLocaleString(undefined, {
     weekday: 'short',
@@ -406,7 +401,7 @@ function _renderAttachmentChipLink(att) {
   if (att.size_bytes) {
     const sizeEl = createElement('span', {
       className: CSS_CLASSES.ATTACHMENT_CHIP_SIZE,
-      textContent: _formatBytesShort(att.size_bytes)
+      textContent: formatBytes(att.size_bytes)
     });
     meta.appendChild(sizeEl);
   }
@@ -426,13 +421,6 @@ function _iconUrlFor(att) {
   }
   if (att.mime_type === 'application/pdf') return origin + '/images/icons/files/pdf.svg';
   return origin + '/images/icons/files/file.svg';
-}
-
-function _formatBytesShort(bytes) {
-  if (!bytes) return '';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
-  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
 }
 
 function setMessageBubbleContent(bubble, type, text) {

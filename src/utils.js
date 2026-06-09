@@ -188,3 +188,17 @@ export function safeImageUrl(url) {
   if (typeof url !== 'string' || url === '') return null;
   return SAFE_IMAGE_URL_RE.test(url) ? url : null;
 }
+
+/**
+ * Human-readable file size. Single source of truth for attachment chips —
+ * previously duplicated as `_formatBytes` (widget.js) and `_formatBytesShort`
+ * (state/messages.js).
+ * @param {number} bytes
+ * @returns {string} e.g. "512 B", "3 KB", "1.4 MB", or "" for falsy input
+ */
+export function formatBytes(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}

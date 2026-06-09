@@ -10,7 +10,7 @@ import { AgentManager } from './agent.js';
 import { AuthManager } from './auth.js';
 import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
-import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug, safeImageUrl } from './utils.js';
+import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug, safeImageUrl, formatBytes } from './utils.js';
 import { createElement, createIcon } from './ui.js';
 import { initI18n, t, getDirection } from './i18n.js';
 import { triggerLabel } from './keyboardTrigger.js';
@@ -1311,7 +1311,7 @@ export class ChatWidget {
 
     const sizeEl = createElement('span', {
       className: CSS_CLASSES.ATTACHMENT_CHIP_SIZE,
-      textContent: this._formatBytes(size_bytes)
+      textContent: formatBytes(size_bytes)
     });
     chip.appendChild(sizeEl);
 
@@ -1348,14 +1348,7 @@ export class ChatWidget {
   }
 
   _removeAttachment(id) {
-    this.attachments = this.attachments.filter((a) => a.id !== id);
-  }
-
-  _formatBytes(bytes) {
-    if (!bytes) return '';
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
-    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    this.attachments = this.attachments.filter(a => a.id !== id);
   }
 
   _clearAttachments() {

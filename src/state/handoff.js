@@ -29,6 +29,22 @@ export const HANDOFF_STATUS = {
 const HEARTBEAT_INTERVAL = 30000;
 
 /**
+ * Build the JSON request headers every handoff endpoint shares: content type,
+ * session + agent ids, and the protected-agent auth token. Pass `extra` for
+ * per-call additions (e.g. X-CONVERSATION-ID). Previously this object was
+ * hand-rolled in six places, each at risk of forgetting authHeaders().
+ */
+function handoffHeaders(widget, extra = {}) {
+  return {
+    'Content-Type': 'application/json',
+    'X-SESSION-ID': widget.sessionId,
+    'X-AGENT-ID': widget.agentId,
+    ...authHeaders(widget.agentId),
+    ...extra
+  };
+}
+
+/**
  * Initialize handoff state on widget
  */
 export function initHandoff(widget) {
@@ -85,12 +101,7 @@ async function sendHeartbeat(widget) {
   try {
     await fetch(`${__API_URL__}/heartbeat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId,
-        ...authHeaders(widget.agentId)
-      },
+      headers: handoffHeaders(widget),
       body: JSON.stringify({
         conversation_id: conversationId
       })
@@ -118,12 +129,7 @@ export async function markMessagesAsRead(widget) {
   try {
     await fetch(`${__API_URL__}/mark-read`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId,
-        ...authHeaders(widget.agentId)
-      },
+      headers: handoffHeaders(widget),
       body: JSON.stringify({
         conversation_id: conversationId
       })
@@ -146,13 +152,7 @@ export async function checkHandoffStatus(widget) {
 
     const response = await fetch(`${__API_URL__}/handoff/status`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId,
-        'X-CONVERSATION-ID': conversationId,
-        ...authHeaders(widget.agentId)
-      }
+      headers: handoffHeaders(widget, { 'X-CONVERSATION-ID': conversationId })
     });
 
     if (!response.ok) {
@@ -417,12 +417,7 @@ export async function endLiveChat(widget) {
     // Notify backend that user ended the chat
     const response = await fetch(`${__API_URL__}/handoff/end`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId,
-        ...authHeaders(widget.agentId)
-      },
+      headers: handoffHeaders(widget),
       body: JSON.stringify({
         conversation_id: conversationId
       })
@@ -852,12 +847,7 @@ async function postTypingStatus(widget, isTyping) {
   try {
     await fetch(`${__API_URL__}/typing`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-SESSION-ID': widget.sessionId,
-        'X-AGENT-ID': widget.agentId,
-        ...authHeaders(widget.agentId)
-      },
+      headers: handoffHeaders(widget),
       body: JSON.stringify({
         conversation_id: widget.conversationId || widget.getCurrentActiveConversationId(),
         is_typing: isTyping
@@ -877,13 +867,9 @@ export async function sendMessageInHumanMode(widget, text) {
   try {
     const response = await fetch(`${__API_URL__}/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-AGENT-ID': widget.agentId,
-        'X-SESSION-ID': widget.sessionId,
-        'X-CONVERSATION-ID': widget.getCurrentActiveConversationId(),
-        ...authHeaders(widget.agentId)
-      },
+      headers: handoffHeaders(widget, {
+        'X-CONVERSATION-ID': widget.getCurrentActiveConversationId()
+      }),
       body: JSON.stringify({
         agent_id: widget.agentId,
         session_id: widget.sessionId,
