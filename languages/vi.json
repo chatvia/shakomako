@@ -74,5 +74,9 @@
     "message_send_failed": "Không gửi được tin nhắn. Vui lòng thử lại.",
     "response_failed": "Đã xảy ra lỗi khi tạo phản hồi. Vui lòng thử lại.",
     "auth_required": "Cuộc trò chuyện này yêu cầu đăng nhập."
+  },
+  "disclosure": {
+    "ai_assistant": "Trợ lý AI",
+    "human_agent": "Nhân viên hỗ trợ"
   }
 }

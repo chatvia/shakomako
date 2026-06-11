@@ -74,5 +74,9 @@
     "message_send_failed": "No se pudo enviar el mensaje. Inténtalo de nuevo.",
     "response_failed": "Algo salió mal al generar la respuesta. Inténtalo de nuevo.",
     "auth_required": "Este chat requiere iniciar sesión."
+  },
+  "disclosure": {
+    "ai_assistant": "Asistente de IA",
+    "human_agent": "Agente humano"
   }
 }

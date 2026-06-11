@@ -106,5 +106,9 @@
     "messages_load_failed": "Error loading messages for this chat.",
     "start_chat_failed": "Failed to start a new chat.",
     "history_load_failed": "Could not load chat history."
+  },
+  "disclosure": {
+    "ai_assistant": "AI assistant",
+    "human_agent": "Human agent"
   }
 }

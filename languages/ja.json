@@ -74,5 +74,9 @@
     "message_send_failed": "メッセージの送信に失敗しました。もう一度お試しください。",
     "response_failed": "応答の生成中に問題が発生しました。もう一度お試しください。",
     "auth_required": "このチャットにはサインインが必要です。"
+  },
+  "disclosure": {
+    "ai_assistant": "AIアシスタント",
+    "human_agent": "人間の担当者"
   }
 }

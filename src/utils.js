@@ -49,6 +49,8 @@ export const CSS_CLASSES = {
   HEADER: 'chatvia-widget-header',
   HEADER_LOGO: 'chatvia-widget-header-logo',
   HEADER_TITLE: 'chatvia-widget-header-title',
+  HEADER_TITLEWRAP: 'chatvia-widget-header-titlewrap',
+  HEADER_SUBTITLE: 'chatvia-widget-header-subtitle',
   MENU_BUTTON: 'chatvia-widget-menu-btn',
   DELETE_BUTTON: 'chatvia-widget-delete-btn',
   EXPAND_BUTTON: 'chatvia-widget-expand-btn',

@@ -74,5 +74,9 @@
     "message_send_failed": "Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.",
     "response_failed": "Beim Erzeugen der Antwort ist ein Fehler aufgetreten. Bitte erneut versuchen.",
     "auth_required": "Für diesen Chat ist eine Anmeldung erforderlich."
+  },
+  "disclosure": {
+    "ai_assistant": "KI-Assistent",
+    "human_agent": "Menschlicher Mitarbeiter"
   }
 }

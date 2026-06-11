@@ -897,6 +897,18 @@ export class ChatWidget {
       className: CSS_CLASSES.HEADER_TITLE,
       id: 'chatvia-widget-header-title'
     });
+    // EU AI Act Art. 50 — persistent, always-visible disclosure that the visitor
+    // is talking to an AI. updateHandoffUI() flips this to the human label when a
+    // live agent takes over, and back to AI when the conversation returns to the bot.
+    this.headerSubtitle = createElement('div', {
+      className: CSS_CLASSES.HEADER_SUBTITLE
+    });
+    this.headerSubtitle.textContent = t('disclosure.ai_assistant');
+    this.headerTitleWrap = createElement('div', {
+      className: CSS_CLASSES.HEADER_TITLEWRAP
+    });
+    this.headerTitleWrap.appendChild(this.headerTitle);
+    this.headerTitleWrap.appendChild(this.headerSubtitle);
     this.menuButton = this._createHeaderButton('menu', t('widget.menu'), CSS_CLASSES.MENU_BUTTON, {
       'aria-haspopup': 'true',
       'aria-expanded': 'false'
@@ -925,7 +937,7 @@ export class ChatWidget {
     this.menuDropdown = this._createMenuDropdown();
 
     header.appendChild(this.headerLogo);
-    header.appendChild(this.headerTitle);
+    header.appendChild(this.headerTitleWrap);
     header.appendChild(this.deleteConversationButton);
     header.appendChild(this.themeToggleButton);
     header.appendChild(this.expandButton);

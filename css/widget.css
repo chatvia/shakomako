@@ -459,6 +459,15 @@
   border-radius: 50%;
 }
 
+.chatvia-widget .chatvia-widget-header-titlewrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
 .chatvia-widget .chatvia-widget-header-title {
   flex-grow: 1;
   font-weight: 600;
@@ -467,6 +476,34 @@
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.2px;
+}
+
+.chatvia-widget .chatvia-widget-header-titlewrap .chatvia-widget-header-title {
+  flex-grow: 0;
+}
+
+/* EU AI Act Art. 50 disclosure label — "AI assistant" / "Human agent". */
+.chatvia-widget .chatvia-widget-header-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chatvia-widget .chatvia-widget-header-subtitle::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.9;
 }
 
 .chatvia-widget .chatvia-widget-close-btn {

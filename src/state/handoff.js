@@ -910,6 +910,14 @@ function updateHandoffUI(widget, mode) {
   const headerTitle = chatWindow.querySelector('.chatvia-widget-header-title');
   const originalTitle = widget.settings?.title || 'Chat';
 
+  // EU AI Act Art. 50 disclosure — keep the persistent header subtitle in sync
+  // with who is actually answering: AI in ai/pending, the human in human mode.
+  const headerSubtitle = chatWindow.querySelector('.chatvia-widget-header-subtitle');
+  if (headerSubtitle) {
+    headerSubtitle.textContent =
+      mode === 'human' ? t('disclosure.human_agent') : t('disclosure.ai_assistant');
+  }
+
   console.log('[Handoff] Current classes before update:', chatWindow.className);
 
   switch (mode) {

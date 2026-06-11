@@ -74,5 +74,9 @@
     "message_send_failed": "Kunne ikke sende besked. Prøv igen.",
     "response_failed": "Noget gik galt under generering af svaret. Prøv igen.",
     "auth_required": "Denne chat kræver login."
+  },
+  "disclosure": {
+    "ai_assistant": "AI-assistent",
+    "human_agent": "Menneskelig agent"
   }
 }

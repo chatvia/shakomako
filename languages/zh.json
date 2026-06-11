@@ -74,5 +74,9 @@
     "message_send_failed": "消息发送失败,请重试。",
     "response_failed": "生成回复时出错,请重试。",
     "auth_required": "此聊天需要登录。"
+  },
+  "disclosure": {
+    "ai_assistant": "AI 助手",
+    "human_agent": "人工客服"
   }
 }
