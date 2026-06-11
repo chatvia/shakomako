@@ -262,7 +262,7 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
   if (messageId) {
     // Thumbs up button
     const thumbsUpButton = createElement('button', {
-      className: `chatvia-widget-action-btn chatvia-widget-thumbs-up${feedback === true ? ' chatvia-widget-active' : ''}`,
+      className: `chatvia-widget-action-btn chatvia-widget-thumbs-up${feedback === 'positive' ? ' chatvia-widget-active' : ''}`,
       'aria-label': t('messages.good_response'),
       title: t('messages.good_response'),
       'data-message-id': messageId
@@ -271,7 +271,7 @@ export function createMessageActions(widget, messageText, messageId, feedback, t
 
     // Thumbs down button
     const thumbsDownButton = createElement('button', {
-      className: `chatvia-widget-action-btn chatvia-widget-thumbs-down${feedback === false ? ' chatvia-widget-active' : ''}`,
+      className: `chatvia-widget-action-btn chatvia-widget-thumbs-down${feedback === 'negative' ? ' chatvia-widget-active' : ''}`,
       'aria-label': t('messages.bad_response'),
       title: t('messages.bad_response'),
       'data-message-id': messageId
@@ -357,6 +357,16 @@ export async function handleFeedback(widget, messageId, isPositive, clickedButto
       } else {
         clickedButton.classList.add('chatvia-widget-active');
         otherButton.classList.remove('chatvia-widget-active');
+      }
+
+      // Mirror the choice onto the in-memory message so a later re-render
+      // (history reload, conversation switch) re-derives the same active
+      // state. The canonical persisted form is the string the API returns
+      // ('positive' / 'negative'), never a boolean — createMessageActions
+      // matches on those strings.
+      const message = widget.messageHistory?.find((m) => m.id === messageId);
+      if (message) {
+        message.feedback = isAlreadyActive ? null : isPositive ? 'positive' : 'negative';
       }
     } else {
       console.error('Failed to submit feedback:', response.status);
