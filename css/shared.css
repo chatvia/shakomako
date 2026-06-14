@@ -327,15 +327,32 @@
   --chat-text-muted: #94a3b8;
   --chat-hover-bg: rgba(0, 0, 0, 0.04);
 
-  /* Borders & Shadows */
+  /* Borders */
   --chat-border: rgba(0, 0, 0, 0.06);
   --chat-border-subtle: rgba(0, 0, 0, 0.04);
   --chat-border-strong: rgba(0, 0, 0, 0.10);
+
+  /* Focus ring. `--chat-focus-ring` is a soft glow (used as a box-shadow halo)
+     and is RE-BOUND at runtime in config.js so it tracks --chat-primary (see
+     the indirection note there). The solid :focus-visible outline color is
+     derived inline from --chat-primary in widget.css for the same indirection
+     reason — a token declared here at :root would capture the transparent
+     sentinel and never pick up the per-widget brand. `--chat-focus-ring-on-accent`
+     is the ring for controls sitting on the colored header, so it's a fixed light. */
   --chat-focus-ring: color-mix(in srgb, var(--chat-primary) 16%, transparent);
-  --chat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --chat-shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.12);
-  --chat-shadow-lg: 0 24px 70px -15px rgba(0, 0, 0, 0.28), 0 10px 30px -10px rgba(0, 0, 0, 0.16);
-  --chat-shadow-float: 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --chat-focus-ring-on-accent: rgba(255, 255, 255, 0.85);
+
+  /* Elevation ramp — one warm-neutral light source, top-down. Every elevated
+     surface (window, menu, dialog, launcher, chips) pulls from this ramp so the
+     widget reads as a single coherent stack instead of competing shadow recipes.
+     Dark mode deepens the whole ramp in css/widget.css. `--chat-ring-hairline`
+     is a 1px border-as-shadow that layers on top of any elevation. */
+  --chat-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.07);
+  --chat-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --chat-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.10), 0 2px 6px -3px rgba(15, 23, 42, 0.08);
+  --chat-shadow-lg: 0 12px 28px -8px rgba(15, 23, 42, 0.16), 0 6px 14px -8px rgba(15, 23, 42, 0.10);
+  --chat-shadow-xl: 0 24px 60px -16px rgba(15, 23, 42, 0.22), 0 12px 30px -12px rgba(15, 23, 42, 0.13);
+  --chat-ring-hairline: 0 0 0 1px rgba(15, 23, 42, 0.06);
 
   /* Message bubbles */
   --chat-user-bubble: var(--chat-primary);
@@ -361,7 +378,24 @@
   --chat-transition-fast: 0.15s ease;
   --chat-transition-normal: 0.25s cubic-bezier(0.32, 0.72, 0, 1);
   --chat-transition-slow: 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-  
+
+  /* Easing — pair with the durations above. `out` is the calm decelerate used
+     for most enter/hover transitions; `emphasized` is a softer curve for larger
+     moves (window open, expand); `spring` adds a slight overshoot for tactile
+     press/pop affordances. */
+  --chat-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --chat-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --chat-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* Spacing scale — 4px base. Prefer these over one-off px so the header,
+     message column, composer, starters, and lists share one vertical rhythm. */
+  --chat-space-1: 4px;
+  --chat-space-2: 8px;
+  --chat-space-3: 12px;
+  --chat-space-4: 16px;
+  --chat-space-5: 20px;
+  --chat-space-6: 24px;
+
   /* Border radius */
   --chat-radius-sm: 6px;
   --chat-radius-md: 10px;

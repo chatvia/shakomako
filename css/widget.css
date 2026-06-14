@@ -63,6 +63,63 @@
   z-index: 9999;
   font-family: var(--chat-font);
   /* Remove the default positioning here */
+
+  /* Primary-derived tokens are declared HERE (on the container), not at :root,
+     so each color-mix() substitutes the container's runtime --chat-primary (the
+     brand injected by applyColors) instead of the transparent :root sentinel —
+     the indirection trap documented in config.js. These give the launcher, send
+     button, and focus rings one shared accent so they read as a single system. */
+  --chat-shadow-accent: 0 6px 18px -4px color-mix(in srgb, var(--chat-primary) 42%, transparent);
+  --chat-shadow-accent-sm: 0 2px 8px -2px color-mix(in srgb, var(--chat-primary) 36%, transparent);
+  --chat-focus-ring-color: color-mix(in srgb, var(--chat-primary) 72%, transparent);
+}
+
+/* ============================================
+   FOCUS-VISIBLE — keyboard focus rings
+   Every interactive control shows a ring on keyboard focus only
+   (:focus-visible), never on mouse press. Body-area controls use a
+   primary-derived outline; controls on the colored header use a fixed light
+   ring so it reads against the brand fill. We use `outline` (not box-shadow)
+   so the ring never reflows layout and layers cleanly over existing shadows.
+   ============================================ */
+.chatvia-widget .chatvia-widget-action-btn:focus-visible,
+.chatvia-widget .chatvia-widget-attach-btn:focus-visible,
+.chatvia-widget .chatvia-widget-starter-btn:focus-visible,
+.chatvia-widget .chatvia-widget-scroll-bottom:focus-visible,
+.chatvia-widget .chatvia-widget-conversation-item:focus-visible,
+.chatvia-widget .chatvia-widget-menu-option:focus-visible,
+.chatvia-widget .chatvia-widget-new-chat-btn:focus-visible,
+.chatvia-widget .chatvia-widget-delete-all-btn:focus-visible,
+.chatvia-widget .chatvia-widget-talk-to-human:focus-visible,
+.chatvia-widget .chatvia-widget-bubble:focus-visible,
+.chatvia-widget-bar-btn:focus-visible,
+.chatvia-widget-bar-history-btn:focus-visible {
+  outline: 2px solid var(--chat-focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* The send button is itself primary-filled; a slightly larger offset keeps the
+   ring legible around the circle instead of blending into the fill. */
+.chatvia-widget .chatvia-widget-send-btn:focus-visible {
+  outline: 2px solid var(--chat-focus-ring-color);
+  outline-offset: 3px;
+}
+
+/* Header controls sit on the brand fill — use the fixed light ring. */
+.chatvia-widget .chatvia-widget-close-btn:focus-visible,
+.chatvia-widget .chatvia-widget-menu-btn:focus-visible,
+.chatvia-widget .chatvia-widget-expand-btn:focus-visible,
+.chatvia-widget .chatvia-widget-delete-btn:focus-visible,
+.chatvia-widget .chatvia-widget-theme-toggle:focus-visible,
+.chatvia-widget .chatvia-widget-end-chat-btn:focus-visible {
+  outline: 2px solid var(--chat-focus-ring-on-accent);
+  outline-offset: 2px;
+}
+
+/* Keyboard focus on the menu option should also tint the row so focus and
+   hover read consistently. */
+.chatvia-widget .chatvia-widget-menu-option:focus-visible {
+  background-color: var(--chat-surface-hover);
 }
 
 .chatvia-widget.chatvia-widget-bottom-right {
@@ -177,16 +234,16 @@
   width: 60px;
   height: 60px;
   background-color: var(--chat-primary);
-  background-image: linear-gradient(135deg, color-mix(in srgb, var(--chat-primary) 100%, white) 0%, color-mix(in srgb, var(--chat-primary) 84%, black) 100%);
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--chat-primary) 90%, white) 0%, var(--chat-primary) 50%, color-mix(in srgb, var(--chat-primary) 84%, black) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 10px 28px -6px color-mix(in srgb, var(--chat-primary) 45%, transparent), 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 28px -6px color-mix(in srgb, var(--chat-primary) 45%, transparent), 0 4px 12px rgba(15, 23, 42, 0.12);
   position: absolute;
   z-index: 10001;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--chat-transition-normal), box-shadow var(--chat-transition-normal);
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -208,8 +265,8 @@
 
 /* Transition only on hover, not on initial load */
 .chatvia-widget .chatvia-widget-bubble:hover {
-  transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 16px 38px -6px color-mix(in srgb, var(--chat-primary) 52%, transparent), 0 6px 16px rgba(0, 0, 0, 0.14);
+  transform: scale(1.06) translateY(-2px);
+  box-shadow: 0 18px 40px -8px color-mix(in srgb, var(--chat-primary) 52%, transparent), 0 6px 16px rgba(15, 23, 42, 0.14);
 }
 
 .chatvia-widget .chatvia-widget-bubble.chatvia-widget-active {
@@ -291,15 +348,15 @@
   background-color: var(--chat-bg, #ffffff);
   border-radius: var(--chat-radius-xl);
   overflow: hidden;
-  box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.25),
-    0 12px 40px -8px rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--chat-shadow-xl), var(--chat-ring-hairline);
   flex-direction: column;
-  transition: all var(--chat-transition-slow);
+  /* Scope to opacity+transform (was `all`) so a theme toggle snaps cleanly
+     instead of cross-fading bg/shadow; the entrance still interpolates. */
+  transition: opacity var(--chat-transition-slow), transform var(--chat-transition-slow);
   border: none;
   z-index: 10000;
   opacity: 0;
-  transform: translateY(20px) scale(0.96);
+  transform: translateY(16px) scale(0.975);
 }
 
 /* Flat mode - widget adapts to container size */
@@ -397,7 +454,9 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 18px;
+  /* Side padding matches the composer's 16px side margin so the message column
+     and the composer pill share one left/right edge (shared rhythm). */
+  padding: var(--chat-space-4);
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   background: var(--chat-bg, #ffffff) !important;
@@ -436,16 +495,23 @@
 .chatvia-widget .chatvia-widget-header {
   display: flex;
   align-items: center;
-  padding: 16px 18px;
-  background: linear-gradient(180deg, var(--chat-primary) 0%, color-mix(in srgb, var(--chat-primary) 93%, black) 100%);
+  padding: var(--chat-space-3) var(--chat-space-4);
+  /* Diagonal 3-stop gradient: a soft top-left sheen easing into the brand and a
+     hair darker at the base — gives the header gentle depth without a second hue. */
+  background: linear-gradient(165deg,
+    color-mix(in srgb, var(--chat-primary) 96%, white) 0%,
+    var(--chat-primary) 46%,
+    color-mix(in srgb, var(--chat-primary) 90%, black) 100%);
   color: var(--chat-header-text);
   border-top-left-radius: var(--chat-radius-xl);
   border-top-right-radius: var(--chat-radius-xl);
   border-bottom: none;
   position: relative;
   z-index: 2;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 4px 12px -2px rgba(0, 0, 0, 0.12);
+  /* Inset top highlight + a primary-tinted drop so the divider under the header
+     belongs to the same accent system rather than a generic black shadow. */
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 2px 10px -4px color-mix(in srgb, var(--chat-primary) 42%, transparent);
 }
 
 .chatvia-widget .chatvia-widget-header-logo {
@@ -465,17 +531,18 @@
   justify-content: center;
   flex-grow: 1;
   min-width: 0;
-  gap: 1px;
+  gap: 2px;
 }
 
 .chatvia-widget .chatvia-widget-header-title {
   flex-grow: 1;
   font-weight: 600;
-  font-size: 16.5px;
+  font-size: 16px;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: -0.2px;
+  letter-spacing: var(--chat-letter-spacing);
 }
 
 .chatvia-widget .chatvia-widget-header-titlewrap .chatvia-widget-header-title {
@@ -487,15 +554,18 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: var(--chat-font-size-xs);
   font-weight: 500;
   line-height: 1.2;
-  opacity: 0.85;
+  letter-spacing: 0.005em;
+  opacity: 0.8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Disclosure status dot — a soft outer glow ring makes the AI/Human state read
+   as a quiet "live" indicator without animating (respects reduced-motion). */
 .chatvia-widget .chatvia-widget-header-subtitle::before {
   content: '';
   flex-shrink: 0;
@@ -504,6 +574,7 @@
   border-radius: 50%;
   background-color: currentColor;
   opacity: 0.9;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
 }
 
 .chatvia-widget .chatvia-widget-close-btn {
@@ -575,13 +646,13 @@
   max-width: calc(100% - 36px);
   min-width: 0;
   position: relative;
-  padding: 11px 15px;
+  padding: 11px 14px;
   z-index: 1;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  font-size: 14px;
-  line-height: 1.65;
+  box-shadow: var(--chat-shadow-xs);
+  font-size: var(--chat-font-size-base);
+  line-height: var(--chat-line-height);
   border: 1px solid var(--chat-assistant-border);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--chat-letter-spacing);
 }
 
 /* Human agent message styling - Subtle difference using primary color */
@@ -682,16 +753,16 @@
   margin-left: auto;
   max-width: 85%;
   min-width: 0;
-  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--chat-primary) 40%, transparent);
-  font-size: 14px;
-  line-height: 1.65;
-  letter-spacing: -0.01em;
+  box-shadow: var(--chat-shadow-accent-sm);
+  font-size: var(--chat-font-size-base);
+  line-height: var(--chat-line-height);
+  letter-spacing: var(--chat-letter-spacing);
 }
 
 /* Message bubbles */
 .chatvia-widget .chatvia-widget-bubble-content {
   padding: 12px 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--chat-shadow-xs);
   position: relative;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -982,12 +1053,12 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  background-color: #ffffff;
+  background-color: var(--chat-surface);
   padding: 14px 18px;
   border-radius: var(--chat-radius-lg);
   border-bottom-left-radius: var(--chat-radius-sm);
   box-shadow: var(--chat-shadow-sm);
-  border: 1px solid var(--chat-border-subtle);
+  border: 1px solid var(--chat-border);
 }
 
 .chatvia-widget .chatvia-widget-loading-dots .chatvia-widget-dot {
@@ -1290,12 +1361,15 @@
      transparent backgrounds, so nothing pokes out of the rounded border. */
   overflow: visible;
   z-index: 2;
+  /* A resting shadow lifts the pill off the window background (Intercom-style),
+     deepening to a primary focus halo when active. */
+  box-shadow: var(--chat-shadow-sm);
   transition: border-color var(--chat-transition-fast), box-shadow var(--chat-transition-fast);
 }
 
 .chatvia-widget .chatvia-widget-input-container:focus-within {
-  border-color: color-mix(in srgb, var(--chat-primary) 45%, var(--chat-border-strong));
-  box-shadow: 0 0 0 3px var(--chat-focus-ring);
+  border-color: color-mix(in srgb, var(--chat-primary) 55%, var(--chat-border-strong));
+  box-shadow: 0 0 0 3px var(--chat-focus-ring), var(--chat-shadow-sm);
 }
 
 /* Composer row — paperclip, textarea, send as flex siblings. align-items:
@@ -1474,25 +1548,31 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  background: var(--chat-primary);
+  background-color: var(--chat-primary);
+  /* Same gradient language as the launcher + header so the accent reads as one
+     system; the shadow is primary-tinted (shared --chat-shadow-accent). */
+  background-image: linear-gradient(135deg,
+    color-mix(in srgb, var(--chat-primary) 92%, white) 0%,
+    var(--chat-primary) 55%,
+    color-mix(in srgb, var(--chat-primary) 88%, black) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform var(--chat-transition-normal), box-shadow var(--chat-transition-normal);
+  box-shadow: var(--chat-shadow-accent-sm);
   z-index: 1;
 }
 
 .chatvia-widget .chatvia-widget-send-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.06) translateY(-1px);
+  box-shadow: var(--chat-shadow-accent);
 }
 
 .chatvia-widget .chatvia-widget-send-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transform: scale(0.94);
+  box-shadow: var(--chat-shadow-accent-sm);
 }
 
 .chatvia-widget .chatvia-widget-send-btn svg {
@@ -1528,7 +1608,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.25), 0 2px 6px -1px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--chat-shadow-lg);
   z-index: 10;
   opacity: 0;
   visibility: hidden;
@@ -1725,7 +1805,7 @@
   width: 210px;
   background-color: var(--chat-surface);
   border-radius: var(--chat-radius-lg);
-  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.2), 0 4px 16px -4px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--chat-shadow-lg);
   overflow: hidden;
   z-index: 10005;
   transition: opacity var(--chat-transition-fast), transform var(--chat-transition-fast),
@@ -2168,7 +2248,7 @@
   background-color: #ffffff;
   padding: 24px 28px;
   border-radius: var(--chat-radius-lg);
-  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.2), 0 8px 24px -8px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--chat-shadow-xl);
   max-width: 400px;
   width: 90%;
   z-index: 100001 !important;
@@ -2232,6 +2312,19 @@
 .chatvia-widget-confirm-cancel:active,
 .chatvia-widget-confirm-delete:active {
   transform: translateY(0) scale(0.98);
+}
+
+/* The dialog mounts on <body>, outside .chatvia-widget, so it can't inherit the
+   container's primary-derived focus token — give each button a self-contained
+   keyboard ring (neutral for cancel, red for the destructive action). */
+.chatvia-widget-confirm-cancel:focus-visible {
+  outline: 2px solid rgba(100, 116, 139, 0.85);
+  outline-offset: 2px;
+}
+
+.chatvia-widget-confirm-delete:focus-visible {
+  outline: 2px solid rgba(239, 68, 68, 0.75);
+  outline-offset: 2px;
 }
 
 /* Window positioning with correct transform origins */
@@ -2391,29 +2484,33 @@
   color: var(--chat-text);
   border: 1px solid var(--chat-border-strong);
   border-radius: var(--chat-radius-full);
-  padding: 10px 18px;
-  font-size: 14px;
+  padding: 10px 16px;
+  font-size: var(--chat-font-size-base);
   font-weight: 500;
   cursor: pointer;
   transition: all var(--chat-transition-fast);
   text-align: center;
   line-height: 1.35;
+  letter-spacing: var(--chat-letter-spacing);
   user-select: none;
   max-width: 90%;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--chat-shadow-xs);
 }
 
+/* Hover tints toward the brand (border + fill + text) so the suggested prompts
+   feel part of the same accent system as the launcher and send button. */
 .chatvia-widget .chatvia-widget-starter-btn:hover {
-  background-color: var(--chat-surface-hover);
-  border-color: var(--chat-text-muted);
+  background-color: color-mix(in srgb, var(--chat-primary) 7%, var(--chat-bg));
+  border-color: color-mix(in srgb, var(--chat-primary) 38%, var(--chat-border-strong));
+  color: color-mix(in srgb, var(--chat-primary) 32%, var(--chat-text));
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--chat-shadow-sm);
 }
 
 .chatvia-widget .chatvia-widget-starter-btn:active {
-  background-color: var(--chat-surface-hover);
+  background-color: color-mix(in srgb, var(--chat-primary) 10%, var(--chat-bg));
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--chat-shadow-xs);
 }
 
 /* Mobile responsiveness for starters */
@@ -3077,6 +3174,14 @@ body.chatvia-scroll-locked {
   --chat-input-bg-focus: #223047;
   --chat-scrollbar-thumb: rgba(255, 255, 255, 0.14);
   --chat-scrollbar-thumb-hover: rgba(255, 255, 255, 0.26);
+  /* Deepen the whole elevation ramp on dark surfaces so shadows still read
+     against the near-black background — same light direction, more contrast. */
+  --chat-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --chat-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --chat-shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.55), 0 2px 6px -3px rgba(0, 0, 0, 0.4);
+  --chat-shadow-lg: 0 12px 28px -8px rgba(0, 0, 0, 0.6), 0 6px 14px -8px rgba(0, 0, 0, 0.45);
+  --chat-shadow-xl: 0 24px 60px -16px rgba(0, 0, 0, 0.7), 0 12px 30px -12px rgba(0, 0, 0, 0.5);
+  --chat-ring-hairline: 0 0 0 1px rgba(255, 255, 255, 0.08);
   background-color: var(--chat-bg);
 }
 
