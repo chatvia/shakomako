@@ -2934,6 +2934,20 @@ body.chatvia-scroll-locked {
   color: #86efac;
 }
 
+/* Error variant in dark mode. Without this, the green dark-system rule above —
+   higher specificity than the light `.error` rule (one extra class) — would
+   paint errors GREEN in dark. Re-assert a red-tinted dark surface and recolor
+   the warning glyph to a lighter red so it reads against the dark fill. */
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-message.chatvia-widget-system.error .chatvia-widget-bubble-content {
+  background-color: #3a1212;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark .chatvia-widget-message.chatvia-widget-system.error .chatvia-widget-bubble-content::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fca5a5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'/%3E%3C/svg%3E");
+}
+
 /* Pending state system message - amber */
 .chatvia-widget .chatvia-widget-window.chatvia-widget-pending-mode .chatvia-widget-message.chatvia-widget-system .chatvia-widget-bubble-content {
   background-color: #fffbeb;
