@@ -25,7 +25,12 @@ export default class StorageManager {
         method: 'GET',
         headers: {
           'X-AGENT-ID': this.agentId,
-          'X-SESSION-ID': this.sessionId
+          'X-SESSION-ID': this.sessionId,
+          // Always pull a fresh list from the server — never a cached response.
+          // Without this the browser/CDN can serve a stale list and a freshly
+          // generated conversation title (server-side) wouldn't show. Mirrors
+          // the no-cache already used by getMessages().
+          'Cache-Control': 'no-cache'
         }
       });
 
