@@ -3497,3 +3497,71 @@ body.chatvia-scroll-locked {
 .chatvia-widget.chatvia-widget-locked .chatvia-widget-menu-dropdown {
   display: none !important;
 }
+
+/* ============================================
+   REDUCED MOTION
+   Honor `prefers-reduced-motion: reduce`. We disable decorative loops
+   (pulse, shimmer, bounce, theme spin) and entrance/hover motion, and snap
+   state changes. Intentionally LEFT RUNNING: the boot/fetch/upload spinners
+   (essential progress feedback) and any transform used purely for layout
+   (centering the scroll-to-bottom button, the floating bar, the pending dot)
+   — those are never touched here so nothing loses its position.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .chatvia-widget .chatvia-widget-window,
+  .chatvia-widget .chatvia-widget-message,
+  .chatvia-widget .chatvia-widget-floating-bubble,
+  .chatvia-widget .chatvia-widget-bubble.chatvia-widget-pulse,
+  .chatvia-widget .chatvia-widget-bubble.chatvia-widget-pulse::after,
+  .chatvia-widget .chatvia-widget-avatar.chatvia-widget-streaming,
+  .chatvia-widget .chatvia-widget-tool-calling,
+  .chatvia-widget .chatvia-widget-loading-dots .chatvia-widget-dot,
+  .chatvia-widget .chatvia-widget-theme-toggle.chatvia-widget-animating svg,
+  .chatvia-widget .chatvia-widget-typing-dot,
+  .chatvia-widget .chatvia-widget-human-typing,
+  .chatvia-widget .chatvia-widget-delete-btn.success svg,
+  .chatvia-widget .chatvia-widget-delete-btn.success-exit svg,
+  .chatvia-widget .chatvia-widget-window.chatvia-widget-pending-mode .chatvia-widget-header::before,
+  .chatvia-widget-confirm-dialog,
+  .chatvia-widget-confirm-content {
+    animation: none !important;
+  }
+
+  /* Window: appear without the translate/scale entrance. */
+  .chatvia-widget .chatvia-widget-window {
+    transition: opacity 0.001ms linear !important;
+    transform: none !important;
+  }
+
+  /* Collapse hover/press polish transforms to identity (structural transforms
+     above are deliberately not in this list). */
+  .chatvia-widget .chatvia-widget-bubble:hover,
+  .chatvia-widget .chatvia-widget-send-btn:hover,
+  .chatvia-widget .chatvia-widget-send-btn:active,
+  .chatvia-widget .chatvia-widget-starter-btn:hover,
+  .chatvia-widget .chatvia-widget-starter-btn:active,
+  .chatvia-widget .chatvia-widget-close-btn:hover,
+  .chatvia-widget .chatvia-widget-close-btn:active,
+  .chatvia-widget .chatvia-widget-menu-btn:hover,
+  .chatvia-widget .chatvia-widget-menu-btn:active,
+  .chatvia-widget .chatvia-widget-expand-btn:hover,
+  .chatvia-widget .chatvia-widget-expand-btn:active,
+  .chatvia-widget .chatvia-widget-theme-toggle:hover,
+  .chatvia-widget .chatvia-widget-delete-btn:hover,
+  .chatvia-widget .chatvia-widget-action-btn:active,
+  .chatvia-widget .chatvia-widget-attach-btn:hover,
+  .chatvia-widget .chatvia-widget-conversation-item:hover,
+  .chatvia-widget .chatvia-widget-conversation-item:hover .chatvia-widget-conversation-arrow,
+  .chatvia-widget .chatvia-widget-new-chat-btn:hover,
+  .chatvia-widget .chatvia-widget-delete-all-btn:hover,
+  .chatvia-widget-bar-btn:hover,
+  .chatvia-widget-bar-btn:active,
+  .chatvia-widget-bar-history-btn:hover,
+  .chatvia-widget-bar-history-btn:active,
+  .chatvia-widget-confirm-cancel:hover,
+  .chatvia-widget-confirm-delete:hover,
+  .chatvia-widget-confirm-cancel:active,
+  .chatvia-widget-confirm-delete:active {
+    transform: none !important;
+  }
+}
