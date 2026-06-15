@@ -450,22 +450,26 @@ export function updateStartersContainer(widget) {
   widget.startersContainer.style.overflow = 'auto';
 
   widget.settings.starters.forEach(starter => {
+    // Starters may be plain strings (legacy) or { text, icon } objects.
+    const text = typeof starter === 'string' ? starter : starter?.text;
+    if (!text) return;
+
     const starterButton = createElement('div', {
       className: CSS_CLASSES.STARTER_BUTTON,
-      textContent: starter,
+      textContent: text,
       role: 'button',
       tabIndex: 0
     });
 
     starterButton.addEventListener('click', () => {
-      widget.sendUserMessage(starter);
+      widget.sendUserMessage(text);
       widget.hideStarters();
     });
 
     starterButton.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        widget.sendUserMessage(starter);
+        widget.sendUserMessage(text);
         widget.hideStarters();
       }
     });
