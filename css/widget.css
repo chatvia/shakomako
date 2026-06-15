@@ -1081,67 +1081,6 @@
   animation-delay: 0s;
 }
 
-/* Boot loader — a centered spinner shown during init (session + settings).
-   Mounted to <body> before the widget container exists, so it is NOT scoped
-   under .chatvia-widget and must not depend on --chat-primary (transparent
-   until settings load). Removed once the real widget mounts. */
-.chatvia-widget-boot {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #1f2937;
-  box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.12);
-  z-index: 10001;
-  opacity: 0;
-  animation: chatvia-boot-in 0.25s ease forwards;
-}
-
-.chatvia-widget-boot-spinner {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2.5px solid rgba(255, 255, 255, 0.25);
-  border-top-color: #ffffff;
-  animation: chatvia-spin 0.7s linear infinite;
-}
-
-.chatvia-widget-boot.chatvia-widget-boot-hiding {
-  opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-/* Flat/embedded mode: fill the mount and center the spinner on a neutral surface */
-.chatvia-widget-boot.chatvia-widget-boot-flat {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 120px;
-  bottom: auto;
-  right: auto;
-  border-radius: inherit;
-  background: transparent;
-  box-shadow: none;
-}
-
-.chatvia-widget-boot.chatvia-widget-boot-flat .chatvia-widget-boot-spinner {
-  border-color: rgba(31, 41, 55, 0.15);
-  border-top-color: #1f2937;
-}
-
-@keyframes chatvia-boot-in {
-  to {
-    opacity: 1;
-  }
-}
-
 @keyframes chatvia-spin {
   to {
     transform: rotate(360deg);
