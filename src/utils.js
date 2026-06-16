@@ -120,6 +120,8 @@ export const CSS_CLASSES = {
     'chatvia-widget-message chatvia-widget-assistant chatvia-widget-streaming',
   MESSAGE_BUBBLES_CONTAINER: 'chatvia-widget-msg-bubbles',
   FLOATING_BUBBLE: 'chatvia-widget-floating-bubble',
+  FLOATING_BUBBLE_TEXT: 'chatvia-widget-floating-bubble-text',
+  FLOATING_BUBBLE_CLOSE: 'chatvia-widget-floating-bubble-close',
   FLOATING_BUBBLE_SHOW: 'chatvia-widget-bubble-show',
   FULLSCREEN: 'chatvia-widget-fullscreen',
   WINDOW_SMALL: 'chatvia-widget-small',

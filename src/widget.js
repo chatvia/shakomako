@@ -737,9 +737,29 @@ export class ChatWidget {
     const bubbleText = this.settings.bubbles[this.currentBubbleIndex];
 
     const bubble = createElement('div', {
-      className: CSS_CLASSES.FLOATING_BUBBLE,
-      textContent: bubbleText
+      className: CSS_CLASSES.FLOATING_BUBBLE
     });
+
+    bubble.appendChild(
+      createElement('span', {
+        className: CSS_CLASSES.FLOATING_BUBBLE_TEXT,
+        textContent: bubbleText
+      })
+    );
+
+    // Close (X) control to dismiss the teaser without opening the chat.
+    const closeBtn = createElement('button', {
+      type: 'button',
+      className: CSS_CLASSES.FLOATING_BUBBLE_CLOSE,
+      'aria-label': t('widget.dismiss')
+    });
+    closeBtn.appendChild(createIcon('close'));
+    closeBtn.addEventListener('click', e => {
+      // Don't let the click fall through to the bubble's open-chat handler.
+      e.stopPropagation();
+      this._dismissMessageBubbles();
+    });
+    bubble.appendChild(closeBtn);
 
     bubble.addEventListener('click', () => {
       // Open the chat widget when bubble is clicked
@@ -765,6 +785,29 @@ export class ChatWidget {
     if (this.currentBubbleIndex < this.settings.bubbles.length) {
       this._nextBubbleTimeout = setTimeout(() => this._showNextBubble(), 2000);
     }
+  }
+
+  _dismissMessageBubbles() {
+    // Stop any pending bubble from appearing after the user dismisses the teaser.
+    clearTimeout(this._nextBubbleTimeout);
+    this.currentBubbleIndex = this.settings.bubbles ? this.settings.bubbles.length : 0;
+
+    if (!this.messageBubblesContainer) {
+      return;
+    }
+
+    // Fade out every visible bubble, then remove them once the transition ends.
+    const bubbles = this.messageBubblesContainer.querySelectorAll(
+      `.${CSS_CLASSES.FLOATING_BUBBLE}`
+    );
+    bubbles.forEach(bubble => {
+      bubble.classList.remove(CSS_CLASSES.FLOATING_BUBBLE_SHOW);
+      setTimeout(() => {
+        if (bubble.parentNode) {
+          bubble.parentNode.removeChild(bubble);
+        }
+      }, 300);
+    });
   }
 
   _createChatWindow() {
