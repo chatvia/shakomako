@@ -172,7 +172,11 @@ export function parseMarkdownToHtml(text) {
 
   // Italic (*text* or _text_)
   html = html.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-  html = html.replace(/(?<![a-zA-Z0-9])_([^_\n]+)_(?![a-zA-Z0-9])/g, '<em>$1</em>');
+  // Avoid a lookbehind here: Safari only supports regex lookbehind from 16.4,
+  // and this bundle ships untranspiled, so a lookbehind throws a parse-time
+  // SyntaxError that kills the whole widget on older Safari/iOS. A leading
+  // capture group ($1, re-emitted) enforces the same "not mid-word" boundary.
+  html = html.replace(/(^|[^a-zA-Z0-9])_([^_\n]+)_(?![a-zA-Z0-9])/g, '$1<em>$2</em>');
 
   // Strikethrough (~~text~~)
   html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
