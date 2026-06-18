@@ -842,6 +842,32 @@
   word-break: break-word;
 }
 
+/* Streaming fade-in: a per-word reveal while the assistant message streams.
+   `-stream` turns the live bubble into a pre-wrap container; each word is a
+   `-word` span that fades in exactly once, then is never re-rendered (see
+   StreamingTextRenderer). Finalize swaps the spans for rich markdown.
+   No base `opacity: 0` — the word stays visible if the animation never runs
+   (reduced motion, unsupported); the dip lives in the keyframe via `both`. */
+.chatvia-widget .chatvia-widget-stream {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chatvia-widget .chatvia-widget-word {
+  display: inline;
+  animation: chatvia-widget-word-fade 0.42s ease both;
+  will-change: opacity;
+}
+
+@keyframes chatvia-widget-word-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Ensure lists are properly styled */
 .chatvia-widget .chatvia-widget-bubble-content ul,
 .chatvia-widget .chatvia-widget-bubble-content ol {
@@ -3515,6 +3541,7 @@ body.chatvia-scroll-locked {
   .chatvia-widget .chatvia-widget-loading-dots .chatvia-widget-dot,
   .chatvia-widget .chatvia-widget-theme-toggle.chatvia-widget-animating svg,
   .chatvia-widget .chatvia-widget-typing-dot,
+  .chatvia-widget .chatvia-widget-word,
   .chatvia-widget .chatvia-widget-human-typing,
   .chatvia-widget .chatvia-widget-delete-btn.success svg,
   .chatvia-widget .chatvia-widget-delete-btn.success-exit svg,

@@ -12,6 +12,7 @@ import {
 } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
+import { StreamingTextRenderer } from './streamingTextRenderer.js';
 import { t } from '../i18n.js';
 // Canonical markdown impl lives in markdown.js. Import for local use, and
 // re-export so existing call sites that go through messages.js keep working.
@@ -686,7 +687,17 @@ export function startStreamingMessage(widget) {
     contentWrapper.appendChild(avatar);
   }
   const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
+  // Word-by-word fade reveal while streaming. The renderer owns the bubble's
+  // text (append-only spans); finalize swaps in rich markdown at the end.
+  messageBubble.classList.add(CSS_CLASSES.STREAM_BUBBLE);
   contentWrapper.appendChild(messageBubble);
+
+  widget._fadeRenderer?.stop(); // cancel any timers left by a prior turn (don't wipe its old bubble)
+  widget._fadeRenderer = new StreamingTextRenderer(messageBubble, {
+    // Reveal cadence (words/sec). Lower = slower/calmer; raise if it feels sluggish.
+    wordsPerSec: 16,
+    onAppend: () => widget.scrollToBottom()
+  });
 
   streamingMsgElement.appendChild(contentWrapper);
   widget.messagesContainer.appendChild(streamingMsgElement);
@@ -726,10 +737,16 @@ function renderStreamingMessageNow(widget) {
       const wrapper = messageBubble.closest('.chatvia-widget-content-wrapper');
       if (wrapper) wrapper.style.display = '';
     }
-    updateMessageBubbleContent(messageBubble, widget.currentStreamedMessage);
+    // Feed the paced fade renderer instead of re-parsing markdown every frame.
+    // It scrolls via its onAppend callback. Fallback to a direct render if the
+    // renderer is somehow absent (e.g. a single-shot final message).
+    if (widget._fadeRenderer) {
+      widget._fadeRenderer.setText(widget.currentStreamedMessage);
+    } else {
+      updateMessageBubbleContent(messageBubble, widget.currentStreamedMessage);
+      widget.scrollToBottom();
+    }
   }
-
-  widget.scrollToBottom();
 }
 
 /**
@@ -765,6 +782,18 @@ export async function finalizeStreamingMessage(widget) {
 
   const finalMessage = widget.currentStreamedMessage;
 
+  // Let the paced fade finish revealing any buffered words before we swap the
+  // plain-text spans for rich markdown — otherwise the tail snaps in. Skip the
+  // wait when hidden: the fade isn't visible and rAF/timers are throttled, so
+  // waiting would just delay finalize by up to ~1s.
+  if (widget._fadeRenderer) {
+    widget._fadeRenderer.setText(finalMessage); // catch any delta a cancelled frame dropped
+    widget._fadeRenderer.flush();
+    if (typeof document !== 'undefined' && !document.hidden) {
+      await widget._fadeRenderer.idle();
+    }
+  }
+
   const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
   if (streamingMsgElement && finalMessage !== '') {
     const messageBubble = streamingMsgElement.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
@@ -773,6 +802,8 @@ export async function finalizeStreamingMessage(widget) {
       // went through updateStreamingMessage's reveal).
       const wrapper = messageBubble.closest('.chatvia-widget-content-wrapper');
       if (wrapper) wrapper.style.display = '';
+      // Swap the streaming plain-text reveal for fully parsed markdown.
+      messageBubble.classList.remove(CSS_CLASSES.STREAM_BUBBLE);
       await updateMessageBubbleContent(messageBubble, finalMessage);
     }
 
@@ -797,6 +828,11 @@ export async function finalizeStreamingMessage(widget) {
     });
   } else if (streamingMsgElement) {
     streamingMsgElement.remove();
+  }
+
+  if (widget._fadeRenderer) {
+    widget._fadeRenderer.stop(); // stop pacing WITHOUT wiping the rendered bubble
+    widget._fadeRenderer = null;
   }
 
   widget.isStreaming = false;

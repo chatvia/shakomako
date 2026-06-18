@@ -37,13 +37,15 @@ export default [
   },
 
   // Tests import describe/it/expect explicitly from 'vitest', so no test globals
-  // are needed; console is unrestricted in tests.
+  // are needed; console is unrestricted in tests. Browser globals are included
+  // because tests run under the jsdom environment (window, document, etc.).
   {
     files: ['**/*.test.js', '**/*.spec.js', '**/__tests__/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
+        ...globals.browser,
         ...globals.node
       }
     },

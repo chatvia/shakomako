@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streaming fade-in demo</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; }
+  button { font: inherit; padding: 8px 14px; margin: 0 8px 16px 0; cursor: pointer; }
+  label { font-size: 14px; }
+  .cv-stream { white-space: pre-wrap; word-break: break-word; line-height: 1.6; min-height: 4em; }
+  /* No base `opacity: 0`: default opacity is 1, so a word stays visible if the
+     animation never runs (reduced motion). The dip lives in the keyframe. */
+  .cv-word { display: inline; animation: cvFadeIn .42s ease both; will-change: opacity; }
+  @keyframes cvFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @media (prefers-reduced-motion: reduce) { .cv-word { animation: none } }
+</style>
+</head>
+<body>
+  <div>
+    <button id="go">Start stream</button>
+    <button id="fin">Finalize (swap to markdown)</button>
+    <label>words/sec <input id="wps" type="number" value="14" min="2" max="120" style="width:4em"></label>
+  </div>
+  <div class="cv-stream" id="out"></div>
+
+<script type="module">
+// Mirror of src/state/streamingTextRenderer.js (class names differ: cv-word here).
+class StreamingTextRenderer {
+  constructor(target, opts = {}) {
+    this.target = target;
+    this.opts = { wordsPerSec: 20, maxLagWords: 40, onAppend: null, ...opts };
+    this.reset();
+  }
+  reset() { this.stop(); this._consumed = 0; this.target.textContent = ''; }
+  stop() {
+    if (this._timer) clearTimeout(this._timer);
+    this._timer = null; this._scheduled = false;
+    this._queue = []; this._pending = '';
+    this._resolveIdle();
+  }
+  setText(fullText) {
+    if (fullText.length < this._consumed) this.reset();
+    const fresh = fullText.slice(this._consumed);
+    this._consumed = fullText.length;
+    if (fresh) { this._pending += fresh; this._drainPending(false); this._schedule(); }
+  }
+  flush() { this._drainPending(true); this._schedule(); }
+  idle() {
+    if (!this._queue.length && !this._scheduled) return Promise.resolve();
+    return new Promise(res => (this._idle ||= []).push(res));
+  }
+  _resolveIdle() { if (this._idle) this._idle.splice(0).forEach(r => r()); }
+  _drainPending(flushTail) {
+    const re = /\S+\s*/g; let lastEnd = 0, m;
+    while ((m = re.exec(this._pending))) {
+      const isTail = re.lastIndex === this._pending.length && !/\s$/.test(m[0]);
+      if (isTail && !flushTail) break;
+      this._queue.push(m[0]); lastEnd = re.lastIndex;
+    }
+    this._pending = this._pending.slice(lastEnd);
+  }
+  _hidden() { return typeof document !== 'undefined' && document.hidden; }
+  _schedule() {
+    if (this._scheduled || !this._queue.length) return;
+    this._scheduled = true;
+    const delay = this._hidden() ? 0 : 1000 / this.opts.wordsPerSec;
+    this._timer = setTimeout(() => {
+      this._timer = null; this._scheduled = false; this._tick();
+    }, delay);
+  }
+  _tick() {
+    const backlog = this._queue.length;
+    if (!backlog) return;
+    let n;
+    if (this._hidden()) n = backlog;
+    else if (backlog > this.opts.maxLagWords) n = Math.ceil(backlog / this.opts.maxLagWords);
+    else n = 1;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < n && this._queue.length; i++) {
+      const span = document.createElement('span');
+      span.className = 'cv-word';
+      span.textContent = this._queue.shift();
+      frag.appendChild(span);
+    }
+    this.target.appendChild(frag);
+    this.opts.onAppend?.();
+    if (!this._queue.length) this._resolveIdle();
+    this._schedule();
+  }
+}
+
+const out = document.getElementById('out');
+let renderer = new StreamingTextRenderer(out, { onAppend: () => window.scrollTo(0, document.body.scrollHeight) });
+window.__renderer = renderer;
+let acc = '';
+
+const text = "Streaming responses can arrive faster than anyone can read. This renderer "
+  + "decouples how quickly text is revealed from how quickly it arrives, releasing "
+  + "words at a steady reading cadence and fading each one in. Even when the whole "
+  + "answer lands in a single burst, you still see it appear calmly, word by word.";
+
+document.getElementById('go').onclick = () => {
+  const wps = +document.getElementById('wps').value || 14;
+  renderer.reset();
+  renderer.opts.wordsPerSec = wps;
+  acc = '';
+  const words = text.split(' ');
+  let i = 0;
+  // Deliver the ENTIRE message in one fast burst (worst case) to prove the
+  // reveal cadence is independent of arrival speed.
+  const timer = setInterval(() => {
+    for (let b = 0; b < 6 && i < words.length; b++, i++) acc += words[i] + ' ';
+    renderer.setText(acc);
+    if (i >= words.length) { clearInterval(timer); renderer.flush(); }
+  }, 16);
+};
+
+// Reproduce finalizeStreamingMessage: let the fade finish, then swap the
+// plain-text spans for "markdown" — and prove the message does NOT disappear.
+document.getElementById('fin').onclick = async () => {
+  renderer.setText(acc);
+  renderer.flush();
+  await renderer.idle();
+  out.classList.remove('cv-stream');
+  out.innerHTML = '<strong>Finalized:</strong> ' + acc.trim(); // stand-in for parseMarkdown()
+  renderer.stop();            // <-- was reset() (the bug): stop() keeps the DOM
+  out.classList.add('cv-stream');
+};
+
+window.__start = () => document.getElementById('go').click();
+</script>
+</body>
+</html>
