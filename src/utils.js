@@ -128,10 +128,6 @@ export const CSS_CLASSES = {
   WINDOW_MEDIUM: 'chatvia-widget-medium',
   WINDOW_LARGE: 'chatvia-widget-large',
   STREAMING: 'chatvia-widget-streaming',
-  // Word-by-word fade-in during streaming. STREAM_BUBBLE turns the live bubble
-  // into a pre-wrap container; STREAM_WORD is the per-word fade unit.
-  STREAM_BUBBLE: 'chatvia-widget-stream',
-  STREAM_WORD: 'chatvia-widget-word',
   TOOL_ACTIVITY: 'chatvia-widget-tool-activity',
   TOOL_CALLING: 'chatvia-widget-tool-calling',
   // Bar mode classes (the floating-bar variant of the launcher)
