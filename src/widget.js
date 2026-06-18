@@ -100,6 +100,9 @@ export class ChatWidget {
     this.bootstrapToken = this.options.auth || null;
     this.authManager = new AuthManager(agentId, this.bootstrapToken);
     this.isLocked = false;
+    // i18n key for the notice shown when the chat is locked (verification
+    // rejected, or protected-agent authorization failed). Null when unlocked.
+    this.disabledReasonKey = null;
 
     // State
     this.conversations = [];
@@ -255,7 +258,13 @@ export class ChatWidget {
       // Initialize i18n system first
       await initI18n({ language: this.language });
 
-      await this._verifyClient();
+      // Verify the agent. A genuine rejection ('unverified') no longer aborts
+      // init — we mount a locked shell below so the visitor sees a branded,
+      // disabled window with a verification notice instead of a blank corner.
+      // 'error' (server unreachable) is distinct from a rejection: we don't
+      // lock on it; the getSettings call right below will surface a real
+      // connectivity failure the same way it always has.
+      const verification = await this.agentManager.verifyClient();
 
       this.settings = await getSettings(this.agentId);
       debug('Initial settings', this.settings);
@@ -265,11 +274,17 @@ export class ChatWidget {
         this.settings.is_fullscreen = true;
       }
 
-      // Protected agents must trade their bootstrap token for a session token
-      // before any gated request. On failure we still mount the shell but lock
-      // it, so the visitor sees the branded window with a sign-in notice rather
-      // than a broken/blank corner.
-      this.isLocked = this.settings.protected === true && !(await this._authorizeProtectedWidget());
+      // Decide the lock state. A server rejection takes precedence over the
+      // protected-agent auth check. Either way we still mount the shell but lock
+      // it, so the visitor sees the branded window with a notice rather than a
+      // broken/blank corner.
+      if (verification === 'unverified') {
+        this.isLocked = true;
+        this.disabledReasonKey = 'errors.verification_failed';
+      } else if (this.settings.protected === true && !(await this._authorizeProtectedWidget())) {
+        this.isLocked = true;
+        this.disabledReasonKey = 'errors.auth_required';
+      }
 
       this.sessionManager = new SessionManager(this.agentId);
       if (!this.isLocked) {
@@ -290,8 +305,10 @@ export class ChatWidget {
       // Locked: skip session-bound wiring (SSE, conversations, heartbeat) and leave
       // the chat in its disabled sign-in state.
       if (this.isLocked) {
-        await this.disabledChat(t('errors.auth_required'));
-        console.warn('chatvia: widget locked — agent is protected and authorization failed.');
+        await this.disabledChat(t(this.disabledReasonKey || 'errors.auth_required'));
+        console.warn(
+          `chatvia: widget locked — ${this.disabledReasonKey || 'errors.auth_required'}.`
+        );
         return;
       }
 
@@ -333,16 +350,6 @@ export class ChatWidget {
       return false;
     }
     return await this.authManager.exchange();
-  }
-
-  async _verifyClient() {
-    const isVerified = await this.agentManager.verifyClient();
-    if (!isVerified) {
-      console.error('Client verification failed. Disabling chat.');
-      await this.disabledChat(t('errors.verification_failed'));
-      throw new Error('Client verification failed');
-    }
-    debug('Client verified.');
   }
 
   async _initializeSession() {
