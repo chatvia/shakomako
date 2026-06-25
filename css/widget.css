@@ -3567,3 +3567,150 @@ body.chatvia-scroll-locked {
     transform: none !important;
   }
 }
+
+/* ── Inline forms (form tool artifact) ───────────────────────────────────── */
+/* An inline form stacks BELOW the assistant bubble. The content-wrapper is a
+   row-flex (avatar | bubble), so without these rules the form becomes a third
+   flex item squeezed into the space beside the bubble. Letting the wrapper wrap
+   and giving the form a 100% flex-basis drops it onto its own full-width row. */
+.chatvia-widget .chatvia-widget-message.chatvia-widget-assistant .chatvia-widget-content-wrapper {
+  flex-wrap: wrap;
+}
+
+.chatvia-widget .chatvia-widget-content-wrapper > .chatvia-widget-form {
+  flex: 0 0 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chatvia-widget .chatvia-widget-form {
+  margin-top: var(--chat-space-2);
+  padding: var(--chat-space-4);
+  border: 1px solid var(--chat-border);
+  border-radius: var(--chat-radius-md);
+  background-color: var(--chat-surface);
+}
+
+.chatvia-widget .chatvia-widget-form-title {
+  font-weight: 600;
+  font-size: var(--chat-font-size-sm);
+  color: var(--chat-text);
+  margin-bottom: var(--chat-space-3);
+}
+
+.chatvia-widget .chatvia-widget-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-space-3);
+}
+
+.chatvia-widget .chatvia-widget-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-space-1);
+}
+
+.chatvia-widget .chatvia-widget-form-label {
+  font-size: var(--chat-font-size-xs);
+  color: var(--chat-text-secondary);
+}
+
+.chatvia-widget .chatvia-widget-form-req {
+  color: #dc2626;
+}
+
+.chatvia-widget .chatvia-widget-form-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: var(--chat-font-size-sm);
+  color: var(--chat-text);
+  background-color: var(--chat-input-bg);
+  border: 1px solid var(--chat-border);
+  border-radius: var(--chat-radius-sm);
+  transition: border-color var(--chat-transition-fast);
+}
+
+.chatvia-widget .chatvia-widget-form-input:focus {
+  outline: none;
+  border-color: var(--chat-primary);
+  background-color: var(--chat-input-bg-focus);
+}
+
+.chatvia-widget textarea.chatvia-widget-form-input {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.chatvia-widget .chatvia-widget-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-space-1);
+}
+
+.chatvia-widget .chatvia-widget-form-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--chat-space-2);
+  font-size: var(--chat-font-size-sm);
+  color: var(--chat-text);
+  cursor: pointer;
+}
+
+.chatvia-widget .chatvia-widget-form-choice input {
+  accent-color: var(--chat-primary);
+}
+
+.chatvia-widget .chatvia-widget-form-help {
+  font-size: var(--chat-font-size-xs);
+  color: var(--chat-text-muted);
+}
+
+.chatvia-widget .chatvia-widget-form-field-error,
+.chatvia-widget .chatvia-widget-form-error {
+  font-size: var(--chat-font-size-xs);
+  color: #dc2626;
+}
+
+.chatvia-widget .chatvia-widget-form-submit {
+  align-self: flex-start;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: var(--chat-font-size-sm);
+  font-weight: 600;
+  color: var(--chat-primary-contrast);
+  background-color: var(--chat-primary);
+  border: none;
+  border-radius: var(--chat-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--chat-transition-fast);
+}
+
+.chatvia-widget .chatvia-widget-form-submit:hover {
+  opacity: 0.9;
+}
+
+.chatvia-widget .chatvia-widget-form-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.chatvia-widget .chatvia-widget-form-success {
+  display: flex;
+  align-items: center;
+  gap: var(--chat-space-2);
+  font-size: var(--chat-font-size-sm);
+  font-weight: 500;
+  color: #16a34a;
+}
+
+.chatvia-widget .chatvia-widget-form-check {
+  font-weight: 700;
+}
+
+.chatvia-widget .chatvia-widget-form-expired {
+  font-size: var(--chat-font-size-sm);
+  color: var(--chat-text-muted);
+  font-style: italic;
+}

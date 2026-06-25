@@ -90,6 +90,14 @@
   "tool": {
     "calling": "Calling external tool..."
   },
+  "forms": {
+    "submit": "Submit",
+    "submitting": "Submitting…",
+    "success_default": "Thanks — your details have been received.",
+    "required": "This field is required.",
+    "expired": "This form has expired.",
+    "submit_failed": "Something went wrong. Please try again."
+  },
   "errors": {
     "initialization_failed": "Initialization error. Please try again later.",
     "verification_failed": "Client verification failed.",
