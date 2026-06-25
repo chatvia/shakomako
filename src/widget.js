@@ -269,6 +269,18 @@ export class ChatWidget {
       this.settings = await getSettings(this.agentId);
       debug('Initial settings', this.settings);
 
+      // Per-surface kill switch (dashboard → Deploy → enable/disable). Each mode
+      // reads its own flag: bubble → widget_enabled, bar → bar_enabled. When the
+      // owner turns this surface off we mount nothing at all, so it simply never
+      // appears on the host page. Defaults to enabled when the flag is absent so
+      // an older backend keeps working unchanged.
+      const surfaceEnabled =
+        this.mode === 'bar' ? this.settings.bar_enabled : this.settings.widget_enabled;
+      if (surfaceEnabled === false) {
+        debug(`chatvia: the ${this.mode} surface is disabled for this agent — not mounting.`);
+        return;
+      }
+
       if (this.isMobileApp) {
         this.settings.show_on_load = false;
         this.settings.is_fullscreen = true;
