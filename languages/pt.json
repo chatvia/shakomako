@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "Ao conversar, você concorda com a nossa {link}.",
+    "privacy_policy": "política de privacidade",
     "open_chat": "Abrir chat",
     "close_chat": "Fechar chat",
     "expand_chat": "Expandir chat",

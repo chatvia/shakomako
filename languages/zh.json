@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "继续聊天即表示您同意我们的{link}。",
+    "privacy_policy": "隐私政策",
     "open_chat": "打开聊天",
     "close_chat": "关闭聊天",
     "expand_chat": "展开聊天",

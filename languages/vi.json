@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "Bằng cách trò chuyện, bạn đồng ý với {link} của chúng tôi.",
+    "privacy_policy": "chính sách quyền riêng tư",
     "open_chat": "Mở trò chuyện",
     "close_chat": "Đóng trò chuyện",
     "expand_chat": "Phóng to trò chuyện",

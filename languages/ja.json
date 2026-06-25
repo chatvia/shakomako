@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "チャットすることで、{link}に同意したものとみなされます。",
+    "privacy_policy": "プライバシーポリシー",
     "open_chat": "チャットを開く",
     "close_chat": "チャットを閉じる",
     "expand_chat": "チャットを拡大",

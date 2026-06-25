@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "Dengan mengobrol, Anda menyetujui {link} kami.",
+    "privacy_policy": "kebijakan privasi",
     "open_chat": "Buka obrolan",
     "close_chat": "Tutup obrolan",
     "expand_chat": "Perbesar obrolan",

@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "채팅하면 당사의 {link}에 동의하는 것입니다.",
+    "privacy_policy": "개인정보 처리방침",
     "open_chat": "채팅 열기",
     "close_chat": "채팅 닫기",
     "expand_chat": "채팅 확대",

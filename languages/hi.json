@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "चैट करके, आप हमारी {link} से सहमत होते हैं।",
+    "privacy_policy": "गोपनीयता नीति",
     "open_chat": "चैट खोलें",
     "close_chat": "चैट बंद करें",
     "expand_chat": "चैट बड़ा करें",

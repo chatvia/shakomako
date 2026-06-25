@@ -8,6 +8,7 @@ import { createElement, createIcon } from '../ui.js';
 import { getDirection, t } from '../i18n.js';
 
 const THEME_STORAGE_PREFIX = 'chatvia-theme:';
+const PRIVACY_DISMISSED_PREFIX = 'chatvia-privacy-dismissed:';
 
 /**
  * Read a visitor's saved theme choice (set via the header toggle).
@@ -30,6 +31,30 @@ export function readStoredTheme(agentId) {
 export function writeStoredTheme(agentId, value) {
   try {
     window.localStorage.setItem(THEME_STORAGE_PREFIX + agentId, value);
+  } catch {
+    /* storage unavailable — non-fatal */
+  }
+}
+
+/**
+ * Whether the visitor has dismissed the privacy-consent strip for this agent.
+ * Namespaced per agent, same scheme as the theme choice.
+ */
+export function readPrivacyDismissed(agentId) {
+  try {
+    return window.localStorage.getItem(PRIVACY_DISMISSED_PREFIX + agentId) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Remember that the visitor dismissed the privacy-consent strip. Silently
+ * no-ops when storage is unavailable (private mode / sandboxed iframe).
+ */
+export function writePrivacyDismissed(agentId) {
+  try {
+    window.localStorage.setItem(PRIVACY_DISMISSED_PREFIX + agentId, '1');
   } catch {
     /* storage unavailable — non-fatal */
   }
@@ -60,6 +85,7 @@ export function applyConfiguration(widget) {
   applyBranding(widget);
   applyInputPlaceholder(widget);
   applyFooterText(widget);
+  applyPrivacyNotice(widget);
   widget._updateStartersContainer();
 }
 
@@ -398,6 +424,58 @@ export function applyFooterText(widget) {
     widget.footerText.textContent = '';
     widget.footerText.style.display = 'none';
   }
+}
+
+/**
+ * Render the "By chatting, you agree to our privacy policy" consent strip above
+ * the composer. Shown only when the agent has a valid http(s)
+ * `privacy_policy_url` set AND the visitor hasn't dismissed it for this agent.
+ *
+ * The sentence and the link text are both translated. The sentence carries a
+ * `{link}` placeholder we split on, so the anchor lands inline without ever
+ * injecting translated/owner-supplied strings as HTML — text goes in as text
+ * nodes, the URL only as a validated href.
+ */
+export function applyPrivacyNotice(widget) {
+  const el = widget.privacyNotice;
+  const textEl = widget.privacyNoticeText;
+  if (!el || !textEl) return;
+
+  const url = widget.settings?.privacy_policy_url;
+
+  const isValidLinkUrl = u => {
+    if (!u || typeof u !== 'string') return false;
+    try {
+      return ['http:', 'https:'].includes(new URL(u, window.location.origin).protocol);
+    } catch {
+      return false;
+    }
+  };
+
+  if (!isValidLinkUrl(url) || readPrivacyDismissed(widget.agentId)) {
+    el.style.display = 'none';
+    textEl.textContent = '';
+    return;
+  }
+
+  const template = t('widget.privacy_consent'); // "By chatting, you agree to our {link}."
+  const linkText = t('widget.privacy_policy'); // "privacy policy"
+  const [before, after = ''] = template.split('{link}');
+
+  textEl.textContent = '';
+  textEl.appendChild(document.createTextNode(before));
+  textEl.appendChild(
+    createElement('a', {
+      className: CSS_CLASSES.PRIVACY_NOTICE_LINK,
+      href: url,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      textContent: linkText
+    })
+  );
+  textEl.appendChild(document.createTextNode(after));
+
+  el.style.display = '';
 }
 
 /**

@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "بمحادثتك، فإنك توافق على {link}.",
+    "privacy_policy": "سياسة الخصوصية",
     "open_chat": "افتح المحادثة",
     "close_chat": "أغلق المحادثة",
     "expand_chat": "وسّع المحادثة",

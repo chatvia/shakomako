@@ -835,6 +835,10 @@ export class ChatWidget {
     // can swap its text in without an extra DOM insertion.
     this.footerText = this._createFooterText();
     this.brandFooter = this._createBrandFooter();
+    // Consent strip ("By chatting, you agree to our privacy policy") — sits
+    // directly above the composer. Hidden until applyPrivacyNotice() fills it,
+    // which only happens when the agent has a privacy_policy_url configured.
+    this.privacyNotice = this._createPrivacyNotice();
     // Floating chevron-down button shown when the user has scrolled up away
     // from the latest message. Absolutely positioned over the chat window so
     // it floats above the input regardless of which message they're reading.
@@ -844,13 +848,54 @@ export class ChatWidget {
     windowEl.appendChild(this.messagesContainer);
     windowEl.appendChild(this.startersContainer);
     // "Powered by" sits directly above the floating composer (it reads as a
-    // quiet caption for the input), with the optional disclaimer strip below.
+    // quiet caption for the input), then the optional privacy-consent strip,
+    // then the composer, with the optional disclaimer strip below.
     windowEl.appendChild(this.brandFooter);
+    windowEl.appendChild(this.privacyNotice);
     windowEl.appendChild(this.inputContainer);
     windowEl.appendChild(this.footerText);
     windowEl.appendChild(this.scrollToBottomBtn);
 
     return windowEl;
+  }
+
+  _createPrivacyNotice() {
+    // Hidden by default; config.applyPrivacyNotice() fills the text span with
+    // the consent sentence + privacy-policy link and reveals it when the agent
+    // has configured `privacy_policy_url`. The dismiss button is created once
+    // here (with a stable handler) so re-applying never rebinds it.
+    const container = createElement('div', {
+      className: CSS_CLASSES.PRIVACY_NOTICE,
+      style: 'display:none;'
+    });
+
+    this.privacyNoticeText = createElement('span', {
+      className: CSS_CLASSES.PRIVACY_NOTICE_TEXT
+    });
+
+    const dismiss = createElement(
+      'button',
+      {
+        type: 'button',
+        className: CSS_CLASSES.PRIVACY_NOTICE_DISMISS,
+        'aria-label': t('widget.dismiss'),
+        title: t('widget.dismiss')
+      },
+      {
+        click: () => {
+          // Remember the dismissal per agent so the strip doesn't nag on every
+          // open; the visitor has already seen the consent line.
+          config.writePrivacyDismissed(this.agentId);
+          container.style.display = 'none';
+        }
+      }
+    );
+    dismiss.appendChild(createIcon('x'));
+
+    container.appendChild(this.privacyNoticeText);
+    container.appendChild(dismiss);
+
+    return container;
   }
 
   _createScrollToBottomButton() {

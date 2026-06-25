@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "Начиная чат, вы соглашаетесь с нашей {link}.",
+    "privacy_policy": "политикой конфиденциальности",
     "open_chat": "Открыть чат",
     "close_chat": "Закрыть чат",
     "expand_chat": "Развернуть чат",

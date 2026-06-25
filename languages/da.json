@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "Ved at chatte accepterer du vores {link}.",
+    "privacy_policy": "privatlivspolitik",
     "open_chat": "Åbn chat",
     "close_chat": "Luk chat",
     "expand_chat": "Udvid chat",

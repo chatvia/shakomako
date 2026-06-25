@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "Sohbet ederek {link} kabul etmiş olursunuz.",
+    "privacy_policy": "gizlilik politikamızı",
     "open_chat": "Sohbeti aç",
     "close_chat": "Sohbeti kapat",
     "expand_chat": "Sohbeti büyüt",

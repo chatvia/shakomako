@@ -101,6 +101,12 @@ export const CSS_CLASSES = {
   // Disclaimer strip below the composer (e.g. "AI can make mistakes…").
   // Distinct from BRAND_FOOTER — that's the "Powered by Chatvia" line.
   FOOTER_TEXT: 'chatvia-widget-footer-text',
+  // Consent strip above the composer: "By chatting, you agree to our privacy
+  // policy." Only shown when the agent has a privacy_policy_url configured.
+  PRIVACY_NOTICE: 'chatvia-widget-privacy-notice',
+  PRIVACY_NOTICE_TEXT: 'chatvia-widget-privacy-text',
+  PRIVACY_NOTICE_LINK: 'chatvia-widget-privacy-link',
+  PRIVACY_NOTICE_DISMISS: 'chatvia-widget-privacy-dismiss',
   CONFIRM_DIALOG: 'chatvia-widget-confirm-dialog',
   CONFIRM_CONTENT: 'chatvia-widget-confirm-content',
   CONFIRM_BUTTONS: 'chatvia-widget-confirm-buttons',

@@ -1,5 +1,7 @@
 {
   "widget": {
+    "privacy_consent": "با گفتگو، شما با {link} ما موافقت می‌کنید.",
+    "privacy_policy": "سیاست حفظ حریم خصوصی",
     "open_chat": "باز کردن گفتگو",
     "close_chat": "بستن گفتگو",
     "expand_chat": "بزرگ کردن گفتگو",
