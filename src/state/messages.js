@@ -861,10 +861,29 @@ export async function finalizeStreamingMessage(widget) {
 }
 
 /**
- * Show a transient "calling external tool" shimmer while a function/MCP call
- * runs, then hide it once every active call has finished so the answer can
- * stream in below. Tracked by tool_call_id so parallel or sequential calls
- * keep the indicator visible until the last one ends — no per-tool icons.
+ * Pick the transient activity phrase for a tool call. The backend resolves a
+ * per-connector `activity_label` ("Preparing your form…", "Searching the web…")
+ * in config/connectors.php; we render that verbatim. When a connector has no
+ * configured phrase (external presets, webhook functions) we fall back to a
+ * label-based line, and finally to a generic string — so the indicator never
+ * mislabels a first-party capability as an "external tool".
+ */
+function toolActivityLabel(tool) {
+  if (typeof tool.activity_label === 'string' && tool.activity_label !== '') {
+    return tool.activity_label;
+  }
+  if (typeof tool.label === 'string' && tool.label !== '') {
+    return t('tool.connecting', { label: tool.label });
+  }
+  return t('tool.calling');
+}
+
+/**
+ * Show a transient activity shimmer while a function/MCP call runs, then hide
+ * it once every active call has finished so the answer can stream in below.
+ * Tracked by tool_call_id so parallel or sequential calls keep the indicator
+ * visible until the last one ends — no per-tool icons. The phrase updates to
+ * the most recent call so a find→render sequence reads naturally.
  */
 export function handleToolEvent(widget, tool) {
   const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
@@ -877,14 +896,12 @@ export function handleToolEvent(widget, tool) {
 
   if (tool.phase === 'start') {
     widget._activeToolCalls.add(tool.tool_call_id);
-    if (!container.firstChild) {
-      container.appendChild(
-        createElement('div', {
-          className: CSS_CLASSES.TOOL_CALLING,
-          textContent: t('tool.calling')
-        })
-      );
+    let node = container.firstChild;
+    if (!node) {
+      node = createElement('div', { className: CSS_CLASSES.TOOL_CALLING });
+      container.appendChild(node);
     }
+    node.textContent = toolActivityLabel(tool);
     widget.scrollToBottom();
     return;
   }

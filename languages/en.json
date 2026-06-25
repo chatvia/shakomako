@@ -90,7 +90,8 @@
     "end_live_chat_tooltip": "End live chat"
   },
   "tool": {
-    "calling": "Calling external tool..."
+    "calling": "Working…",
+    "connecting": "Connecting to {label}…"
   },
   "forms": {
     "submit": "Submit",
