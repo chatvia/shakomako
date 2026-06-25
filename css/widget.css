@@ -620,6 +620,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Reserve room for the status dot's 3px glow ring so `overflow: hidden`
+     (here for text ellipsis) clips at the padding edge instead of slicing the
+     ring. The negative margin keeps the dot aligned under the title text. */
+  padding-left: 4px;
+  margin-left: -4px;
 }
 
 /* Disclosure status dot — a soft outer glow ring makes the AI/Human state read
