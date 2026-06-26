@@ -677,7 +677,7 @@
   box-sizing: border-box;
   background-color: transparent;
   box-shadow: none;
-  animation: message-appear 0.2s ease-out;
+  animation: message-appear 0.32s var(--chat-ease-emphasized) both;
   min-width: 0;
   /* Prevent flex items from overflowing */
 }
@@ -1294,12 +1294,12 @@
 @keyframes message-appear {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px) scale(0.985);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1366,12 +1366,17 @@
   /* A resting shadow lifts the pill off the window background (Intercom-style),
      deepening to a primary focus halo when active. */
   box-shadow: var(--chat-shadow-sm);
-  transition: border-color var(--chat-transition-fast), box-shadow var(--chat-transition-fast);
+  transition: border-color var(--chat-transition-fast),
+    box-shadow var(--chat-transition-fast),
+    transform var(--chat-transition-fast);
 }
 
 .chatvia-widget .chatvia-widget-input-container:focus-within {
   border-color: color-mix(in srgb, var(--chat-primary) 55%, var(--chat-border-strong));
-  box-shadow: 0 0 0 3px var(--chat-focus-ring), var(--chat-shadow-sm);
+  /* A 1px lift pairs with the accent halo so focusing the composer feels like
+     the pill rises to meet the visitor (Linear/Intercom-style). */
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px var(--chat-focus-ring), var(--chat-shadow-md);
 }
 
 /* Composer row — paperclip, textarea, send as flex siblings. align-items:
@@ -2598,6 +2603,27 @@
   user-select: none;
   max-width: 90%;
   box-shadow: var(--chat-shadow-xs);
+  /* Settle in with a quiet bottom-up fade so the prompts feel offered rather
+     than dumped. Staggered per-child below; disabled under reduced-motion. */
+  animation: starter-appear 0.34s var(--chat-ease-emphasized) both;
+}
+
+/* Stagger the suggested prompts so they cascade in (nearest the composer
+   first, matching their bottom-anchored column order). */
+.chatvia-widget .chatvia-widget-starter-btn:nth-child(1) { animation-delay: 0.02s; }
+.chatvia-widget .chatvia-widget-starter-btn:nth-child(2) { animation-delay: 0.08s; }
+.chatvia-widget .chatvia-widget-starter-btn:nth-child(3) { animation-delay: 0.14s; }
+.chatvia-widget .chatvia-widget-starter-btn:nth-child(4) { animation-delay: 0.20s; }
+
+@keyframes starter-appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Hover tints toward the brand (border + fill + text) so the suggested prompts
@@ -3613,6 +3639,7 @@ body.chatvia-scroll-locked {
 @media (prefers-reduced-motion: reduce) {
   .chatvia-widget .chatvia-widget-window,
   .chatvia-widget .chatvia-widget-message,
+  .chatvia-widget .chatvia-widget-starter-btn,
   .chatvia-widget .chatvia-widget-floating-bubble,
   .chatvia-widget .chatvia-widget-bubble.chatvia-widget-pulse,
   .chatvia-widget .chatvia-widget-bubble.chatvia-widget-pulse::after,
@@ -3639,6 +3666,7 @@ body.chatvia-scroll-locked {
   /* Collapse hover/press polish transforms to identity (structural transforms
      above are deliberately not in this list). */
   .chatvia-widget .chatvia-widget-bubble:hover,
+  .chatvia-widget .chatvia-widget-input-container:focus-within,
   .chatvia-widget .chatvia-widget-send-btn:hover,
   .chatvia-widget .chatvia-widget-send-btn:active,
   .chatvia-widget .chatvia-widget-starter-btn:hover,
