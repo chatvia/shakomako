@@ -1581,6 +1581,32 @@
   width: 16px;
   height: 16px;
   fill: white;
+  transition: fill var(--chat-transition-normal);
+}
+
+/* Idle send button — when the composer is empty (`:placeholder-shown` on the
+   sibling textarea), the button rests in a calm neutral coin instead of the
+   saturated brand gradient. It "lights up" to the full accent (the base rule
+   above) the instant the visitor types, so the affordance reads as primed →
+   ready. The textarea is an earlier sibling in `.chatvia-widget-input-row`,
+   so the general-sibling combinator reaches the button. */
+.chatvia-widget .chatvia-widget-input:placeholder-shown ~ .chatvia-widget-send-btn {
+  background-image: none;
+  background-color: color-mix(in srgb, var(--chat-text) 7%, transparent);
+  color: var(--chat-text-muted);
+  box-shadow: none;
+}
+
+.chatvia-widget .chatvia-widget-input:placeholder-shown ~ .chatvia-widget-send-btn svg {
+  fill: var(--chat-text-muted);
+}
+
+/* Idle hover stays quiet — a neutral fill bump, no lift or accent halo, so an
+   empty composer never implies there's something to send yet. */
+.chatvia-widget .chatvia-widget-input:placeholder-shown ~ .chatvia-widget-send-btn:hover {
+  background-color: color-mix(in srgb, var(--chat-text) 12%, transparent);
+  transform: none;
+  box-shadow: none;
 }
 
 
