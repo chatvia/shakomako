@@ -577,10 +577,10 @@
   height: 34px;
   margin-right: 12px;
   object-fit: cover;
-  /* Circular crop for uploaded avatars. No background fill — the default
-     Chatvia logo is a white glyph on transparent, so a white fill here would
-     hide it (white-on-white) on the dark header. */
-  border-radius: 50%;
+  /* Square crop for the avatar/logo. No background fill — the default Chatvia
+     logo is a white glyph on transparent, so a white fill here would hide it
+     (white-on-white) on the dark header. */
+  border-radius: 0;
 }
 
 .chatvia-widget .chatvia-widget-header-titlewrap {
