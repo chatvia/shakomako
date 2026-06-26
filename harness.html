@@ -323,6 +323,31 @@
     </div>
   </div>
 
+  <!-- =========================================================
+       SECTION 8 — Inline form (title + subtitle header)
+       ========================================================= -->
+  <h2>8 · Inline form — title + description header</h2>
+  <div class="grid">
+    <div class="cell">
+      <div class="label">Form · light</div>
+      <div class="stage" style="height:660px"><div class="chatvia-widget chatvia-widget-bottom-right" dir="ltr">
+        <div class="chatvia-widget-window chatvia-widget-medium chatvia-widget-open js-form" dir="ltr"></div>
+      </div></div>
+    </div>
+    <div class="cell">
+      <div class="label">Form · dark</div>
+      <div class="stage" style="height:660px"><div class="chatvia-widget chatvia-widget-bottom-right" dir="ltr">
+        <div class="chatvia-widget-window chatvia-widget-medium chatvia-widget-open chatvia-widget-dark js-form" dir="ltr"></div>
+      </div></div>
+    </div>
+    <div class="cell">
+      <div class="label">Form · RTL</div>
+      <div class="stage" style="height:660px"><div class="chatvia-widget chatvia-widget-bottom-right" dir="rtl">
+        <div class="chatvia-widget-window chatvia-widget-medium chatvia-widget-open js-form" dir="rtl"></div>
+      </div></div>
+    </div>
+  </div>
+
   <!-- ============== TEMPLATES (cloned by JS into the slots above) ============== -->
 
   <!-- Reusable header -->
@@ -580,6 +605,49 @@
     </div>
   </template>
 
+  <!-- Inline form (mirrors the DOM forms.js builds: header > title + subtitle, then fields) -->
+  <template id="tpl-form">
+    <div class="chatvia-widget-messages" role="log">
+      <div class="chatvia-widget-message chatvia-widget-assistant">
+        <div class="chatvia-widget-content-wrapper">
+          <div class="chatvia-widget-form" data-form-instance="demo">
+            <div class="chatvia-widget-form-header">
+              <div class="chatvia-widget-form-title">Talk to sales</div>
+              <div class="chatvia-widget-form-subtitle">Tell us about your company and we'll get in touch.</div>
+            </div>
+            <form class="chatvia-widget-form-body">
+              <div class="chatvia-widget-form-field">
+                <label class="chatvia-widget-form-label">Name<span class="chatvia-widget-form-req"> *</span></label>
+                <input class="chatvia-widget-form-input" type="text" name="name" placeholder="John Doe">
+              </div>
+              <div class="chatvia-widget-form-field">
+                <label class="chatvia-widget-form-label">Work email<span class="chatvia-widget-form-req"> *</span></label>
+                <input class="chatvia-widget-form-input" type="email" name="email" placeholder="your.email@example.com">
+              </div>
+              <div class="chatvia-widget-form-field">
+                <label class="chatvia-widget-form-label">Company size</label>
+                <select class="chatvia-widget-form-input" name="company_size">
+                  <option value="">Select company size</option>
+                  <option value="1-10">1–10</option>
+                  <option value="11-50">11–50</option>
+                  <option value="51-200">51–200</option>
+                </select>
+              </div>
+              <div class="chatvia-widget-form-field">
+                <label class="chatvia-widget-form-label">How can we help you?</label>
+                <textarea class="chatvia-widget-form-input" rows="3" name="message" placeholder="Write your message…"></textarea>
+              </div>
+              <div class="chatvia-widget-form-field">
+                <label class="chatvia-widget-form-choice"><input type="checkbox" name="agency"><span>We're an agency</span></label>
+              </div>
+              <button type="submit" class="chatvia-widget-form-submit">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
   <script>
     const T = id => document.getElementById(id).content;
     const clone = id => T(id).cloneNode(true);
@@ -620,6 +688,11 @@
       win.appendChild(clone('tpl-header'));
       win.appendChild(clone('tpl-loading'));
       win.appendChild(clone('tpl-composer'));
+    });
+    // Inline form (title + subtitle header)
+    document.querySelectorAll('.js-form').forEach(win => {
+      win.appendChild(clone('tpl-header'));
+      win.appendChild(clone('tpl-form'));
     });
     // Empty history state
     document.querySelectorAll('.js-empty').forEach(win => {

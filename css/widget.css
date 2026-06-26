@@ -3744,11 +3744,24 @@ body.chatvia-scroll-locked {
   background-color: var(--chat-surface);
 }
 
+.chatvia-widget .chatvia-widget-form-header {
+  margin-bottom: var(--chat-space-4);
+  padding-bottom: var(--chat-space-3);
+  border-bottom: 1px solid var(--chat-border);
+}
+
 .chatvia-widget .chatvia-widget-form-title {
   font-weight: 600;
-  font-size: var(--chat-font-size-sm);
+  font-size: var(--chat-font-size-xl);
+  line-height: 1.3;
   color: var(--chat-text);
-  margin-bottom: var(--chat-space-3);
+}
+
+.chatvia-widget .chatvia-widget-form-subtitle {
+  margin-top: var(--chat-space-1);
+  font-size: var(--chat-font-size-sm);
+  line-height: 1.45;
+  color: var(--chat-text-secondary);
 }
 
 .chatvia-widget .chatvia-widget-form-body {

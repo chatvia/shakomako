@@ -230,10 +230,24 @@ export function createInlineForm(widget, form, messageId) {
     return card;
   }
 
-  if (form.title) {
-    card.appendChild(
-      createElement('div', { className: 'chatvia-widget-form-title', textContent: form.title })
-    );
+  // Title + optional subtitle, grouped in a header so they share a divider
+  // above the fields (mirrors the dashboard's InlineFormBlock rendering).
+  if (form.title || form.subtitle) {
+    const header = createElement('div', { className: 'chatvia-widget-form-header' });
+    if (form.title) {
+      header.appendChild(
+        createElement('div', { className: 'chatvia-widget-form-title', textContent: form.title })
+      );
+    }
+    if (form.subtitle) {
+      header.appendChild(
+        createElement('div', {
+          className: 'chatvia-widget-form-subtitle',
+          textContent: form.subtitle
+        })
+      );
+    }
+    card.appendChild(header);
   }
 
   const formEl = createElement('form', { className: 'chatvia-widget-form-body' });
