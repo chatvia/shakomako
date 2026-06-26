@@ -1600,7 +1600,11 @@
 .chatvia-widget .chatvia-widget-scroll-bottom {
   position: absolute;
   bottom: 92px;
-  left: 50%;
+  /* Anchored to the window's right edge, lined up with the composer's 16px
+     side margin, rather than centered — sits just above the send button.
+     Mirrored to the left in RTL below. */
+  right: 16px;
+  left: auto;
   width: 36px;
   height: 36px;
   background: rgba(17, 24, 39, 0.9);
@@ -1615,7 +1619,7 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translate(-50%, 8px) scale(0.92);
+  transform: translateY(8px) scale(0.92);
   transition: opacity var(--chat-transition-fast),
     transform var(--chat-transition-fast),
     visibility 0s linear 150ms,
@@ -1626,7 +1630,7 @@
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translate(-50%, 0) scale(1);
+  transform: translateY(0) scale(1);
   transition: opacity var(--chat-transition-fast),
     transform var(--chat-transition-fast),
     visibility 0s linear 0s,
@@ -1638,7 +1642,13 @@
 }
 
 .chatvia-widget .chatvia-widget-scroll-bottom:active {
-  transform: translate(-50%, 0) scale(0.94);
+  transform: translateY(0) scale(0.94);
+}
+
+/* RTL — mirror the button to the left (start) edge. */
+.chatvia-widget[dir="rtl"] .chatvia-widget-scroll-bottom {
+  right: auto;
+  left: 16px;
 }
 
 .chatvia-widget .chatvia-widget-scroll-bottom svg {
