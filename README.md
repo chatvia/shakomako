@@ -1,4 +1,6 @@
-# Chat Widget Project
+<p align="center">
+  <img src="logo.png" alt="ChatVia Logo" width="120" height="120">
+</p>
 
 A customizable, embeddable chat widget with Markdown support, designed to connect via Server-Sent Events (SSE).
 
