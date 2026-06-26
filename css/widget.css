@@ -2215,9 +2215,10 @@
   position: relative;
   text-align: center;
   font-size: 0.72rem;
-  /* Sits just above the floating composer on the plain window background — no
-     divider or fill, so it reads as a quiet caption rather than a toolbar. */
-  padding: 8px 14px 2px;
+  /* Anchored at the very bottom of the window, below the floating composer (and
+     the optional disclaimer line). No divider or fill, so it reads as a quiet
+     brand caption rather than a toolbar. */
+  padding: 2px 14px 10px;
   color: var(--chat-text-muted);
   background: transparent;
   z-index: 1;

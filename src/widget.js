@@ -870,13 +870,13 @@ export class ChatWidget {
     windowEl.appendChild(this.chatHeader);
     windowEl.appendChild(this.messagesContainer);
     windowEl.appendChild(this.startersContainer);
-    // "Powered by" sits directly above the floating composer (it reads as a
-    // quiet caption for the input), then the optional privacy-consent strip,
-    // then the composer, with the optional disclaimer strip below.
-    windowEl.appendChild(this.brandFooter);
+    // Optional privacy-consent strip, then the composer. The optional disclaimer
+    // strip and the "Powered by" brand footer sit below the composer, with the
+    // brand line anchored at the very bottom of the window.
     windowEl.appendChild(this.privacyNotice);
     windowEl.appendChild(this.inputContainer);
     windowEl.appendChild(this.footerText);
+    windowEl.appendChild(this.brandFooter);
     windowEl.appendChild(this.scrollToBottomBtn);
 
     return windowEl;
