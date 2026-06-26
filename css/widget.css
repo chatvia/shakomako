@@ -327,13 +327,37 @@
   box-shadow: 0 18px 40px -8px color-mix(in srgb, var(--chat-primary) 52%, transparent), 0 6px 16px rgba(15, 23, 42, 0.14);
 }
 
+/* Open state — keep the themed launcher color and just swap the logo for a
+   down-chevron, Chatbase-style, so it reads as a "minimize/close" affordance. */
 .chatvia-widget .chatvia-widget-bubble.chatvia-widget-active {
-  background-color: var(--chat-primary);
-  opacity: 0.8;
+  opacity: 1;
+}
+
+/* Swap logo ↔ close icon based on open state. */
+.chatvia-widget .chatvia-widget-bubble-close-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.chatvia-widget .chatvia-widget-bubble-close-icon svg {
+  width: 26px;
+  height: 26px;
 }
 
 .chatvia-widget .chatvia-widget-bubble.chatvia-widget-active img {
-  filter: brightness(0.5);
+  display: none;
+}
+
+.chatvia-widget .chatvia-widget-bubble.chatvia-widget-active .chatvia-widget-bubble-close-icon {
+  display: flex;
+}
+
+/* Keep the open-state launcher static — no pulse ring while the chat is open. */
+.chatvia-widget .chatvia-widget-bubble.chatvia-widget-active.chatvia-widget-pulse,
+.chatvia-widget .chatvia-widget-bubble.chatvia-widget-active.chatvia-widget-pulse:after {
+  animation: none;
 }
 
 .chatvia-widget .chatvia-widget-bubble:after {

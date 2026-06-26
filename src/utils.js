@@ -41,6 +41,7 @@ export const CSS_CLASSES = {
   BUBBLE: 'chatvia-widget-bubble',
   BUBBLE_PULSE: 'chatvia-widget-pulse',
   BUBBLE_ACTIVE: 'chatvia-widget-active',
+  BUBBLE_CLOSE_ICON: 'chatvia-widget-bubble-close-icon',
   BUBBLE_NEW_MESSAGE: 'chatvia-widget-new-message',
   WINDOW: 'chatvia-widget-window',
   WINDOW_OPEN: 'chatvia-widget-open',

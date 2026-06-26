@@ -648,6 +648,17 @@ export class ChatWidget {
       style: 'width: 30px; height: 30px; opacity: 1;'
     });
     bubble.appendChild(this.bubbleLogo);
+
+    // Shown only while the chat is open: the bubble flips to a dark circle with
+    // a down-chevron (Chatbase-style). The logo/icon swap is driven purely by
+    // the `.chatvia-widget-active` class toggled in toggleChat().
+    this.bubbleCloseIcon = createElement('span', {
+      className: CSS_CLASSES.BUBBLE_CLOSE_ICON,
+      'aria-hidden': 'true'
+    });
+    this.bubbleCloseIcon.appendChild(createIcon('chevron-down'));
+    bubble.appendChild(this.bubbleCloseIcon);
+
     return bubble;
   }
 
