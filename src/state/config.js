@@ -111,6 +111,22 @@ export function applyDirection(widget) {
   }
 }
 
+// Map the API's semantic window size ('small' / 'medium' / 'large') to the CSS
+// class the window logic works in ('chatvia-widget-large'). applyWindowSize()
+// and the expand/collapse controls (controls.js) both compare against and assign
+// these classes, so we normalize once at settings ingestion. Valid classes pass
+// through; anything unrecognised (incl. null) falls back to large — the default.
+const WINDOW_SIZE_CLASS = {
+  small: CSS_CLASSES.WINDOW_SMALL,
+  medium: CSS_CLASSES.WINDOW_MEDIUM,
+  large: CSS_CLASSES.WINDOW_LARGE
+};
+
+export function normalizeWindowSize(size) {
+  if (WINDOW_SIZE_CLASS[size]) return WINDOW_SIZE_CLASS[size];
+  return Object.values(WINDOW_SIZE_CLASS).includes(size) ? size : CSS_CLASSES.WINDOW_LARGE;
+}
+
 /**
  * Apply window size
  */

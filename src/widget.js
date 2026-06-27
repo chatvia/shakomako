@@ -267,6 +267,9 @@ export class ChatWidget {
       const verification = await this.agentManager.verifyClient();
 
       this.settings = await getSettings(this.agentId);
+      // The API sends the semantic window size ('small' / 'medium' / 'large');
+      // the window-size logic works in CSS-class terms, so normalize once here.
+      this.settings.window_size = config.normalizeWindowSize(this.settings.window_size);
       debug('Initial settings', this.settings);
 
       // Per-surface kill switch (dashboard → Deploy → enable/disable). Each mode
