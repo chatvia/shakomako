@@ -12,7 +12,7 @@ import { getSettings } from './settings.js';
 import { SessionManager } from './sessions.js';
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug, safeImageUrl, formatBytes } from './utils.js';
 import { createElement, createIcon } from './ui.js';
-import { initI18n, t, getDirection } from './i18n.js';
+import { initI18n, t, getDirection, pickLocalized } from './i18n.js';
 import { triggerLabel } from './keyboardTrigger.js';
 
 // Import state modules
@@ -779,7 +779,13 @@ export class ChatWidget {
       return;
     }
 
-    const bubbleText = this.settings.bubbles[this.currentBubbleIndex];
+    const rawBubble = this.settings.bubbles[this.currentBubbleIndex];
+    // Localize the bubble to the widget's active language via its parallel
+    // translation map; fall back to the resolved string (or a legacy object).
+    const bubbleText =
+      typeof rawBubble === 'string'
+        ? pickLocalized(this.settings.bubble_translations?.[this.currentBubbleIndex], rawBubble)
+        : rawBubble?.text;
 
     const bubble = createElement('div', {
       className: CSS_CLASSES.FLOATING_BUBBLE
