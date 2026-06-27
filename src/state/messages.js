@@ -13,7 +13,7 @@ import {
 import { createElement, createIcon } from '../ui.js';
 import { createInlineForm } from '../forms.js';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff.js';
-import { t } from '../i18n.js';
+import { pickLocalized, t } from '../i18n.js';
 // Canonical markdown impl lives in markdown.js. Import for local use, and
 // re-export so existing call sites that go through messages.js keep working.
 import { parseMarkdown, escapeHtml, htmlToText } from '../markdown.js';
@@ -644,11 +644,16 @@ export async function sendUserMessage(widget, customText) {
 export async function displayHistoryMessages(widget) {
   widget.clearMessages();
 
+  // Greeting localized to the widget's active language (falls back to the base).
+  const welcome = pickLocalized(
+    widget.settings?.text_translations?.welcome_message,
+    widget.settings?.welcome_message
+  );
+
   if (widget.messageHistory && widget.messageHistory.length > 0) {
     for (const message of widget.messageHistory) {
       const messageType = message.role ? mapRoleToMessageType(message.role) : message.type;
-      const isWelcomeMessage =
-        widget.settings.welcome_message && message.content === widget.settings.welcome_message;
+      const isWelcomeMessage = welcome && message.content === welcome;
       const isHumanAgent = message.role === 'agent';
       await addMessage(widget, messageType, message.content, false, {
         messageId: message.id,
@@ -663,7 +668,7 @@ export async function displayHistoryMessages(widget) {
           .map(a => a.data)
       });
     }
-  } else if (widget.settings.welcome_message) {
+  } else if (welcome) {
     const activeConversation = widget.getActiveConversation();
     if (activeConversation && !activeConversation.welcomeShown) {
       activeConversation.welcomeShown = true;
@@ -671,15 +676,9 @@ export async function displayHistoryMessages(widget) {
       // leaked this 500ms timer if the widget was torn down during the gap.
       widget._welcomeMessageTimeout = setTimeout(async () => {
         widget._welcomeMessageTimeout = null;
-        await addMessage(
-          widget,
-          CSS_CLASSES.MESSAGE_AGENT,
-          widget.settings.welcome_message,
-          false,
-          {
-            hideActions: true
-          }
-        );
+        await addMessage(widget, CSS_CLASSES.MESSAGE_AGENT, welcome, false, {
+          hideActions: true
+        });
       }, 500);
     }
   }

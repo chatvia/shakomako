@@ -207,6 +207,26 @@ export function getCurrentLanguage() {
 }
 
 /**
+ * Resolve an agent-supplied string (title / welcome / placeholder / starter) to
+ * the active language from its `{ locale: text }` map, falling back to the base
+ * string. The widget's own UI labels go through t(); these owner-authored
+ * strings arrive pre-translated from the server, keyed by locale — so they
+ * follow the same active language the rest of the widget renders in.
+ * @param {Object|undefined|null} map - per-locale map (e.g. settings.text_translations.title)
+ * @param {string|null|undefined} fallback - base string when the language is absent
+ * @returns {string|null|undefined}
+ */
+export function pickLocalized(map, fallback) {
+  if (map && typeof map === 'object') {
+    const value = map[currentLanguage];
+    if (typeof value === 'string' && value !== '') {
+      return value;
+    }
+  }
+  return fallback;
+}
+
+/**
  * Whether the current language flows right-to-left.
  * Used to set `dir="rtl"` on the widget container so direction-sensitive CSS
  * (and the few `[dir="rtl"]` overrides in widget.css) flip into place.

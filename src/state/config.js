@@ -5,7 +5,7 @@
 
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, safeImageUrl } from '../utils.js';
 import { createElement, createIcon } from '../ui.js';
-import { getDirection, t } from '../i18n.js';
+import { getDirection, pickLocalized, t } from '../i18n.js';
 
 const THEME_STORAGE_PREFIX = 'chatvia-theme:';
 const PRIVACY_DISMISSED_PREFIX = 'chatvia-privacy-dismissed:';
@@ -358,7 +358,10 @@ export function applyLogos(widget) {
  */
 export function applyTitle(widget) {
   if (widget.headerTitle) {
-    widget.headerTitle.textContent = widget.settings.title;
+    widget.headerTitle.textContent = pickLocalized(
+      widget.settings?.text_translations?.title,
+      widget.settings.title
+    );
   }
 }
 
@@ -502,7 +505,10 @@ export function applyPrivacyNotice(widget) {
  */
 export function applyInputPlaceholder(widget) {
   const placeholder =
-    widget.settings?.composer_placeholder ||
+    pickLocalized(
+      widget.settings?.text_translations?.composer_placeholder,
+      widget.settings?.composer_placeholder
+    ) ||
     widget.options?.placeholder ||
     t('widget.type_message');
 
@@ -544,8 +550,10 @@ export function updateStartersContainer(widget) {
   widget.startersContainer.style.overflow = 'auto';
 
   widget.settings.starters.forEach(starter => {
-    // Starters may be plain strings (legacy) or { text, icon } objects.
-    const text = typeof starter === 'string' ? starter : starter?.text;
+    // Starters may be plain strings (legacy) or { text, icon, translations }
+    // objects; localize the text to the widget's active language.
+    const text =
+      typeof starter === 'string' ? starter : pickLocalized(starter?.translations, starter?.text);
     if (!text) return;
 
     const starterButton = createElement('div', {
