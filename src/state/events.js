@@ -48,6 +48,18 @@ function setupScrollListener(widget) {
     });
   };
   widget.messagesContainer.addEventListener('scroll', onScroll, { passive: true });
+
+  // Release a top-pin (ChatGPT-style) the moment the visitor scrolls by their
+  // own hand. We key off wheel/touch — genuine user gestures — rather than
+  // scrollTop deltas, because the pin itself moves scrollTop programmatically
+  // and a delta heuristic can't tell the two apart (that confusion is what made
+  // the question "drop" when a turn finalized).
+  const releaseOnUserScroll = () => {
+    if (widget._pinActive) widget._pinReleased = true;
+  };
+  widget.messagesContainer.addEventListener('wheel', releaseOnUserScroll, { passive: true });
+  widget.messagesContainer.addEventListener('touchmove', releaseOnUserScroll, { passive: true });
+
   // Initial sync — if the chat opens with content already overflowing and the
   // saved scroll position isn't at the bottom, show the button immediately.
   updateScrollToBottomButton(widget);

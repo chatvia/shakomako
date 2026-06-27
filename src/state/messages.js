@@ -504,7 +504,7 @@ export async function sendUserMessage(widget, customText) {
   const pendingAttachments = Array.isArray(widget.attachments) ? [...widget.attachments] : [];
   if (!text && pendingAttachments.length === 0) return;
 
-  await addMessage(widget, CSS_CLASSES.MESSAGE_USER, text, true, {
+  const userMessageEl = await addMessage(widget, CSS_CLASSES.MESSAGE_USER, text, true, {
     attachments: pendingAttachments
   });
 
@@ -545,6 +545,11 @@ export async function sendUserMessage(widget, customText) {
   }
 
   // AI mode - use SSE
+  // Pin the just-sent question to the top of the viewport (ChatGPT-style) so the
+  // incoming reply streams in beneath it. Held for the turn; the streaming path
+  // keeps it in place via followStream().
+  widget.pinMessageToTop(userMessageEl);
+
   // Clear any previous loading timeout
   if (widget._loadingTimeout) {
     clearTimeout(widget._loadingTimeout);
@@ -628,7 +633,9 @@ export async function sendUserMessage(widget, customText) {
     }
   }
 
-  widget.scrollToBottom();
+  // Keep the pinned question in place (or fall back to bottom if the send failed
+  // and an error message cleared the pin).
+  widget.followStream();
 }
 
 /**
@@ -714,7 +721,7 @@ export function startStreamingMessage(widget) {
 
   streamingMsgElement.appendChild(contentWrapper);
   widget.messagesContainer.appendChild(streamingMsgElement);
-  widget.scrollToBottom();
+  widget.followStream();
 }
 
 /**
@@ -753,7 +760,7 @@ function renderStreamingMessageNow(widget) {
     updateMessageBubbleContent(messageBubble, widget.currentStreamedMessage);
   }
 
-  widget.scrollToBottom();
+  widget.followStream();
 }
 
 /**
@@ -852,12 +859,18 @@ export async function finalizeStreamingMessage(widget) {
 
   if (widget.chatInput) {
     widget.chatInput.disabled = false;
-    widget.chatInput.focus();
+    // preventScroll: re-focusing the composer must not scroll the messages
+    // container, which would fight the pinned question.
+    widget.chatInput.focus({ preventScroll: true });
   }
   if (widget.sendButton) {
     widget.sendButton.disabled = false;
   }
   widget.autoResizeInput();
+  // Re-size the reserved spacer and re-assert the pin synchronously now that the
+  // actions row (and any forms) have been appended — keeps the question pinned
+  // instead of letting the new content nudge the view down at finish.
+  widget.holdPin();
 }
 
 /**
@@ -902,7 +915,7 @@ export function handleToolEvent(widget, tool) {
       container.appendChild(node);
     }
     node.textContent = toolActivityLabel(tool);
-    widget.scrollToBottom();
+    widget.followStream();
     return;
   }
 

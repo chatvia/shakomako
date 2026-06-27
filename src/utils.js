@@ -83,6 +83,10 @@ export const CSS_CLASSES = {
   // toggles the show/hide transition.
   SCROLL_TO_BOTTOM: 'chatvia-widget-scroll-bottom',
   SCROLL_TO_BOTTOM_VISIBLE: 'chatvia-widget-scroll-bottom-visible',
+  // Empty trailing block that reserves scroll room below a just-sent user
+  // message so it can be pinned to the top of the viewport (ChatGPT-style).
+  // Shrinks as the assistant reply fills the space beneath it.
+  SCROLL_SPACER: 'chatvia-widget-scroll-spacer',
   STARTERS_CONTAINER: 'chatvia-widget-starters',
   STARTER_BUTTON: 'chatvia-widget-starter-btn',
   INPUT_CONTAINER: 'chatvia-widget-input-container',

@@ -15,7 +15,9 @@ function makeWidget() {
   return {
     messagesContainer,
     settings: { avatar_url: null },
-    scrollToBottom() {}
+    scrollToBottom() {},
+    followStream() {},
+    pinMessageToTop() {}
   };
 }
 

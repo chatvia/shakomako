@@ -545,6 +545,18 @@
   min-height: 100px;
 }
 
+/* Trailing spacer that reserves scroll room so a just-sent question can sit
+   pinned at the top while its reply streams in below (ChatGPT-style). Its
+   height is driven from JS and collapses to 0 when not pinning. */
+.chatvia-widget .chatvia-widget-scroll-spacer {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
 /* Custom scrollbar for messages */
 .chatvia-widget .chatvia-widget-messages {
   scrollbar-width: thin;

@@ -522,6 +522,18 @@ export class ChatWidget {
     return controls.scrollToBottom(this, smooth);
   }
 
+  pinMessageToTop(anchorEl) {
+    return controls.pinMessageToTop(this, anchorEl);
+  }
+
+  followStream() {
+    return controls.followStream(this);
+  }
+
+  holdPin() {
+    return controls.holdPin(this);
+  }
+
   clearMessages() {
     return controls.clearMessages(this);
   }
