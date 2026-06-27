@@ -755,6 +755,7 @@ export class ChatWidget {
   _initializeMessageBubbles() {
     if (
       this.isFlat ||
+      this.isOpen ||
       !this.settings.bubbles ||
       !Array.isArray(this.settings.bubbles) ||
       this.settings.bubbles.length === 0
@@ -767,7 +768,11 @@ export class ChatWidget {
   }
 
   _showNextBubble() {
+    // Never reveal a teaser bubble once the chat is open — a pending timer can
+    // fire on the same tick the chat opens (e.g. show_on_load auto-open racing
+    // the bubble schedule), after stopMessageBubbles() has already run.
     if (
+      this.isOpen ||
       !this.settings.bubbles ||
       this.settings.bubbles.length === 0 ||
       !this.messageBubblesContainer
