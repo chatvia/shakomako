@@ -161,7 +161,6 @@ export interface AddMessageOptions {
   attachments?: Attachment[];
   formArtifacts?: FormArtifact[];
   metadata?: MessageMetadata;
-  retryText?: string;
   senderName?: string;
 }
 

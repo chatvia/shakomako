@@ -138,6 +138,9 @@ export const CSS_CLASSES = {
   WINDOW_MEDIUM: 'chatvia-widget-medium',
   WINDOW_LARGE: 'chatvia-widget-large',
   STREAMING: 'chatvia-widget-streaming',
+  // Marks error banners from a failed turn (send or stream), so they can be
+  // cleared once a stream works again without matching their translated text.
+  CONNECTION_ERROR: 'chatvia-widget-connection-error',
   TOOL_ACTIVITY: 'chatvia-widget-tool-activity',
   TOOL_CALLING: 'chatvia-widget-tool-calling',
   // Bar mode classes (the floating-bar variant of the launcher)

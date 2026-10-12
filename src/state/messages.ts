@@ -357,6 +357,10 @@ export async function handleCopyMessage(text: string, button: HTMLElement): Prom
 
     await navigator.clipboard.writeText(plainText);
 
+    // Already showing the check from a click moments ago: its timer restores
+    // the copy icon, so don't record the check as the icon to restore.
+    if (button.classList.contains('chatvia-widget-copied')) return;
+
     const originalIcon = button.innerHTML;
     button.innerHTML = '';
     button.appendChild(createIcon('check'));
@@ -522,7 +526,11 @@ function addMessageToHistory(
 
   if (activeConversation) {
     if (!Array.isArray(activeConversation.messages)) activeConversation.messages = [];
-    activeConversation.messages.push(messageData);
+    // After a history load the conversation's list is the same array as
+    // widget.messageHistory; pushing again would store the message twice.
+    if (activeConversation.messages !== widget.messageHistory) {
+      activeConversation.messages.push(messageData);
+    }
 
     if (type === CSS_CLASSES.MESSAGE_USER) {
       activeConversation.hasUserInteraction = true;
@@ -535,12 +543,22 @@ function addMessageToHistory(
  * Send user message
  */
 export async function sendUserMessage(widget: ChatWidget, customText?: string): Promise<void> {
+  // One AI turn at a time: a second send would abort the reply streaming in,
+  // and that stream's close would then reset the new turn's state.
+  if (!isInHumanMode(widget) && widget.sseClient?.isConnected()) return;
+  // Nothing to send from before the widget has mounted (chatvia.send() can
+  // be called by the host page at any time).
+  if (!widget.messagesContainer) return;
+
   const text = customText || widget.chatInput.value.trim();
   // Allow attachment-only messages — the user can attach a PDF and hit send
   // without typing anything; the LLM still gets the URL through the notice
   // appended server-side.
   const pendingAttachments = Array.isArray(widget.attachments) ? [...widget.attachments] : [];
   if (!text && pendingAttachments.length === 0) return;
+  // A file still uploading has no URL yet; wait for it rather than sending a
+  // placeholder (its chip shows a spinner until it is ready).
+  if (pendingAttachments.some(attachment => !attachment.url)) return;
 
   const userMessageEl = await addMessage(widget, CSS_CLASSES.MESSAGE_USER, text, true, {
     attachments: pendingAttachments
@@ -566,16 +584,7 @@ export async function sendUserMessage(widget: ChatWidget, customText?: string): 
     const success = await sendMessageInHumanMode(widget, text);
 
     if (!success) {
-      const el = await addMessage(
-        widget,
-        CSS_CLASSES.MESSAGE_SYSTEM,
-        t('errors.message_send_failed'),
-        false,
-        {
-          retryText: text
-        }
-      );
-      el?.classList.add('error');
+      await showSendFailure(widget, t('errors.message_send_failed'), text, !customText);
     }
 
     widget.scrollToBottom();
@@ -604,16 +613,7 @@ export async function sendUserMessage(widget: ChatWidget, customText?: string): 
     console.error('SSE client not initialized.');
     clearTimeout(widget._loadingTimeout);
     widget.hideLoading();
-    const el = await addMessage(
-      widget,
-      CSS_CLASSES.MESSAGE_SYSTEM,
-      t('errors.connection_unavailable'),
-      false,
-      {
-        retryText: text
-      }
-    );
-    el?.classList.add('error');
+    await showSendFailure(widget, t('errors.connection_unavailable'), text, !customText);
     return;
   }
 
@@ -648,16 +648,7 @@ export async function sendUserMessage(widget: ChatWidget, customText?: string): 
     console.error('Failed to send message via SSE.');
     clearTimeout(widget._loadingTimeout);
     widget.hideLoading();
-    const el = await addMessage(
-      widget,
-      CSS_CLASSES.MESSAGE_SYSTEM,
-      t('errors.message_send_failed'),
-      false,
-      {
-        retryText: text
-      }
-    );
-    el?.classList.add('error');
+    await showSendFailure(widget, t('errors.message_send_failed'), text, !customText);
     widget.chatInput.disabled = false;
     widget.sendButton.disabled = false;
   } else {
@@ -674,6 +665,32 @@ export async function sendUserMessage(widget: ChatWidget, customText?: string): 
   // Keep the pinned question in place (or fall back to bottom if the send failed
   // and an error message cleared the pin).
   widget.followStream();
+}
+
+/**
+ * Show an error for a failed turn as a red banner, marked as a connection
+ * error so it is cleared once a stream works again (removeConnectionErrorMessages).
+ */
+export async function showConnectionError(widget: ChatWidget, text: string): Promise<void> {
+  const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, text, false);
+  el?.classList.add('error', CSS_CLASSES.CONNECTION_ERROR);
+}
+
+/**
+ * A message that never reached the server: say so, and when the visitor typed
+ * it, put the text back in the (empty) composer so Enter retries it.
+ */
+async function showSendFailure(
+  widget: ChatWidget,
+  errorText: string,
+  text: string,
+  wasTyped: boolean
+): Promise<void> {
+  await showConnectionError(widget, errorText);
+  if (wasTyped && text && !widget.chatInput.value) {
+    widget.chatInput.value = text;
+    widget.autoResizeInput();
+  }
 }
 
 /**
@@ -1004,11 +1021,9 @@ export async function renderStreamError(widget: ChatWidget, message?: string): P
     streamingMsgElement.remove();
   }
 
-  const text = message || t('errors.response_failed');
-  const el = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, text, false);
-  // `.error` swaps the default (green handoff-style) system bubble for the
-  // red error variant + warning-triangle icon defined in widget.css.
-  el?.classList.add('error');
+  // `.error` (added by showConnectionError) swaps the default green status
+  // bubble for the red error variant + warning-triangle icon in widget.css.
+  await showConnectionError(widget, message || t('errors.response_failed'));
 
   if (widget.chatInput) widget.chatInput.disabled = false;
   if (widget.sendButton) widget.sendButton.disabled = false;

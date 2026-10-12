@@ -1589,6 +1589,10 @@ export class ChatWidget {
       }
 
       const body: { data: Attachment } = await response.json();
+      // The visitor removed the chip, or sent the message and cleared the strip,
+      // while this file was uploading: drop the result instead of attaching it,
+      // invisibly, to their next message.
+      if (!chip.isConnected) return;
       const att = body.data;
       // Swap the temp entry for the server's authoritative attachment record.
       this.attachments = this.attachments.filter(a => a.id !== tempId);

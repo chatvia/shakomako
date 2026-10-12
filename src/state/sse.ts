@@ -222,17 +222,9 @@ export async function handleReceivedMessage(
  * Remove connection error messages
  */
 export function removeConnectionErrorMessages(widget: ChatWidget): void {
+  // Marked by showConnectionError(): works in every language, unlike matching
+  // the English error text.
   widget.messagesContainer
-    ?.querySelectorAll(`.${CSS_CLASSES.MESSAGE}.${CSS_CLASSES.MESSAGE_SYSTEM}`)
-    .forEach(element => {
-      const bubble = element.querySelector(`.${CSS_CLASSES.MESSAGE_BUBBLE}`);
-      if (
-        bubble &&
-        (bubble.textContent.includes('Unable to') ||
-          bubble.textContent.includes('Failed to') ||
-          bubble.textContent.includes('Connection lost'))
-      ) {
-        element.remove();
-      }
-    });
+    ?.querySelectorAll(`.${CSS_CLASSES.CONNECTION_ERROR}`)
+    .forEach(element => element.remove());
 }
