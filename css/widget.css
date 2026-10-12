@@ -2170,21 +2170,21 @@
   justify-content: center;
   z-index: 100000 !important;
   backdrop-filter: blur(4px);
-  opacity: 0;
-  animation: dialogFadeIn 0.2s ease forwards;
+  /* The hidden start state lives in the keyframes, not here: with reduced
+     motion the animation is removed, and a resting opacity of 0 would leave
+     the dialog invisible yet focused. */
+  animation: dialogFadeIn 0.2s ease;
 }
 
 .chatvia-widget-confirm-content {
-  background-color: #ffffff;
+  background-color: var(--chat-surface);
   padding: 24px 28px;
   border-radius: var(--chat-radius-lg);
   box-shadow: var(--chat-shadow-xl);
   max-width: 400px;
   width: 90%;
   z-index: 100001 !important;
-  opacity: 0;
-  transform: translateY(20px) scale(0.95);
-  animation: dialogSlideIn 0.3s ease forwards;
+  animation: dialogSlideIn 0.3s ease;
   border: 1px solid var(--chat-border-subtle);
 }
 
@@ -2210,6 +2210,7 @@
 }
 
 .chatvia-widget-confirm-buttons button {
+  min-height: 40px;
   padding: 10px 18px;
   border-radius: var(--chat-radius-md);
   border: none;
@@ -2220,12 +2221,13 @@
 }
 
 .chatvia-widget-confirm-cancel {
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: var(--chat-surface-hover);
+  color: var(--chat-text-secondary);
 }
 
 .chatvia-widget-confirm-cancel:hover {
-  background-color: #e2e8f0;
+  background-color: color-mix(in srgb, var(--chat-text) 12%, var(--chat-surface));
+  color: var(--chat-text);
 }
 
 .chatvia-widget-confirm-delete {
@@ -2978,9 +2980,11 @@
    Redefining the semantic tokens here cascades to every
    token-driven surface (messages, bubbles, input, starters,
    menu, scrollbar, code). The explicit rules below cover the
-   remaining surfaces that still carry hard-coded light values.
+   remaining surfaces that still carry hard-coded light values. The confirm
+   dialog lives on <body>, so it gets the same tokens through its own class.
    ============================================ */
-.chatvia-widget .chatvia-widget-window.chatvia-widget-dark {
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark,
+.chatvia-widget-confirm-dialog.chatvia-widget-dark {
   --chat-bg: #0f172a;
   --chat-bg-secondary: #1e293b;
   --chat-surface: #1e293b;
@@ -3011,6 +3015,9 @@
   --chat-shadow-lg: 0 12px 28px -8px rgba(0, 0, 0, 0.6), 0 6px 14px -8px rgba(0, 0, 0, 0.45);
   --chat-shadow-xl: 0 24px 60px -16px rgba(0, 0, 0, 0.7), 0 12px 30px -12px rgba(0, 0, 0, 0.5);
   --chat-ring-hairline: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.chatvia-widget .chatvia-widget-window.chatvia-widget-dark {
   background-color: var(--chat-bg);
 }
 

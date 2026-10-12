@@ -114,6 +114,10 @@ export class ChatWidget {
   /** Conversation the session init returned; wins over the stored one. */
   initialConversationId?: string | null;
   private _activeConversationId?: string | null;
+  /** Set by destroy(); async init steps check it so they don't revive the widget. */
+  private _destroyed?: boolean;
+  /** The open confirmation dialog, if any (it lives on <body>). */
+  private _confirmDialog?: HTMLDivElement | null;
 
   // State
   conversations: Conversation[];
@@ -1699,29 +1703,47 @@ export class ChatWidget {
     confirmText: string,
     onConfirm: () => void
   ): void {
-    // Dialog lives at document.body, so dir is not inherited from the widget
-    // container — stamp it explicitly to flip text/button alignment in RTL.
+    this._confirmDialog?.remove();
+
+    // Give focus back to whatever opened the dialog when it closes. A menu
+    // item is hidden by then (the menu closes first), so use the menu button.
+    const opener = document.activeElement as HTMLElement | null;
+    const returnFocusTo = opener && this.menuDropdown?.contains(opener) ? this.menuButton : opener;
+
+    // Dialog lives at document.body, so neither dir nor the theme is inherited
+    // from the widget — stamp both explicitly.
     const dialog = createElement('div', {
-      className: CSS_CLASSES.CONFIRM_DIALOG,
+      className:
+        this.settings.theme === 'dark'
+          ? `${CSS_CLASSES.CONFIRM_DIALOG} ${CSS_CLASSES.WINDOW_DARK}`
+          : CSS_CLASSES.CONFIRM_DIALOG,
       dir: getDirection()
     });
 
-    const content = createElement('div', { className: CSS_CLASSES.CONFIRM_CONTENT });
+    const content = createElement('div', {
+      className: CSS_CLASSES.CONFIRM_CONTENT,
+      role: 'alertdialog',
+      'aria-modal': 'true',
+      'aria-labelledby': 'chatvia-widget-confirm-title',
+      'aria-describedby': 'chatvia-widget-confirm-message'
+    });
 
-    const titleEl = createElement('h3');
+    const titleEl = createElement('h3', { id: 'chatvia-widget-confirm-title' });
     titleEl.textContent = title;
 
-    const messageEl = createElement('p');
+    const messageEl = createElement('p', { id: 'chatvia-widget-confirm-message' });
     messageEl.textContent = message;
 
     const buttonsContainer = createElement('div', { className: CSS_CLASSES.CONFIRM_BUTTONS });
 
     const cancelButton = createElement('button', {
+      type: 'button',
       className: CSS_CLASSES.CONFIRM_CANCEL,
       textContent: t('confirm.cancel')
     });
 
     const deleteButton = createElement('button', {
+      type: 'button',
       className: CSS_CLASSES.CONFIRM_DELETE,
       textContent: confirmText
     });
@@ -1734,13 +1756,34 @@ export class ChatWidget {
     content.appendChild(buttonsContainer);
     dialog.appendChild(content);
 
-    document.body.appendChild(dialog);
+    const close = () => {
+      dialog.remove();
+      if (this._confirmDialog === dialog) this._confirmDialog = null;
+      returnFocusTo?.focus();
+    };
 
-    cancelButton.addEventListener('click', () => dialog.remove());
+    // Escape cancels; Tab cycles between the two buttons instead of leaving
+    // the dialog for the page behind it.
+    dialog.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        close();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        (document.activeElement === cancelButton ? deleteButton : cancelButton).focus();
+      }
+    });
+    cancelButton.addEventListener('click', close);
     deleteButton.addEventListener('click', () => {
       onConfirm();
-      dialog.remove();
+      close();
     });
+
+    document.body.appendChild(dialog);
+    this._confirmDialog = dialog;
+    // Start on Cancel: the safe default for a destructive action.
+    cancelButton.focus();
   }
 
   // ========================================
@@ -1784,6 +1827,9 @@ export class ChatWidget {
   // ========================================
 
   destroy(): void {
+    this._destroyed = true;
+    this._confirmDialog?.remove();
+    this._confirmDialog = null;
     this._cancelTrackedRafs(['_scrollRAF', '_resizeRAF', '_streamRenderRAF']);
     this._streamRenderScheduled = false;
 
