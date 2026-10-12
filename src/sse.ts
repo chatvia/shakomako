@@ -53,6 +53,16 @@ interface StreamEnvelopeData extends ToolEvent {
   status?: string;
 }
 
+/**
+ * How long a turn may go without any data (no response yet, or no new chunk)
+ * before it is abandoned as a failure. Without a limit a stalled stream left
+ * the composer disabled until the page was reloaded.
+ */
+const STREAM_IDLE_TIMEOUT = 120000;
+
+/** Error code for a turn lost to the network or the idle timeout. */
+export const CONNECTION_LOST = 'connection_lost';
+
 export function createSSEClient(
   agent_id: string,
   session_id: string | null,
@@ -91,6 +101,29 @@ export function createSSEClient(
     isStreaming = true;
     let isDone = false;
 
+    // Idle watchdog: restarted by the response and by every chunk, cleared
+    // when the turn ends. Firing aborts the turn as a failure (not as a
+    // supersede, which is what a plain abort means below).
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    let timedOut = false;
+    const keepAlive = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        if (myController.signal.aborted) return;
+        timedOut = true;
+        myController.abort();
+      }, STREAM_IDLE_TIMEOUT);
+    };
+    keepAlive();
+
+    function finishTurn(): Promise<void> {
+      clearTimeout(idleTimer);
+      isDone = true;
+      isStreaming = false;
+      sseCallbacks.onClose();
+      return Promise.resolve();
+    }
+
     const sendUrl = getApiUrl() + '/stream';
 
     // Transient, worker-/gateway-level failures: the POST was rejected before a
@@ -122,6 +155,7 @@ export function createSSEClient(
         }),
         signal: myController.signal
       }).then((response): Promise<void> => {
+        keepAlive();
         if (!response.ok) {
           if (
             TRANSIENT_STATUS.has(response.status) &&
@@ -156,13 +190,9 @@ export function createSSEClient(
           value
         }: ReadableStreamReadResult<Uint8Array>): Promise<void> {
           if (done || isDone) {
-            if (!isDone) {
-              isDone = true;
-              isStreaming = false;
-              sseCallbacks.onClose();
-            }
-            return Promise.resolve();
+            return isDone ? Promise.resolve() : finishTurn();
           }
+          keepAlive();
 
           // Decode the chunk and add to buffer
           buffer += decoder.decode(value, { stream: true });
@@ -198,10 +228,7 @@ export function createSSEClient(
 
               // terminal: clean `done` envelope OR legacy [DONE]
               if (type === 'done' || event.content === '[DONE]') {
-                isDone = true;
-                isStreaming = false;
-                sseCallbacks.onClose();
-                return Promise.resolve();
+                return finishTurn();
               }
 
               // backend-signalled error: surface, then let the following `done` close
@@ -218,27 +245,23 @@ export function createSSEClient(
 
               // function + MCP tool lifecycle
               if (type === 'tool') {
-                sseCallbacks.onMessage({ type: 'tool', id: assistantMessageId, ...d });
+                // `type` last: a tool payload's own `type` field must not hide that
+                // this is a tool event.
+                sseCallbacks.onMessage({ id: assistantMessageId, ...d, type: 'tool' });
                 continue;
               }
 
               // handoff now rides inside meta{key:'handoff', value:{status,…}}
               if (type === 'meta' && d.key === 'handoff' && d.value) {
                 sseCallbacks.onMessage({ ...d.value, status: d.value.status });
-                isDone = true;
-                isStreaming = false;
-                sseCallbacks.onClose();
-                return Promise.resolve();
+                return finishTurn();
               }
 
               // legacy flat handoff: { status: 'human' | 'returned' | 'ai' }
               const legacyStatus = d.status || event.status;
               if (legacyStatus && ['human', 'returned', 'ai'].includes(legacyStatus)) {
                 sseCallbacks.onMessage({ ...(event.data || event), status: legacyStatus });
-                isDone = true;
-                isStreaming = false;
-                sseCallbacks.onClose();
-                return Promise.resolve();
+                return finishTurn();
               }
 
               // backward-compat: flat { content } (old format + server.js mock)
@@ -259,17 +282,16 @@ export function createSSEClient(
       // Single failure handler for the whole turn — runs only after retries are
       // exhausted (or on a non-transient/aborted failure).
       attempt(MAX_RETRIES).catch((error: Error) => {
+        clearTimeout(idleTimer);
         isStreaming = false;
-        if (error.name === 'AbortError') {
+        if (error.name === 'AbortError' && !timedOut) {
           // Superseded by a new send or torn down — not a failed turn.
           console.log('Fetch aborted');
           sseCallbacks.onClose({ aborted: true });
         } else {
-          console.error('❌ SSE error:', error);
-          sseCallbacks.onMessage({
-            type: 'error',
-            message: 'Connection lost. Please try again.'
-          });
+          console.error('❌ SSE error:', timedOut ? 'no data for too long' : error);
+          // The widget turns the code into a message in the visitor's language.
+          sseCallbacks.onMessage({ type: 'error', code: CONNECTION_LOST });
           sseCallbacks.onClose();
         }
       });

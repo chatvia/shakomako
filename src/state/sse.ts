@@ -15,6 +15,8 @@ import {
   renderStreamError
 } from './messages';
 import { handleHandoffEvent } from './handoff';
+import { t } from '../i18n';
+import { CONNECTION_LOST } from '../sse';
 import type { SSECloseInfo } from '../sse';
 import type { StreamMessage } from '../types';
 import type { ChatWidget } from '../widget';
@@ -171,7 +173,11 @@ export async function handleReceivedMessage(
   if (messageType === 'error') {
     widget._streamHandled = true;
     widget._streamErrorShown = true;
-    renderStreamError(widget, message.message);
+    renderStreamError(
+      widget,
+      message.message ||
+        (message.code === CONNECTION_LOST ? t('errors.connection_lost') : undefined)
+    );
     return;
   }
 
