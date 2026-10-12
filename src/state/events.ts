@@ -105,7 +105,7 @@ export function setupBarListeners(widget: ChatWidget): void {
 
   // Enter submits
   widget.barInput?.addEventListener('keydown', async e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing(e)) {
       e.preventDefault();
       await handleBarSubmit(widget);
     }
@@ -150,6 +150,15 @@ async function handleBarSubmit(widget: ChatWidget): Promise<void> {
 }
 
 /**
+ * Whether a key belongs to an IME composition (Japanese, Chinese, Korean…):
+ * Enter there picks a candidate, it doesn't send. Safari reports the Enter that
+ * commits a composition with isComposing false but keyCode 229.
+ */
+function isComposing(e: KeyboardEvent): boolean {
+  return e.isComposing || e.keyCode === 229;
+}
+
+/**
  * Setup window control listeners
  */
 export function setupWindowControlListeners(widget: ChatWidget): void {
@@ -169,7 +178,7 @@ export function setupInputListeners(widget: ChatWidget): void {
   // A native <button>: Enter and Space already fire `click`.
   widget.sendButton?.addEventListener('click', () => widget.sendUserMessage());
   widget.chatInput?.addEventListener('keydown', async e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing(e)) {
       e.preventDefault();
       await widget.sendUserMessage();
     }
@@ -302,8 +311,10 @@ export function setupKeyboardShortcuts(widget: ChatWidget): void {
         return;
       }
 
-      // Escape to close panel
-      if (e.key === 'Escape') {
+      // Escape closes the menu, then the chat, then the expanded bar — but only
+      // while focus is inside the widget: an Escape meant for the host page's
+      // own dialog or form field must not close the chat.
+      if (e.key === 'Escape' && widget.container.contains(e.target as Node)) {
         if (widget.menuDropdownIsOpened()) {
           widget.closeMenuDropdown();
           return;
@@ -325,9 +336,16 @@ export function setupKeyboardShortcuts(widget: ChatWidget): void {
       const isInputFocused =
         activeElement === widget.chatInput || activeElement === widget.barInput;
 
-      if (isInputFocused && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      if (isInputFocused && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !isComposing(e)) {
         const userMessages = getUserMessageHistory(widget);
         if (userMessages.length === 0) return;
+
+        // Take over the arrows only at the edge of the draft: ArrowUp on its
+        // first line, ArrowDown while already browsing history. Elsewhere they
+        // move the caret through a multi-line message as usual.
+        const caret = activeElement.selectionStart ?? 0;
+        const onFirstLine = !activeElement.value.slice(0, caret).includes('\n');
+        if (e.key === 'ArrowUp' ? !onFirstLine : widget._historyIndex < 0) return;
 
         e.preventDefault();
 
