@@ -8,6 +8,14 @@
 // persistence" keeps the widget rendering; it just re-verifies and re-creates
 // sessions each load instead of caching them. (config.ts guards its theme
 // storage the same way.)
+//
+// "No persistence" still has to mean "remembered for this page view": the
+// widget keeps state such as the active conversation id here, and losing it on
+// every write made init create a second conversation and then lock the chat.
+// So when localStorage throws, values fall back to this in-memory map, shared
+// by every PersistenceManager on the page.
+const memoryFallback = new Map<string, string>();
+
 export class PersistenceManager {
   agentId: string | null;
 
@@ -30,6 +38,8 @@ export class PersistenceManager {
       localStorage.setItem(key, value);
     } catch {
       /* storage unavailable — non-fatal, widget still renders */
+      if (value === null || value === undefined) memoryFallback.delete(key);
+      else memoryFallback.set(key, value);
     }
   }
 
@@ -38,7 +48,7 @@ export class PersistenceManager {
     try {
       return localStorage.getItem(key);
     } catch {
-      return null;
+      return memoryFallback.get(key) ?? null;
     }
   }
 
@@ -48,6 +58,7 @@ export class PersistenceManager {
       localStorage.removeItem(key);
     } catch {
       /* storage unavailable — non-fatal */
+      memoryFallback.delete(key);
     }
   }
 
@@ -66,6 +77,9 @@ export class PersistenceManager {
       }
     } catch {
       /* storage unavailable — non-fatal */
+      for (const key of [...memoryFallback.keys()]) {
+        if (!this.agentId || key.startsWith(`${this.agentId}-`)) memoryFallback.delete(key);
+      }
     }
   }
 }

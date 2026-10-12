@@ -8,8 +8,30 @@ import { createElement, createIcon } from '../ui';
 import { cleanupHandoff, subscribeToConversation } from './handoff';
 import { mapRoleToMessageType } from './messages';
 import { t } from '../i18n';
-import type { Conversation } from '../types';
+import type { ChatMessage, Conversation } from '../types';
 import type { ChatWidget } from '../widget';
+
+/**
+ * The conversation list for init. The list only serves to pick and validate
+ * the active conversation, so when it can't be loaded, fall back to the
+ * conversation the session init just validated: creating a new one instead
+ * would orphan the visitor's real conversation. With no such conversation the
+ * empty list leads to a new one, as for a first visit.
+ */
+async function loadConversationList(
+  widget: ChatWidget
+): Promise<{ conversations: Conversation[]; activeConversationId: string | null }> {
+  try {
+    return await widget.storageManager!.loadConversations();
+  } catch (error) {
+    console.warn('Could not load the conversation list; continuing with the session one.', error);
+    const sessionConversationId = widget.initialConversationId ?? null;
+    return {
+      conversations: sessionConversationId ? [{ id: sessionConversationId }] : [],
+      activeConversationId: sessionConversationId
+    };
+  }
+}
 
 /**
  * Initialize conversations from storage
@@ -17,8 +39,7 @@ import type { ChatWidget } from '../widget';
 export async function initConversations(widget: ChatWidget): Promise<void> {
   console.log('Initializing conversations...');
   try {
-    const { conversations, activeConversationId } =
-      await widget.storageManager!.loadConversations();
+    const { conversations, activeConversationId } = await loadConversationList(widget);
     console.log(
       'Loaded conversations from API:',
       conversations,
@@ -90,12 +111,13 @@ export async function createNewConversation(widget: ChatWidget): Promise<Convers
       return newConversation;
     } else {
       console.error('API did not return a new conversation object.');
-      await widget.disabledChat(t('errors.new_chat_failed'));
       return null;
     }
   } catch (error) {
+    // Report failure to the caller rather than locking the widget for good:
+    // "New chat" shows an error message, and during init loadActiveConversation
+    // locks the chat itself if no conversation can be established.
     console.error('Failed to create new conversation:', error);
-    await widget.disabledChat(t('errors.new_chat_error'));
     return null;
   }
 }
@@ -140,9 +162,13 @@ export async function loadActiveConversation(widget: ChatWidget): Promise<void> 
           await widget.disabledChat(t('errors.load_chat_failed'));
           return;
         }
-        const messages = await widget.storageManager!.getMessages(
-          potentiallyNewActiveConversation.id
-        );
+        let messages: ChatMessage[] = [];
+        try {
+          messages = await widget.storageManager!.getMessages(potentiallyNewActiveConversation.id);
+        } catch (error) {
+          console.error('Error loading messages after re-initialization:', error);
+          await showError(widget, t('errors.messages_load_failed'));
+        }
         widget.messageHistory = messages || [];
         potentiallyNewActiveConversation.messages = widget.messageHistory;
         console.log(
@@ -161,6 +187,8 @@ export async function loadActiveConversation(widget: ChatWidget): Promise<void> 
 
     console.log(`Loading messages for active conversation: ${activeConversation.id}`);
 
+    // Only fetching and rendering the messages is guarded: if that fails the
+    // visitor still gets a working conversation (stream and live chat below).
     try {
       const messages = await widget.storageManager!.getMessages(activeConversation.id);
       widget.messageHistory = messages || [];
@@ -190,28 +218,36 @@ export async function loadActiveConversation(widget: ChatWidget): Promise<void> 
       } else {
         widget.hideStarters();
       }
-
-      widget._updateConversationActionButtons();
-
-      // Clean up previous conversation's handoff state and reset to AI mode
-      cleanupHandoff(widget);
-
-      // Re-setup SSE with the new conversation ID (default mode)
-      if (widget.setupSSE) {
-        widget.setupSSE();
-      }
-
-      // Always subscribe to WebSocket for this conversation
-      // This ensures we receive handoff events even for conversations without messages yet
-      await subscribeToConversation(widget);
     } catch (error) {
       console.error(`Error loading messages for conversation ${activeConversation.id}:`, error);
-      await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('errors.messages_load_failed'), false);
+      widget.messageHistory = [];
+      widget.hideStarters();
+      await showError(widget, t('errors.messages_load_failed'));
     }
+
+    widget._updateConversationActionButtons();
+
+    // Clean up previous conversation's handoff state and reset to AI mode
+    cleanupHandoff(widget);
+
+    // Re-setup SSE with the new conversation ID (default mode)
+    if (widget.setupSSE) {
+      widget.setupSSE();
+    }
+
+    // Always subscribe to WebSocket for this conversation
+    // This ensures we receive handoff events even for conversations without messages yet
+    await subscribeToConversation(widget);
     widget.scrollToBottom();
   } finally {
     widget.hideFetchSpinner();
   }
+}
+
+/** Show a failure as the red error banner (not the neutral status one). */
+async function showError(widget: ChatWidget, text: string): Promise<void> {
+  const el = await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, text, false);
+  el?.classList.add('error');
 }
 
 /**
@@ -248,7 +284,7 @@ export async function startNewConversation(widget: ChatWidget): Promise<void> {
     }
   } catch (error) {
     console.error('Error starting new conversation:', error);
-    await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('errors.start_chat_failed'), false);
+    await showError(widget, t('errors.start_chat_failed'));
   } finally {
     widget.hideFetchSpinner();
   }
@@ -273,7 +309,7 @@ export async function loadChatHistory(widget: ChatWidget): Promise<void> {
     widget.messagesContainer?.appendChild(conversationsContainer);
   } catch (error) {
     console.error('Error loading chat history:', error);
-    await widget.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, t('errors.history_load_failed'), false);
+    await showError(widget, t('errors.history_load_failed'));
     if (widget.inputContainer) widget.inputContainer.style.display = 'flex';
   } finally {
     widget.hideFetchSpinner();
@@ -494,10 +530,9 @@ function getFirstUserMessage(widget: ChatWidget, conversation: Conversation): st
     return messageType === CSS_CLASSES.MESSAGE_USER;
   });
 
-  return firstUserMessage
-    ? firstUserMessage.content.substring(0, 50) +
-        (firstUserMessage.content.length > 50 ? '...' : '')
-    : null;
+  // An attachment-only message can come back with no text.
+  const content = firstUserMessage?.content;
+  return content ? content.substring(0, 50) + (content.length > 50 ? '...' : '') : null;
 }
 
 /**

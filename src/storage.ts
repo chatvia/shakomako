@@ -30,55 +30,54 @@ export default class StorageManager {
     this.persistenceManager.set(this.activeConversationPersistedId, conversationId);
   }
 
+  /**
+   * The visitor's conversations and which one is active. Throws when they can't
+   * be loaded, so callers can tell a failure from a visitor with no history.
+   */
   async loadConversations(): Promise<{
     conversations: Conversation[];
     activeConversationId: string | null;
   }> {
-    try {
-      const response = await api({
-        endpoint: 'conversations',
-        method: 'GET',
-        headers: {
-          'X-AGENT-ID': this.agentId,
-          'X-SESSION-ID': this.sessionId,
-          // Always pull a fresh list from the server — never a cached response.
-          // Without this the browser/CDN can serve a stale list and a freshly
-          // generated conversation title (server-side) wouldn't show. Mirrors
-          // the no-cache already used by getMessages().
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load conversations');
+    const response = await api({
+      endpoint: 'conversations',
+      method: 'GET',
+      headers: {
+        'X-AGENT-ID': this.agentId,
+        'X-SESSION-ID': this.sessionId,
+        // Always pull a fresh list from the server — never a cached response.
+        // Without this the browser/CDN can serve a stale list and a freshly
+        // generated conversation title (server-side) wouldn't show. Mirrors
+        // the no-cache already used by getMessages().
+        'Cache-Control': 'no-cache'
       }
+    });
 
-      const data: ConversationsResponse = await response.json();
-
-      // Prioritize locally stored active conversation ID over server's
-      const localActiveConversationId = this.getActiveConversationId();
-      let activeConversationId = localActiveConversationId;
-
-      // Only use server's active conversation ID if we don't have one locally
-      if (!activeConversationId && data.active_conversation_id) {
-        activeConversationId = data.active_conversation_id;
-        this.setActiveConversationId(activeConversationId);
-      }
-
-      // If still no active conversation ID, use the first conversation
-      if (!activeConversationId && data.conversations && data.conversations.length > 0) {
-        activeConversationId = data.conversations[0].id;
-        this.setActiveConversationId(activeConversationId);
-      }
-
-      return {
-        conversations: data.conversations || [],
-        activeConversationId: activeConversationId
-      };
-    } catch (error) {
-      console.error('Error loading conversations from API:', error);
-      return { conversations: [], activeConversationId: null };
+    if (!response.ok) {
+      throw new Error('Failed to load conversations');
     }
+
+    const data: ConversationsResponse = await response.json();
+
+    // Prioritize locally stored active conversation ID over server's
+    const localActiveConversationId = this.getActiveConversationId();
+    let activeConversationId = localActiveConversationId;
+
+    // Only use server's active conversation ID if we don't have one locally
+    if (!activeConversationId && data.active_conversation_id) {
+      activeConversationId = data.active_conversation_id;
+      this.setActiveConversationId(activeConversationId);
+    }
+
+    // If still no active conversation ID, use the first conversation
+    if (!activeConversationId && data.conversations && data.conversations.length > 0) {
+      activeConversationId = data.conversations[0].id;
+      this.setActiveConversationId(activeConversationId);
+    }
+
+    return {
+      conversations: data.conversations || [],
+      activeConversationId: activeConversationId
+    };
   }
 
   async createNewConversation(): Promise<Conversation> {
@@ -140,7 +139,7 @@ export default class StorageManager {
 
   async deleteAllConversations(): Promise<boolean> {
     try {
-      await api({
+      const response = await api({
         endpoint: 'conversations',
         method: 'DELETE',
         headers: {
@@ -148,6 +147,12 @@ export default class StorageManager {
           'X-SESSION-ID': this.sessionId
         }
       });
+      // A rejected request (401, 500, …) deleted nothing, so keep the local
+      // state rather than showing the visitor an empty history.
+      if (!response.ok) {
+        console.error('Failed to delete all conversations:', response.status);
+        return false;
+      }
       this.setActiveConversationId(null);
       return true;
     } catch (error) {
@@ -156,27 +161,23 @@ export default class StorageManager {
     }
   }
 
+  /** A conversation's messages. Throws when they can't be loaded. */
   async getMessages(conversationId: string): Promise<ChatMessage[]> {
-    try {
-      const response = await api({
-        endpoint: 'conversations/messages',
-        method: 'GET',
-        headers: {
-          'X-AGENT-ID': this.agentId,
-          'X-SESSION-ID': this.sessionId,
-          'X-CONVERSATION-ID': conversationId,
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load messages');
+    const response = await api({
+      endpoint: 'conversations/messages',
+      method: 'GET',
+      headers: {
+        'X-AGENT-ID': this.agentId,
+        'X-SESSION-ID': this.sessionId,
+        'X-CONVERSATION-ID': conversationId,
+        'Cache-Control': 'no-cache'
       }
+    });
 
-      return await response.json();
-    } catch (error) {
-      console.error(`Error loading messages for conversation ${conversationId}:`, error);
-      return [];
+    if (!response.ok) {
+      throw new Error(`Failed to load messages (HTTP ${response.status})`);
     }
+
+    return await response.json();
   }
 }
