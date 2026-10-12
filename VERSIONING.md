@@ -13,7 +13,7 @@ embed.js           (unversioned, small, rarely changes)
 
 ## `embed.js` (the loader)
 
-Location: `dist/embed.js`. Source: `src/embed.js`. This is the only file a
+Location: `dist/embed.js`. Source: `src/embed.ts`. This is the only file a
 site embeds.
 
 On load it:
@@ -61,7 +61,7 @@ A second `embed.js` on the same page does nothing (`window.chatvia.initialized`)
 
 ## `{VERSION}/widget.min.js` (the widget)
 
-Location: `dist/{VERSION}/widget.min.js`. Source: `src/main.js`.
+Location: `dist/{VERSION}/widget.min.js`. Source: `src/main.ts`.
 
 One bundle serves both modes; it reads `window.chatvia.mode` to render the
 chat bubble or the floating bar. It is an IIFE (a classic script, not an ES
@@ -70,7 +70,7 @@ inlined into the bundle.
 
 ## Build
 
-`rollup.config.js` produces:
+`rollup.config.ts` produces:
 
 ```
 dist/

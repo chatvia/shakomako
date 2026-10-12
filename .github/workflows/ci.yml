@@ -1,8 +1,8 @@
 name: CI
 
-# Lint, test and build the widget on every push and pull request. It does not
-# publish anything: a Chatvia server builds the release (a v* tag) named in
-# its Dockerfile.
+# Type-check, lint, test and build the widget on every push and pull request.
+# It does not publish anything: a Chatvia server builds the release (a v* tag)
+# named in its Dockerfile.
 on:
   push:
     branches:
@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Lint, test and build
+    name: Type-check, lint, test and build
     runs-on: ubuntu-latest
 
     env:
@@ -44,6 +44,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
 
       - name: Lint
         run: npm run lint

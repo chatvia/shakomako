@@ -1,0 +1,8 @@
+{
+  // The Vitest suite (test/), run in jsdom against the widget source.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo"
+  },
+  "include": ["src/env.d.ts", "test"]
+}

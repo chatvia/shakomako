@@ -1,0 +1,10 @@
+{
+  // One project per environment, so Node's types never leak into the widget
+  // source that runs in the browser. `npm run typecheck` checks all three.
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.test.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

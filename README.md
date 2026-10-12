@@ -26,7 +26,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-*   [Node.js](https://nodejs.org/) (LTS version recommended)
+*   [Node.js](https://nodejs.org/) 22.18 or newer. The widget is written in
+    TypeScript, and the build and demo scripts run their `.ts` files directly
+    with Node's built-in type stripping.
 *   [npm](https://www.npmjs.com/) (comes with Node.js)
 
 ### Installation
@@ -96,6 +98,14 @@ npm run dev
 
 Vite serves the widget on `http://localhost:3000` and opens `index.html`.
 `bar.html` shows the bar launcher.
+
+Before pushing, run the checks CI runs:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+```
 
 ## Building for Production
 
@@ -256,8 +266,8 @@ chatvia.on('ready', () => {
 
 A Chatvia server builds and serves the widget itself (see "The chat widget"
 in its self-hosting guide), from the release named in its `Dockerfile`. CI
-(`.github/workflows/ci.yml`) lints, tests and builds the widget on every push
-and pull request. It does not publish it.
+(`.github/workflows/ci.yml`) type-checks, lints, tests and builds the widget
+on every push and pull request. It does not publish it.
 
 To host the widget somewhere else, build it and upload the contents of `dist/`
 to any static host or CDN. Point it at your Chatvia server with `VITE_API_URL`

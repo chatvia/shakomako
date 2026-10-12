@@ -1,0 +1,29 @@
+{
+  // The widget source (src/), which runs in the browser.
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    // Rollup (build) and Vite (dev server) emit the JavaScript; tsc only checks.
+    "noEmit": true,
+
+    // The bundles are not transpiled for older browsers. ES2020 keeps optional
+    // chaining and `??` as written, and with useDefineForClassFields off, class
+    // field declarations add no code, so the output runs where it did before.
+    "target": "ES2020",
+    "useDefineForClassFields": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": [],
+
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
