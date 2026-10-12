@@ -101,17 +101,19 @@ All optional, in `.env` (see the README for what happens without them):
 
 ## Releasing a new version
 
-A Chatvia server builds the release named by `SHAKOMAKO_VERSION` in Chatvia's
-`Dockerfile` into `public/shakomako` (`npm run shakomako:build` reads the same
-line). The version folder name changes by itself when the code changes. To
-ship a change to Chatvia:
+A Chatvia server builds the newest release of this repository into
+`public/shakomako`: the highest `vX.Y.Z` tag. Pre-release tags
+(`v3.1.0-beta.1`) and untagged commits are never built. Chatvia's
+`npm run shakomako:build` and its Docker release workflow both find the
+release by themselves; Chatvia does not store a version. The version folder
+name changes by itself when the code changes. To ship a change to Chatvia:
 
-1. `npm version X.Y.Z`. It sets the version in `package.json` and the
+1. When the change also needs a server change (the `/widget` API, its headers
+   or settings), merge that change in Chatvia first. Every Chatvia build takes
+   the newest release, so the server must be ready before the release exists.
+2. `npm version X.Y.Z`. It sets the version in `package.json` and the
    lockfile, commits, and tags `vX.Y.Z`.
-2. `git push --follow-tags`.
-3. In Chatvia, set `SHAKOMAKO_VERSION` in the `Dockerfile` to `vX.Y.Z`. When
-   the change also needs a server change (the `/widget` API, its headers or
-   settings), make both in the same Chatvia pull request.
+3. `git push --follow-tags`. The next Chatvia build takes the release.
 
 For a copy on a CDN:
 

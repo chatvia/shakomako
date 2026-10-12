@@ -1,8 +1,8 @@
 name: CI
 
 # Type-check, lint, test and build the widget on every push and pull request.
-# It does not publish anything: a Chatvia server builds the release (a v* tag)
-# named in its Dockerfile.
+# It does not publish anything: a Chatvia server builds the newest release
+# (the highest vX.Y.Z tag) itself.
 on:
   push:
     branches:

@@ -49,8 +49,8 @@ server serves it:
   agent settings.
 
 This is how a Chatvia server builds it. Chatvia's Docker image, and
-`npm run shakomako:build` in the Chatvia repository, build the release named by
-`SHAKOMAKO_VERSION` in Chatvia's `Dockerfile` into `public/shakomako`.
+`npm run shakomako:build` in the Chatvia repository, build the newest release
+of this repository (the highest `vX.Y.Z` tag) into `public/shakomako`.
 
 Set values in `.env` (copy `.env.example`) when the widget runs somewhere
 else, for example on the dev server or a CDN:
@@ -265,9 +265,9 @@ chatvia.on('ready', () => {
 ## Deployment
 
 A Chatvia server builds and serves the widget itself (see "The chat widget"
-in its self-hosting guide), from the release named in its `Dockerfile`. CI
-(`.github/workflows/ci.yml`) type-checks, lints, tests and builds the widget
-on every push and pull request. It does not publish it.
+in its self-hosting guide), from the newest release (the highest `vX.Y.Z`
+tag). CI (`.github/workflows/ci.yml`) type-checks, lints, tests and builds the
+widget on every push and pull request. It does not publish it.
 
 To host the widget somewhere else, build it and upload the contents of `dist/`
 to any static host or CDN. Point it at your Chatvia server with `VITE_API_URL`
