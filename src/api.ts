@@ -3,10 +3,22 @@ import { getApiUrl } from './endpoints';
 
 /**
  * Request headers (X-AGENT-ID, X-SESSION-ID, X-CONVERSATION-ID, …). A value
- * that is not known yet, such as the session id before the session starts, is
- * sent as fetch stringifies it.
+ * that is not known yet, such as the session id before the session starts,
+ * may be null; requestHeaders() leaves it out.
  */
 export type ApiHeaders = Record<string, string | null | undefined>;
+
+/**
+ * Headers ready for fetch(): entries without a value are dropped, so a missing
+ * id is an absent header rather than the literal string "null".
+ */
+export function requestHeaders(headers: ApiHeaders): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [name, value] of Object.entries(headers)) {
+    if (value !== null && value !== undefined) result[name] = value;
+  }
+  return result;
+}
 
 export interface ApiRequest {
   /** API endpoint, relative to the widget API base URL. */
@@ -54,7 +66,7 @@ export default async function api({
   try {
     const response = await fetch(`${apiUrl}/${endpoint}`, {
       method: method,
-      headers: mergedHeaders as HeadersInit,
+      headers: requestHeaders(mergedHeaders),
       body: body,
       // Add timeout via AbortController for better error handling
       signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined
@@ -93,7 +105,7 @@ export async function uploadFile({
 
   const response = await fetch(`${apiUrl}/${endpoint}`, {
     method: 'POST',
-    headers: mergedHeaders as HeadersInit,
+    headers: requestHeaders(mergedHeaders),
     body: form,
     signal: AbortSignal.timeout ? AbortSignal.timeout(120000) : undefined
   });

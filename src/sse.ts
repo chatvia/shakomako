@@ -1,4 +1,4 @@
-import type { ApiHeaders } from './api';
+import { requestHeaders } from './api';
 import { authHeaders } from './auth';
 import { getApiUrl } from './endpoints';
 import { debug } from './utils';
@@ -104,18 +104,18 @@ export function createSSEClient(
     function attempt(retriesLeft: number): Promise<void> {
       let assistantMessageId: string | null = null;
 
-      const headers: ApiHeaders = {
+      const headers = requestHeaders({
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
         'X-AGENT-ID': agent_id,
         'X-SESSION-ID': session_id,
         'X-CONVERSATION-ID': conversation_id,
         ...authHeaders(agent_id)
-      };
+      });
 
       return fetch(sendUrl, {
         method: 'POST',
-        headers: headers as HeadersInit,
+        headers,
         body: JSON.stringify({
           ...message,
           agent_id: agent_id
