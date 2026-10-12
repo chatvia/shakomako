@@ -69,6 +69,7 @@
     "verification_failed": "클라이언트 인증에 실패했습니다.",
     "session_failed": "세션 초기화에 실패했습니다.",
     "message_send_failed": "메시지를 보내지 못했습니다. 다시 시도해 주세요.",
+    "connection_lost": "연결이 끊어졌습니다. 다시 시도해 주세요.",
     "response_failed": "응답을 생성하는 중 문제가 발생했습니다. 다시 시도해 주세요.",
     "auth_required": "이 채팅은 로그인이 필요합니다."
   },

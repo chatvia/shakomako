@@ -69,6 +69,7 @@
     "verification_failed": "Xác minh máy khách thất bại.",
     "session_failed": "Khởi tạo phiên thất bại.",
     "message_send_failed": "Không gửi được tin nhắn. Vui lòng thử lại.",
+    "connection_lost": "Mất kết nối. Vui lòng thử lại.",
     "response_failed": "Đã xảy ra lỗi khi tạo phản hồi. Vui lòng thử lại.",
     "auth_required": "Cuộc trò chuyện này yêu cầu đăng nhập."
   },

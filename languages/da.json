@@ -69,6 +69,7 @@
     "verification_failed": "Klientverificering mislykkedes.",
     "session_failed": "Sessionsinitialisering mislykkedes.",
     "message_send_failed": "Kunne ikke sende besked. Prøv igen.",
+    "connection_lost": "Forbindelsen blev afbrudt. Prøv igen.",
     "response_failed": "Noget gik galt under generering af svaret. Prøv igen.",
     "auth_required": "Denne chat kræver login."
   },

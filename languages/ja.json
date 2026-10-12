@@ -69,6 +69,7 @@
     "verification_failed": "クライアントの認証に失敗しました。",
     "session_failed": "セッションの初期化に失敗しました。",
     "message_send_failed": "メッセージの送信に失敗しました。もう一度お試しください。",
+    "connection_lost": "接続が切断されました。もう一度お試しください。",
     "response_failed": "応答の生成中に問題が発生しました。もう一度お試しください。",
     "auth_required": "このチャットにはサインインが必要です。"
   },

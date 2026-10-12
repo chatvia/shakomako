@@ -69,6 +69,7 @@
     "verification_failed": "Falha na verificação do cliente.",
     "session_failed": "Falha na inicialização da sessão.",
     "message_send_failed": "Falha ao enviar a mensagem. Tente novamente.",
+    "connection_lost": "Conexão perdida. Tente novamente.",
     "response_failed": "Algo deu errado ao gerar a resposta. Tente novamente.",
     "auth_required": "Este chat requer login."
   },

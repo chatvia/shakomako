@@ -3,7 +3,7 @@
  * Handles SSE setup, message handling, and streaming
  */
 
-import { createSSEClient } from '../sse';
+import { CONNECTION_LOST, createSSEClient } from '../sse';
 import { CSS_CLASSES, STREAMING_DONE_MARKER, debug } from '../utils';
 import {
   startStreamingMessage,
@@ -16,7 +16,6 @@ import {
 } from './messages';
 import { handleHandoffEvent } from './handoff';
 import { t } from '../i18n';
-import { CONNECTION_LOST } from '../sse';
 import type { SSECloseInfo } from '../sse';
 import type { StreamMessage } from '../types';
 import type { ChatWidget } from '../widget';

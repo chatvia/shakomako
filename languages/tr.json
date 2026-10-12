@@ -69,6 +69,7 @@
     "verification_failed": "İstemci doğrulaması başarısız oldu.",
     "session_failed": "Oturum başlatılamadı.",
     "message_send_failed": "Mesaj gönderilemedi. Lütfen tekrar deneyin.",
+    "connection_lost": "Bağlantı kesildi. Lütfen tekrar deneyin.",
     "response_failed": "Yanıt oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.",
     "auth_required": "Bu sohbet için oturum açmanız gerekiyor."
   },

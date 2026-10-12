@@ -69,6 +69,7 @@
     "verification_failed": "Échec de la vérification du client.",
     "session_failed": "Échec de l'initialisation de la session.",
     "message_send_failed": "Échec de l'envoi du message. Veuillez réessayer.",
+    "connection_lost": "Connexion perdue. Veuillez réessayer.",
     "response_failed": "Une erreur est survenue lors de la génération de la réponse. Veuillez réessayer.",
     "auth_required": "Ce chat nécessite une connexion."
   },

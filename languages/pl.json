@@ -102,6 +102,7 @@
     "verification_failed": "Weryfikacja klienta nie powiodła się.",
     "session_failed": "Nie udało się rozpocząć sesji.",
     "message_send_failed": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+    "connection_lost": "Utracono połączenie. Spróbuj ponownie.",
     "response_failed": "Coś poszło nie tak podczas tworzenia odpowiedzi. Spróbuj ponownie.",
     "auth_required": "Ten czat wymaga zalogowania.",
     "chat_disabled": "Czat jest wyłączony",

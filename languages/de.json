@@ -69,6 +69,7 @@
     "verification_failed": "Client-Verifizierung fehlgeschlagen.",
     "session_failed": "Sitzungsinitialisierung fehlgeschlagen.",
     "message_send_failed": "Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "connection_lost": "Verbindung unterbrochen. Bitte erneut versuchen.",
     "response_failed": "Beim Erzeugen der Antwort ist ein Fehler aufgetreten. Bitte erneut versuchen.",
     "auth_required": "Für diesen Chat ist eine Anmeldung erforderlich."
   },
