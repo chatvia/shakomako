@@ -67,7 +67,7 @@ export function applyConfiguration(widget) {
   if (!widget.container) return;
 
   const positionClass =
-    widget.settings.position === 'bottom-left'
+    resolvePlacement(widget.settings.position, getDirection()) === 'bottom-left'
       ? CSS_CLASSES.POSITION_BOTTOM_LEFT
       : CSS_CLASSES.POSITION_BOTTOM_RIGHT;
   widget.container.className = `${CSS_CLASSES.WIDGET} ${widget.isFlat ? CSS_CLASSES.FLAT_MODE : positionClass}`;
@@ -87,6 +87,22 @@ export function applyConfiguration(widget) {
   applyFooterText(widget);
   applyPrivacyNotice(widget);
   widget._updateStartersContainer();
+}
+
+/**
+ * Which corner the bubble sits in for the active text direction. The agent's
+ * configured placement describes the left-to-right layout; in a right-to-left
+ * language the whole page mirrors, so the bubble mirrors with it — the default
+ * bottom-right becomes bottom-left for Arabic readers, and vice versa.
+ *
+ * @param {string|null|undefined} configured - 'bottom-left' | 'bottom-right' (anything else = bottom-right)
+ * @param {'rtl'|'ltr'} direction
+ * @returns {'bottom-left'|'bottom-right'}
+ */
+export function resolvePlacement(configured, direction) {
+  const ltr = configured === 'bottom-left' ? 'bottom-left' : 'bottom-right';
+  if (direction !== 'rtl') return ltr;
+  return ltr === 'bottom-left' ? 'bottom-right' : 'bottom-left';
 }
 
 /**
