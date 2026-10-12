@@ -907,6 +907,10 @@ export function handleToolEvent(widget, tool) {
   if (!widget._activeToolCalls) widget._activeToolCalls = new Set();
 
   if (tool.phase === 'start') {
+    // Builtin capabilities (forms, charts, leads) are internal plumbing — never
+    // show a "Calling …" chip for them. Their `end`-phase artifacts (e.g. an
+    // inline form) still render; the call is still logged server-side.
+    if (tool.internal) return;
     widget._activeToolCalls.add(tool.tool_call_id);
     let node = container.firstChild;
     if (!node) {

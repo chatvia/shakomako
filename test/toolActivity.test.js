@@ -109,4 +109,46 @@ describe('tool activity indicator', () => {
     handleToolEvent(widget, { phase: 'end', tool_call_id: 'b' });
     expect(callingText()).toBeNull(); // all done → cleared
   });
+
+  it('shows no indicator for an internal builtin tool, but still captures its artifacts', () => {
+    const widget = makeWidget();
+    startStreamingMessage(widget);
+
+    // Builtin capability (forms): internal plumbing — no "Calling …" chip even
+    // though it carries a label + activity_label.
+    handleToolEvent(widget, {
+      phase: 'start',
+      tool_call_id: 'tc-form',
+      kind: 'mcp',
+      label: 'Forms',
+      activity_label: 'Preparing your form…',
+      internal: true
+    });
+    expect(callingText()).toBeNull();
+
+    // Its end-phase form artifact is still stashed for rendering.
+    handleToolEvent(widget, {
+      phase: 'end',
+      tool_call_id: 'tc-form',
+      artifacts: [{ kind: 'form', data: { form_instance_id: 'f1' } }]
+    });
+    expect(callingText()).toBeNull();
+    expect(widget._streamFormArtifacts).toEqual([{ form_instance_id: 'f1' }]);
+  });
+
+  it('still shows the indicator for a non-internal (external) tool', () => {
+    const widget = makeWidget();
+    startStreamingMessage(widget);
+
+    handleToolEvent(widget, {
+      phase: 'start',
+      tool_call_id: 'tc-ext',
+      kind: 'mcp',
+      label: 'Stripe',
+      activity_label: 'Searching Stripe…',
+      internal: false
+    });
+
+    expect(callingText()).toBe('Searching Stripe…');
+  });
 });
