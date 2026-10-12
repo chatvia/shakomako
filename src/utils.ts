@@ -216,6 +216,30 @@ export function formatBytes(bytes: number | null | undefined): string {
   return (bytes / 1024 / 1024).toFixed(1) + ' MB';
 }
 
+/** The visitor asked the OS to minimise motion. */
+export function prefersReducedMotion(): boolean {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
+/**
+ * Elements inside `root` that Tab can reach right now: focusable, enabled and
+ * rendered (not inside something hidden with display or visibility).
+ */
+export function tabbableElements(root: HTMLElement): HTMLElement[] {
+  const candidates = root.querySelectorAll<HTMLElement>(
+    'a[href], button, input, textarea, select, [tabindex]'
+  );
+  return Array.from(candidates).filter(
+    el =>
+      el.tabIndex >= 0 &&
+      !(el as HTMLButtonElement).disabled &&
+      el.getAttribute('aria-disabled') !== 'true' &&
+      (el.checkVisibility
+        ? el.checkVisibility({ checkVisibilityCSS: true })
+        : el.getClientRects().length > 0)
+  );
+}
+
 /**
  * Whether `value` is one of `allowed`. A type guard, so a value read from the
  * embed tag or the settings API narrows to the allowed union.

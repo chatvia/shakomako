@@ -3,7 +3,7 @@
  * Handles toggle, expand, scroll, and other UI state management
  */
 
-import { CSS_CLASSES } from '../utils';
+import { CSS_CLASSES, prefersReducedMotion, tabbableElements } from '../utils';
 import { createIcon, createElement } from '../ui';
 import { markMessagesAsRead, HANDOFF_MODE } from './handoff';
 import { applyTheme, writeStoredTheme } from './config';
@@ -267,6 +267,9 @@ export function toggleMenuDropdown(widget: ChatWidget): void {
   }
   widget.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
   widget.menuButton?.setAttribute('aria-expanded', 'true');
+  // Menu pattern: focus moves into the menu (arrow keys take it from there;
+  // see setupMenuKeyboard).
+  tabbableElements(widget.menuDropdown)[0]?.focus();
 }
 
 /**
@@ -465,7 +468,10 @@ export function scrollToBottom(widget: ChatWidget, smooth = false): void {
       // scrollTo() honors the `smooth` behavior; the browser animates the
       // scroll over ~300ms. We can't fall back to scrollIntoView here because
       // both methods racing produces a janky double-scroll.
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: prefersReducedMotion() ? 'instant' : 'smooth'
+      });
     } else {
       // Direct scrollTop assignment is the most reliable instant-scroll path —
       // works in every browser/embed context, including ones where

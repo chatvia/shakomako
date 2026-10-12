@@ -3,7 +3,7 @@
  * Sets up all event listeners for the widget
  */
 
-import { CSS_CLASSES } from '../utils';
+import { CSS_CLASSES, tabbableElements } from '../utils';
 import { matchesTrigger } from '../keyboardTrigger';
 import { updateScrollToBottomButton } from './controls';
 import type { ChatWidget } from '../widget';
@@ -26,7 +26,72 @@ export function setupEventListeners(widget: ChatWidget): void {
   setupHeaderButtonListeners(widget);
   setupGlobalListeners(widget);
   setupScrollListener(widget);
+  setupFocusTrap(widget);
+  setupMenuKeyboard(widget);
   widget.autoResizeInput();
+}
+
+/**
+ * While the chat covers the whole screen (fullscreen, where toggleChat marks it
+ * aria-modal), keep Tab inside it: the page behind is out of view.
+ */
+export function setupFocusTrap(widget: ChatWidget): void {
+  widget.chatWindow?.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || widget.chatWindow.getAttribute('aria-modal') !== 'true') return;
+    const tabbable = tabbableElements(widget.chatWindow);
+    if (tabbable.length === 0) return;
+    const first = tabbable[0];
+    const last = tabbable[tabbable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+}
+
+/**
+ * Keyboard support for the header menu (ARIA menu pattern): arrow keys, Home
+ * and End move between the enabled items, Escape closes the menu and returns
+ * focus to its button, Tab closes it and moves on.
+ */
+export function setupMenuKeyboard(widget: ChatWidget): void {
+  widget.menuDropdown?.addEventListener('keydown', e => {
+    const items = tabbableElements(widget.menuDropdown);
+    const index = items.indexOf(document.activeElement as HTMLElement);
+    let next: HTMLElement | undefined;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        next = items[(index + 1) % items.length];
+        break;
+      case 'ArrowUp':
+        next = items[(index - 1 + items.length) % items.length];
+        break;
+      case 'Home':
+        next = items[0];
+        break;
+      case 'End':
+        next = items[items.length - 1];
+        break;
+      case 'Escape':
+        e.preventDefault();
+        e.stopPropagation();
+        widget.closeMenuDropdown();
+        widget.menuButton?.focus();
+        return;
+      case 'Tab':
+        widget.closeMenuDropdown();
+        return;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    next?.focus();
+  });
 }
 
 /**

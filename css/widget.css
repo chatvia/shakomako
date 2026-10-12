@@ -3323,6 +3323,14 @@
     animation: none !important;
   }
 
+  /* Elements that move as they appear keep their fade but not the motion
+     (these transforms are animation-only, never used for positioning). */
+  .chatvia-widget .chatvia-widget-floating-bubble,
+  .chatvia-widget .chatvia-widget-menu-dropdown,
+  .chatvia-widget .chatvia-widget-scroll-bottom {
+    transform: none !important;
+  }
+
   /* Collapse hover/press polish transforms to identity (structural transforms
      above are deliberately not in this list). */
   .chatvia-widget .chatvia-widget-bubble:hover,
