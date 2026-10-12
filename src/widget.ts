@@ -73,12 +73,6 @@ export interface ChatWidgetOptions {
   emit?: WidgetEventEmitter;
 }
 
-/**
- * A `<div role="button">`. Divs have no native disabled state, so `disabled`
- * is a plain property here.
- */
-type DivButton = HTMLDivElement & { disabled?: boolean };
-
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 type IntervalHandle = ReturnType<typeof setInterval>;
 
@@ -175,7 +169,7 @@ export class ChatWidget {
   inputContainer!: HTMLDivElement;
   attachmentsStrip!: HTMLDivElement;
   chatInput!: HTMLTextAreaElement;
-  sendButton!: DivButton;
+  sendButton!: HTMLButtonElement;
   footerText!: HTMLDivElement;
   brandFooter!: HTMLDivElement;
   scrollToBottomBtn!: HTMLDivElement;
@@ -850,6 +844,7 @@ export class ChatWidget {
       className: `${CSS_CLASSES.BUBBLE} ${CSS_CLASSES.BUBBLE_PULSE}`,
       role: 'button',
       'aria-label': t('widget.open_chat'),
+      'aria-expanded': 'false',
       tabIndex: 0
     });
     const logoUrl = safeImageUrl(this.settings.logo_url) || DEFAULT_LOGO_SVG;
@@ -1070,10 +1065,12 @@ export class ChatWidget {
   }
 
   _createChatWindow(): HTMLDivElement {
+    // A floating chat is a non-modal dialog: the host page stays usable beside
+    // it. toggleChat() adds aria-modal only while it covers the whole screen
+    // (fullscreen). Embedded in the page (flat mode) it is just a region.
     const windowEl = createElement('div', {
       className: CSS_CLASSES.WINDOW,
-      role: 'dialog',
-      'aria-modal': 'true',
+      role: this.isFlat ? 'region' : 'dialog',
       'aria-labelledby': 'chatvia-widget-header-title'
     });
 
@@ -1368,6 +1365,7 @@ export class ChatWidget {
   _createLoadingIndicator(): HTMLDivElement {
     const indicator = createElement('div', {
       className: CSS_CLASSES.LOADING,
+      role: 'status',
       'aria-label': t('widget.loading')
     });
     const dotsContainer = createElement('div', { className: CSS_CLASSES.LOADING_DOTS });
@@ -1477,11 +1475,10 @@ export class ChatWidget {
       });
     }
 
-    this.sendButton = createElement('div', {
+    this.sendButton = createElement('button', {
+      type: 'button',
       className: CSS_CLASSES.SEND_BUTTON,
-      role: 'button',
-      'aria-label': t('widget.send_message'),
-      tabIndex: 0
+      'aria-label': t('widget.send_message')
     });
     this.sendButton.appendChild(createIcon('send'));
 

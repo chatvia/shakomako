@@ -57,6 +57,7 @@ export function setupSSE(widget: ChatWidget): void {
               .querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)
               ?.classList.remove(CSS_CLASSES.STREAMING);
             leftover.removeAttribute('id');
+            leftover.removeAttribute('aria-busy');
           }
         }
 

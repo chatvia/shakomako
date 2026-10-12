@@ -74,7 +74,9 @@ export async function addMessage(
     !skipEmptyAgentBubble &&
     (text || type !== CSS_CLASSES.MESSAGE_USER || attachmentList.length === 0)
   ) {
-    const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
+    // dir="auto": a message takes the direction of its own text, so an English
+    // reply reads left-to-right inside an Arabic widget and vice versa.
+    const bubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE, dir: 'auto' });
     await setMessageBubbleContent(bubble, type, text);
     contentWrapper.appendChild(bubble);
   }
@@ -731,9 +733,12 @@ export function startStreamingMessage(widget: ChatWidget): void {
     return;
   }
 
+  // aria-busy until finalize: the messages area is a live log, and without it
+  // a screen reader re-reads the growing reply on every rendered frame.
   const streamingMsgElement = createElement('div', {
     className: `${CSS_CLASSES.MESSAGE} ${CSS_CLASSES.MESSAGE_AGENT}`,
-    id: CSS_CLASSES.STREAMING_MESSAGE
+    id: CSS_CLASSES.STREAMING_MESSAGE,
+    'aria-busy': 'true'
   });
 
   // Tool activity lives OUTSIDE the bubble (the bubble's innerHTML is
@@ -754,7 +759,10 @@ export function startStreamingMessage(widget: ChatWidget): void {
     avatar.classList.add(CSS_CLASSES.STREAMING); // drives the avatar typing pulse
     contentWrapper.appendChild(avatar);
   }
-  const messageBubble = createElement('div', { className: CSS_CLASSES.MESSAGE_BUBBLE });
+  const messageBubble = createElement('div', {
+    className: CSS_CLASSES.MESSAGE_BUBBLE,
+    dir: 'auto'
+  });
   contentWrapper.appendChild(messageBubble);
 
   streamingMsgElement.appendChild(contentWrapper);
@@ -879,6 +887,7 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
       .querySelector(`.${CSS_CLASSES.MESSAGE_AVATAR}`)
       ?.classList.remove(CSS_CLASSES.STREAMING);
     streamingMsgElement.removeAttribute('id');
+    streamingMsgElement.removeAttribute('aria-busy');
 
     addMessageToHistory(widget, CSS_CLASSES.MESSAGE_AGENT, finalMessage, {
       messageId,

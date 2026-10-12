@@ -61,8 +61,11 @@ function expiredView(): HTMLElement {
   });
 }
 
+// Unique ids that tie each label and error message to its control.
+let fieldCount = 0;
+
 function optionRows(node: FormSchemaNode, inputType: 'radio' | 'checkbox'): HTMLElement {
-  const group = createElement('div', { className: 'chatvia-widget-form-group' });
+  const group = createElement('div', { className: 'chatvia-widget-form-group', role: 'group' });
   for (const o of Array.isArray(node.options) ? node.options : []) {
     const row = createElement('label', { className: 'chatvia-widget-form-choice' });
     const input = createElement('input', { type: inputType, name: node.name });
@@ -85,11 +88,15 @@ function buildField(node: FormSchemaNode): FormField | null {
   const required = isRequired(node);
   const singleCheckbox = type === 'checkbox' && !node.multiple;
   const wrapper = createElement('div', { className: 'chatvia-widget-form-field' });
+  const id = `chatvia-widget-form-field-${++fieldCount}`;
 
   // Single checkbox carries its label inline (next to the box), not above.
+  // `for` names the control below (choice groups point back via aria-labelledby).
   if (node.label && !singleCheckbox) {
     const label = createElement('label', {
       className: 'chatvia-widget-form-label',
+      id: `${id}-label`,
+      for: id,
       textContent: node.label
     });
     if (required)
@@ -100,6 +107,8 @@ function buildField(node: FormSchemaNode): FormField | null {
   }
 
   let getValue: () => FieldValue;
+  // The element that carries the field's id and its invalid state.
+  let control: HTMLElement;
 
   if (type === 'textarea') {
     const ta = createElement('textarea', {
@@ -110,6 +119,7 @@ function buildField(node: FormSchemaNode): FormField | null {
     if (node.placeholder) ta.setAttribute('placeholder', node.placeholder);
     wrapper.appendChild(ta);
     getValue = () => ta.value.trim();
+    control = ta;
   } else if (type === 'select') {
     const sel = createElement('select', { className: 'chatvia-widget-form-input', name });
     sel.appendChild(createElement('option', { value: '', textContent: node.placeholder || '—' }));
@@ -123,15 +133,18 @@ function buildField(node: FormSchemaNode): FormField | null {
     }
     wrapper.appendChild(sel);
     getValue = () => sel.value;
+    control = sel;
   } else if (type === 'radio') {
     const group = optionRows(node, 'radio');
     wrapper.appendChild(group);
     getValue = () => group.querySelector<HTMLInputElement>('input:checked')?.value ?? '';
+    control = group;
   } else if (type === 'checkbox' && node.multiple) {
     const group = optionRows(node, 'checkbox');
     wrapper.appendChild(group);
     getValue = () =>
       Array.from(group.querySelectorAll<HTMLInputElement>('input:checked')).map(c => c.value);
+    control = group;
   } else if (singleCheckbox) {
     const row = createElement('label', { className: 'chatvia-widget-form-choice' });
     const box = createElement('input', { type: 'checkbox', name });
@@ -139,6 +152,7 @@ function buildField(node: FormSchemaNode): FormField | null {
     if (node.label) row.appendChild(createElement('span', { textContent: node.label }));
     wrapper.appendChild(row);
     getValue = () => box.checked;
+    control = box;
   } else {
     const input = createElement('input', {
       type: TEXT_INPUTS[type] || 'text',
@@ -148,6 +162,14 @@ function buildField(node: FormSchemaNode): FormField | null {
     if (node.placeholder) input.setAttribute('placeholder', node.placeholder);
     wrapper.appendChild(input);
     getValue = () => input.value.trim();
+    control = input;
+  }
+
+  control.id = id;
+  if (control.getAttribute('role') === 'group' && node.label) {
+    // A group isn't labelable with `for`; it names its label instead.
+    wrapper.querySelector('.chatvia-widget-form-label')?.removeAttribute('for');
+    control.setAttribute('aria-labelledby', `${id}-label`);
   }
 
   if (node.help) {
@@ -156,15 +178,20 @@ function buildField(node: FormSchemaNode): FormField | null {
     );
   }
 
-  const errorEl = createElement('div', { className: 'chatvia-widget-form-field-error' });
+  const errorEl = createElement('div', {
+    className: 'chatvia-widget-form-field-error',
+    id: `${id}-error`
+  });
   errorEl.style.display = 'none';
   wrapper.appendChild(errorEl);
+  control.setAttribute('aria-describedby', errorEl.id);
 
   function validate(): boolean {
     if (!required) return true;
     const v = getValue();
     const empty = v === '' || v === false || (Array.isArray(v) && v.length === 0);
     errorEl.textContent = empty ? t('forms.required') : '';
+    control.setAttribute('aria-invalid', String(empty));
     errorEl.style.display = empty ? '' : 'none';
     return !empty;
   }

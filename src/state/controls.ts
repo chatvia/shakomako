@@ -35,6 +35,14 @@ export function toggleChat(widget: ChatWidget, open?: boolean): void {
   widget.isOpen = typeof open === 'boolean' ? open : !widget.isOpen;
   const isBarMode = widget.mode === 'bar';
 
+  // The launcher tells assistive tech whether the chat is open, and its label
+  // follows what a press will do next.
+  widget.chatBubble?.setAttribute('aria-expanded', String(widget.isOpen));
+  widget.chatBubble?.setAttribute(
+    'aria-label',
+    t(widget.isOpen ? 'widget.close_chat' : 'widget.open_chat')
+  );
+
   if (widget.isOpen) {
     widget.chatWindow?.classList.add(CSS_CLASSES.WINDOW_OPEN);
 
@@ -47,6 +55,8 @@ export function toggleChat(widget: ChatWidget, open?: boolean): void {
 
     if (widget.settings.is_fullscreen && !isBarMode) {
       widget.container.classList.add(CSS_CLASSES.FULLSCREEN);
+      // Covering the whole screen, the chat is modal.
+      widget.chatWindow?.setAttribute('aria-modal', 'true');
       if (widget.chatBubble) {
         widget.chatBubble.style.display = 'none';
       }
@@ -59,7 +69,9 @@ export function toggleChat(widget: ChatWidget, open?: boolean): void {
     }
 
     setTimeout(() => {
-      widget.chatInput?.focus();
+      // On a touch screen, focusing the composer pops the keyboard up over half
+      // the conversation; there the visitor taps the composer when ready.
+      if (!isTouchScreen()) widget.chatInput?.focus();
       // Scroll to bottom when opening chat
       widget.scrollToBottom();
       // Mark messages as read if in human mode
@@ -68,7 +80,11 @@ export function toggleChat(widget: ChatWidget, open?: boolean): void {
       }
     }, 300);
   } else {
+    // Closing hides the window; if focus was inside it, hand it back to the
+    // control that reopens the chat rather than dropping it to the page.
+    const focusWasInside = widget.chatWindow?.contains(document.activeElement) ?? false;
     widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
+    widget.chatWindow?.removeAttribute('aria-modal');
 
     if (isBarMode) {
       widget.bar?.classList.remove('chatvia-widget-hidden', 'chatvia-widget-expanded');
@@ -85,12 +101,21 @@ export function toggleChat(widget: ChatWidget, open?: boolean): void {
     if (widget.settings.is_fullscreen || widget.isMobileApp) {
       unlockBodyScroll(widget);
     }
+
+    if (focusWasInside) {
+      (isBarMode ? widget.barHistoryButton : widget.chatBubble)?.focus();
+    }
   }
 
   const event = new CustomEvent(widget.isOpen ? 'chat:opened' : 'chat:closed', {
     detail: { widget }
   });
   document.dispatchEvent(event);
+}
+
+/** Primary pointer is a finger: focusing a text field would open the on-screen keyboard. */
+function isTouchScreen(): boolean {
+  return window.matchMedia?.('(pointer: coarse)').matches ?? false;
 }
 
 /**
@@ -229,6 +254,7 @@ export function toggleMenuDropdown(widget: ChatWidget): void {
   // won't run (you'll see the menu sit fully visible until display:none).
   if (widget.menuDropdown.classList.contains(CSS_CLASSES.MENU_DROPDOWN_OPEN)) {
     widget.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+    widget.menuButton?.setAttribute('aria-expanded', 'false');
     return;
   }
 
@@ -236,6 +262,7 @@ export function toggleMenuDropdown(widget: ChatWidget): void {
     widget._updateMenuForHandoffState();
   }
   widget.menuDropdown.classList.add(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+  widget.menuButton?.setAttribute('aria-expanded', 'true');
 }
 
 /**
@@ -251,6 +278,7 @@ export function menuDropdownIsOpened(widget: ChatWidget): boolean {
 export function closeMenuDropdown(widget: ChatWidget): void {
   if (menuDropdownIsOpened(widget)) {
     widget.menuDropdown.classList.remove(CSS_CLASSES.MENU_DROPDOWN_OPEN);
+    widget.menuButton?.setAttribute('aria-expanded', 'false');
   }
 }
 

@@ -166,13 +166,8 @@ export function setupWindowControlListeners(widget: ChatWidget): void {
  * Setup input listeners
  */
 export function setupInputListeners(widget: ChatWidget): void {
+  // A native <button>: Enter and Space already fire `click`.
   widget.sendButton?.addEventListener('click', () => widget.sendUserMessage());
-  widget.sendButton?.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      widget.sendUserMessage();
-    }
-  });
   widget.chatInput?.addEventListener('keydown', async e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

@@ -428,7 +428,11 @@ function createConversationsContainer(
  * Create a single conversation item
  */
 function createConversationItem(widget: ChatWidget, conversation: Conversation): HTMLDivElement {
-  const item = createElement('div', { className: CSS_CLASSES.CONVERSATION_ITEM });
+  const item = createElement('div', {
+    className: CSS_CLASSES.CONVERSATION_ITEM,
+    role: 'button',
+    tabIndex: 0
+  });
   if (conversation.id === widget.activeConversationId) {
     item.classList.add(CSS_CLASSES.CONVERSATION_ITEM_ACTIVE);
   }
@@ -462,11 +466,18 @@ function createConversationItem(widget: ChatWidget, conversation: Conversation):
   arrowIcon.appendChild(createIcon('arrow-right'));
   item.appendChild(arrowIcon);
 
-  item.addEventListener('click', async () => {
+  const open = async () => {
     widget.storageManager!.setActiveConversationId(conversation.id);
     widget.activeConversationId = conversation.id;
     widget.setupSSE();
     await loadActiveConversation(widget);
+  };
+  item.addEventListener('click', open);
+  item.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      open();
+    }
   });
 
   return item;

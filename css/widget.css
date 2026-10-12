@@ -147,6 +147,14 @@
    ring so it reads against the brand fill. We use `outline` (not box-shadow)
    so the ring never reflows layout and layers cleanly over existing shadows.
    ============================================ */
+
+/* Baseline for every focusable element (links in messages, chip and dismiss
+   buttons, teaser close, ...); the component rules below refine it. */
+.chatvia-widget :is(a, button, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--chat-focus-ring-color);
+  outline-offset: 2px;
+}
+
 .chatvia-widget .chatvia-widget-action-btn:focus-visible,
 .chatvia-widget .chatvia-widget-attach-btn:focus-visible,
 .chatvia-widget .chatvia-widget-starter-btn:focus-visible,
@@ -1554,6 +1562,8 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
+  padding: 0;
+  border: none;
   background-color: var(--chat-primary);
   /* Same gradient language as the launcher + header so the accent reads as one
      system; the shadow is primary-tinted (shared --chat-shadow-accent). */
