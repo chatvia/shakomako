@@ -2,7 +2,12 @@
    SHARED STYLES - Common to all widgets
    ============================================ */
 
-:root {
+/* Every token is declared on the widget's own roots, never on the host page's
+   :root, so the widget neither overwrites the embedding site's custom
+   properties nor picks up theirs. The confirm dialog mounts on <body>, outside
+   .chatvia-widget, so it is a root of its own. */
+.chatvia-widget,
+.chatvia-widget-confirm-dialog {
   /* Color Palette Variables */
   /* Black Shades */
   --black-50: #fafafa;

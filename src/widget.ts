@@ -221,6 +221,8 @@ export class ChatWidget {
   _pinActive?: boolean;
   _pinReleased?: boolean;
   _scrollPosition?: number;
+  /** The host page's own body styles while lockBodyScroll() overrides them. */
+  _savedBodyStyle?: Pick<CSSStyleDeclaration, 'overflow' | 'position' | 'top' | 'width'> | null;
 
   // The streamed turn (state/sse.ts, state/messages.ts)
   _streamHandled?: boolean;

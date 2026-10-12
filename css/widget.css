@@ -5,8 +5,9 @@
 /* Import shared styles */
 @import './shared.css';
 
-/* Widget-specific size variables - Responsive with clamp() */
-:root {
+/* Widget-specific size variables - Responsive with clamp(). Declared on the
+   widget, not the host page's :root (see shared.css). */
+.chatvia-widget {
   /* Small: compact */
   --chat-small-width: clamp(340px, 22vw, 380px);
   --chat-small-height: clamp(500px, 60vh, 600px);
@@ -21,7 +22,7 @@
 }
 
 @media (max-width: 768px) {
-  :root {
+  .chatvia-widget {
     /* On mobile, fullscreen */
     --chat-small-width: 100%;
     --chat-small-height: 100%;
@@ -36,7 +37,7 @@
 
 /* Landscape mode - use smaller heights to account for browser UI */
 @media (max-width: 1024px) and (max-height: 600px) and (orientation: landscape) {
-  :root {
+  .chatvia-widget {
     --chat-small-height: clamp(400px, 90vh, 500px);
     --chat-medium-height: clamp(450px, 90vh, 550px);
     --chat-large-height: clamp(500px, 90vh, 600px);
@@ -56,13 +57,68 @@
   }
 }
 
+/* ============================================
+   HOST-PAGE ISOLATION
+   The widget renders in the embedding page's DOM, so that page's CSS reaches
+   it: `body { line-height: 2 }`, `* { box-sizing: content-box }`, a theme's
+   `button { text-transform: uppercase; margin: 1em }` and so on. Pin every
+   inherited text property on the roots, and normalize form controls with a
+   one-class-one-element selector: it beats a host's bare `button {}` but
+   loses to every component rule below, so it only removes leakage.
+   ============================================ */
+.chatvia-widget,
+.chatvia-widget-confirm-dialog {
+  font-family: var(--chat-font);
+  font-size: var(--chat-font-size-base);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-align: start;
+  text-indent: 0;
+  text-transform: none;
+  text-shadow: none;
+  white-space: normal;
+  color: var(--chat-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chatvia-widget *,
+.chatvia-widget *::before,
+.chatvia-widget *::after,
+.chatvia-widget-confirm-dialog *,
+.chatvia-widget-confirm-dialog *::before,
+.chatvia-widget-confirm-dialog *::after {
+  box-sizing: border-box;
+}
+
+.chatvia-widget button,
+.chatvia-widget input,
+.chatvia-widget textarea,
+.chatvia-widget select,
+.chatvia-widget-confirm-dialog button {
+  margin: 0;
+  font-family: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+  min-width: 0;
+  min-height: 0;
+}
+
+.chatvia-widget img,
+.chatvia-widget svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* Chat Widget container */
 .chatvia-widget {
   position: fixed !important;
   /* Make sure position is not overridden */
   z-index: 9999;
-  font-family: var(--chat-font);
-  /* Remove the default positioning here */
 
   /* Primary-derived tokens are declared HERE (on the container), not at :root,
      so each color-mix() substitutes the container's runtime --chat-primary (the

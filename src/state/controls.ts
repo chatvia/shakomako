@@ -591,28 +591,40 @@ export function autoResizeInput(widget: ChatWidget): void {
 }
 
 /**
- * Lock body scroll
+ * Lock the host page's scroll while the chat covers it. The page's own inline
+ * styles are saved so unlocking restores them, and a repeated lock is ignored
+ * (it would otherwise record scroll position 0 and jump the page on close).
  */
 export function lockBodyScroll(widget: ChatWidget): void {
+  if (widget._savedBodyStyle) return;
+
+  const style = document.body.style;
+  widget._savedBodyStyle = {
+    overflow: style.overflow,
+    position: style.position,
+    top: style.top,
+    width: style.width
+  };
   widget._scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 
-  document.body.style.overflow = 'hidden';
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${widget._scrollPosition}px`;
-  document.body.style.width = '100%';
+  style.overflow = 'hidden';
+  style.position = 'fixed';
+  style.top = `-${widget._scrollPosition}px`;
+  style.width = '100%';
 
   document.body.classList.add('chatvia-scroll-locked');
 }
 
 /**
- * Unlock body scroll
+ * Undo lockBodyScroll(). Does nothing unless this widget locked the page, so
+ * destroy() never wipes styles the host page set itself.
  */
 export function unlockBodyScroll(widget: ChatWidget): void {
-  document.body.style.overflow = '';
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.width = '';
+  const saved = widget._savedBodyStyle;
+  if (!saved) return;
+  widget._savedBodyStyle = null;
 
+  Object.assign(document.body.style, saved);
   document.body.classList.remove('chatvia-scroll-locked');
 
   if (widget._scrollPosition !== undefined) {
