@@ -10,6 +10,7 @@ import { authHeaders } from '../auth';
 import api from '../api';
 import type { ApiHeaders } from '../api';
 import { getApiUrl, getReverbConfig } from '../endpoints';
+import { applyInputPlaceholder, applyTitle } from './config';
 import type { HandoffEventData, HandoffWidgetEvent } from '../types';
 import type { ChatWidget } from '../widget';
 
@@ -310,9 +311,6 @@ export async function switchToPendingMode(
 
   // Update UI to indicate pending mode
   updateHandoffUI(widget, 'pending');
-
-  // Emit event for external listeners
-  emitHandoffEvent(widget, { mode: HANDOFF_MODE.PENDING, status: 'pending' });
 }
 
 /**
@@ -325,6 +323,11 @@ export async function handleHandoffEvent(
   const { status, admin_name, admin_id, message } = data;
   widget.conversationId = data.conversation_id || widget.getCurrentActiveConversationId();
 
+  const modeBefore = widget.handoffMode;
+  const adminBefore = widget.adminName;
+
+  // The same status can arrive more than once (over the stream and the
+  // WebSocket, or echoed after the visitor ends the chat): only act on a change.
   switch (status) {
     case HANDOFF_STATUS.PENDING:
       if (widget.handoffMode !== HANDOFF_MODE.PENDING) {
@@ -333,19 +336,24 @@ export async function handleHandoffEvent(
       break;
 
     case HANDOFF_STATUS.HUMAN:
-      widget.adminName = admin_name;
-      await switchToHumanMode(widget, admin_name, admin_id, message);
+      // A different agent taking over is a change too.
+      if (widget.handoffMode !== HANDOFF_MODE.HUMAN || widget.adminName !== admin_name) {
+        await switchToHumanMode(widget, admin_name, admin_id, message);
+      }
       break;
 
     case HANDOFF_STATUS.RETURNED:
     case HANDOFF_STATUS.AI:
-      widget.adminName = null;
-      await switchToAIMode(widget, message);
+      if (widget.handoffMode !== HANDOFF_MODE.AI) {
+        await switchToAIMode(widget, message);
+      }
       break;
   }
 
-  // Emit event for external listeners
-  emitHandoffEvent(widget, { mode: widget.handoffMode, ...data });
+  // One event per change, carrying the server's full payload.
+  if (widget.handoffMode !== modeBefore || widget.adminName !== adminBefore) {
+    emitHandoffEvent(widget, { mode: widget.handoffMode, ...data });
+  }
 }
 
 /**
@@ -404,9 +412,6 @@ export async function switchToHumanMode(
   if (widget.isOpen) {
     markMessagesAsRead(widget);
   }
-
-  // Emit event
-  emitHandoffEvent(widget, { mode: HANDOFF_MODE.HUMAN, status: 'human', admin_name: adminName });
 }
 
 /**
@@ -442,9 +447,6 @@ export async function switchToAIMode(widget: ChatWidget, serverMessage?: string)
   // Scroll to bottom to show the notification
   widget.scrollToBottom();
   if (widget.sendButton) widget.sendButton.disabled = false;
-
-  // Emit event
-  emitHandoffEvent(widget, { mode: HANDOFF_MODE.AI, status: 'ai' });
 }
 
 /**
@@ -477,6 +479,10 @@ export async function endLiveChat(widget: ChatWidget): Promise<void> {
     // Still switch to AI mode even if the request failed
     await switchToAIMode(widget, t('handoff.connection_ended'));
   }
+
+  // The visitor's own action doesn't pass through handleHandoffEvent, so tell
+  // host-page listeners here.
+  emitHandoffEvent(widget, { mode: HANDOFF_MODE.AI, status: 'ai' });
 }
 
 /**
@@ -976,15 +982,10 @@ function updateHandoffUI(widget: ChatWidget, mode: HandoffMode): void {
 
     case 'ai':
     default:
-      if (widget.chatInput) {
-        // Mirror applyInputPlaceholder (config.ts), which keys off
-        // composer_placeholder — not the stale `input_placeholder`.
-        widget.chatInput.placeholder =
-          widget.settings?.composer_placeholder || t('widget.type_message');
-      }
-      if (headerTitle) {
-        headerTitle.textContent = originalTitle;
-      }
+      // Back to the agent's own (localized) title and placeholder, exactly as
+      // applyConfiguration set them.
+      applyInputPlaceholder(widget);
+      applyTitle(widget);
       removeEndChatButton(widget);
       showMenuButton(widget);
       break;
@@ -1183,6 +1184,8 @@ export function createTalkToHumanButton(
  * Note: We keep the Pusher client connected but unsubscribe from the current channel
  */
 export function cleanupHandoff(widget: ChatWidget): void {
+  const wasHandedOff = widget.handoffMode !== HANDOFF_MODE.AI;
+
   // Unsubscribe from current channel but keep connection alive
   if (widget.pusherChannel && widget.pusherClient) {
     widget.pusherClient.unsubscribe(widget.pusherChannel.name);
@@ -1205,6 +1208,13 @@ export function cleanupHandoff(widget: ChatWidget): void {
     widget._typingInterval = null;
   }
   widget._isTypingSent = false;
+
+  // Leaving a pending or live-agent conversation: drop its header colour, End
+  // chat button and agent placeholder, and bring the menu back.
+  if (wasHandedOff) {
+    updateHandoffUI(widget, HANDOFF_MODE.AI);
+    widget._updateMenuForHandoffState();
+  }
 }
 
 /**
