@@ -2,7 +2,7 @@ import { ChatWidget } from './widget';
 import type { ChatWidgetOptions } from './widget';
 import { NAMESPACE } from './utils';
 import { configureEndpoints } from './endpoints';
-import type { ChatviaApi, ChatviaStub, WidgetEventListener } from './types';
+import type { ChatviaApi, ChatviaStub, QueuedCommand, WidgetEventListener } from './types';
 
 (function () {
   const namespace = NAMESPACE;
@@ -59,6 +59,9 @@ import type { ChatviaApi, ChatviaStub, WidgetEventListener } from './types';
       emit: emitWidgetEvent
     };
     const widgetInstance = new ChatWidget(clientId, options);
+
+    const onOpened = () => emitWidgetEvent('open');
+    const onClosed = () => emitWidgetEvent('close');
 
     // Create the public API object
     const api: ChatviaApi = {
@@ -134,6 +137,8 @@ import type { ChatviaApi, ChatviaStub, WidgetEventListener } from './types';
        */
       destroy: () => {
         widgetInstance.destroy();
+        document.removeEventListener('chat:opened', onOpened);
+        document.removeEventListener('chat:closed', onClosed);
       },
 
       /**
@@ -235,30 +240,42 @@ import type { ChatviaApi, ChatviaStub, WidgetEventListener } from './types';
     };
 
     // Set up DOM event listeners to emit custom events
-    document.addEventListener('chat:opened', () => emitWidgetEvent('open'));
-    document.addEventListener('chat:closed', () => emitWidgetEvent('close'));
+    document.addEventListener('chat:opened', onOpened);
+    document.addEventListener('chat:closed', onClosed);
 
-    // Make API callable as function for legacy support: chatbot('open')
-    const proxyHandler: ProxyHandler<ChatviaApi> = {
-      apply: (target, thisArg, args) => target.__call(...args),
-      get: (target, prop) => target[prop as keyof ChatviaApi]
-    };
+    // Expose the API as a function that also carries the methods, so the
+    // documented legacy form works after load too: chatvia('open') runs
+    // __call('open'). (A Proxy only forwards calls when its target is itself
+    // callable, so a Proxy of the plain `api` object threw instead.)
+    window[namespace] = Object.assign((...args: unknown[]) => api.__call(...args), api);
 
-    window[namespace] = new Proxy(api, proxyHandler);
-
-    // Process queued commands
+    // Replay the commands queued before the bundle loaded. The embed script
+    // queues 'init' after anything the host page queued early (e.g. 'open'),
+    // so run init first, then the rest in order: each then acts on a built
+    // widget instead of racing init. 'ready' fires once that is done, which is
+    // what the README promises ("widget initialized").
     console.log(`chatvia: Processing ${commandQueue.length} queued commands.`);
-
-    while (commandQueue.length > 0) {
-      const commandArgs = commandQueue.shift();
-      if (commandArgs) {
-        console.log('chatvia: Executing queued command:', commandArgs);
-        api.__call(...commandArgs);
+    const queued = commandQueue.splice(0);
+    const isInit = (command: QueuedCommand) => command[0] === 'init';
+    void (async () => {
+      if (queued.some(isInit)) {
+        try {
+          await api.init();
+        } catch (error) {
+          console.error('chatvia: Widget initialization failed:', error);
+          return;
+        }
       }
-    }
-
-    // Emit ready event
-    setTimeout(() => emitWidgetEvent('ready'), 0);
+      for (const commandArgs of queued.filter(command => !isInit(command))) {
+        console.log('chatvia: Executing queued command:', commandArgs);
+        try {
+          await api.__call(...commandArgs);
+        } catch (error) {
+          console.error('chatvia: Queued command failed:', error);
+        }
+      }
+      emitWidgetEvent('ready');
+    })();
 
     console.log('chatvia: Chat Widget setup complete.');
   } catch (error) {

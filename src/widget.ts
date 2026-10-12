@@ -457,6 +457,9 @@ export class ChatWidget {
       const verification = await this.agentManager.verifyClient();
 
       this.settings = await getSettings(this.agentId);
+      // destroy() may run while init is still waiting on the network; stop at
+      // each await so a torn-down widget never mounts or starts timers.
+      if (this._destroyed) return;
       // Where this server's live chat (Reverb) runs, for builds that carry no
       // Reverb settings of their own.
       configureServerReverb(this.settings.reverb);
@@ -498,11 +501,13 @@ export class ChatWidget {
       if (!this.isLocked) {
         await this._initializeSession();
       }
+      if (this._destroyed) return;
 
       this.storageManager = new StorageManager(this.agentId, this.sessionId);
       if (!this.isLocked) {
         await this.initConversations();
       }
+      if (this._destroyed) return;
 
       await this._createWidgetElements();
 
@@ -522,6 +527,7 @@ export class ChatWidget {
 
       this.setupSSE();
       await this.loadActiveConversation();
+      if (this._destroyed) return;
 
       // Start heartbeat to track online status
       startHeartbeat(this);
@@ -836,6 +842,10 @@ export class ChatWidget {
       }
 
       requestAnimationFrame(() => {
+        if (this._destroyed) {
+          resolve();
+          return;
+        }
         const mountEl = this.mountId ? document.getElementById(this.mountId) : null;
         (mountEl || document.body).appendChild(this.container);
         resolve();

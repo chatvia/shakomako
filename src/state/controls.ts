@@ -32,6 +32,10 @@ export function toggleChat(widget: ChatWidget, open?: boolean): void {
     'mode:',
     widget.mode
   );
+  // Nothing to open or close before the widget has mounted (or when this
+  // surface is disabled), yet the host page may call chatvia.open() any time.
+  if (!widget.container) return;
+
   widget.isOpen = typeof open === 'boolean' ? open : !widget.isOpen;
   const isBarMode = widget.mode === 'bar';
 
