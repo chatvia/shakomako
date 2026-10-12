@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="Shakomako logo" width="120" height="120">
+  <img src="logo.svg" alt="Shakomako logo" width="120" height="120">
 </p>
 
 # Shakomako
