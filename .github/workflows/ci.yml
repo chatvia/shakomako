@@ -1,0 +1,57 @@
+name: CI
+
+# Lint, test and build the widget on every push and pull request. It does not
+# publish anything: a Chatvia server builds the release (a v* tag) named in
+# its Dockerfile.
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Read-only token and no secrets, so it runs the same for pull requests from forks.
+permissions:
+  contents: read
+
+# A new push to the same pull request cancels its older run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+
+    env:
+      # The `prepare` script runs husky, which CI does not need.
+      HUSKY: '0'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      # With no settings, like a Chatvia server builds it: the widget then
+      # finds its server at runtime (see README.md, "Configuration").
+      - name: Build
+        run: npm run build
