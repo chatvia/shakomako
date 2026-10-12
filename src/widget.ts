@@ -114,8 +114,8 @@ export class ChatWidget {
   /** Conversation the session init returned; wins over the stored one. */
   initialConversationId?: string | null;
   private _activeConversationId?: string | null;
-  /** Set by destroy(); async init steps check it so they don't revive the widget. */
-  private _destroyed?: boolean;
+  /** Set by destroy(); async steps check it so they don't revive the widget. */
+  _destroyed?: boolean;
   /** The open confirmation dialog, if any (it lives on <body>). */
   private _confirmDialog?: HTMLDivElement | null;
 

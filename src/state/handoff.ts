@@ -260,7 +260,7 @@ async function syncHandoffState(widget: ChatWidget, data: HandoffStatusResponse)
  */
 export async function subscribeToConversation(widget: ChatWidget): Promise<void> {
   const conversationId = widget.getCurrentActiveConversationId();
-  if (!conversationId) return;
+  if (!conversationId || widget._destroyed) return;
 
   widget.conversationId = conversationId;
 
@@ -494,6 +494,10 @@ export async function endLiveChat(widget: ChatWidget): Promise<void> {
  * no CDN-compromise / MITM blast radius for embedding customers.
  */
 export async function connectPusher(widget: ChatWidget): Promise<void> {
+  // destroy() may have run while a conversation was still loading; a socket
+  // opened now would never be closed.
+  if (widget._destroyed) return;
+
   // Don't reconnect if already connected
   if (widget.pusherClient && widget.pusherClient.connection.state === 'connected') {
     return;
