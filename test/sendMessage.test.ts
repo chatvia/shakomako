@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { addMessage, sendUserMessage } from '../src/state/messages';
+import { removeConnectionErrorMessages } from '../src/state/sse';
 import { initI18n } from '../src/i18n';
 import { CSS_CLASSES } from '../src/utils';
 import type { Attachment, ChatMessage, Conversation } from '../src/types';
@@ -88,5 +89,36 @@ describe('sendUserMessage guards', () => {
     await sendUserMessage(widget, 'Hello');
 
     expect(send).toHaveBeenCalledWith(expect.objectContaining({ content: 'Hello' }));
+  });
+});
+
+describe('failed sends', () => {
+  beforeAll(async () => {
+    await initI18n({ language: 'en' });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it('gives the typed text back so the visitor can retry', async () => {
+    const { widget } = makeWidget({ sseClient: null });
+    widget.chatInput.value = 'Is the Pro plan monthly?';
+
+    await sendUserMessage(widget);
+
+    expect(widget.chatInput.value).toBe('Is the Pro plan monthly?');
+    const banner = widget.messagesContainer.querySelector(`.${CSS_CLASSES.CONNECTION_ERROR}`);
+    expect(banner?.classList.contains('error')).toBe(true);
+  });
+
+  it('clears only the connection errors once a stream works again', async () => {
+    const { widget } = makeWidget({ sseClient: null });
+    widget.chatInput.value = 'Hello';
+    await sendUserMessage(widget);
+    const other = await addMessage(widget, CSS_CLASSES.MESSAGE_SYSTEM, 'Upload failed', false);
+    other?.classList.add('error');
+
+    removeConnectionErrorMessages(widget);
+
+    expect(widget.messagesContainer.querySelector(`.${CSS_CLASSES.CONNECTION_ERROR}`)).toBeNull();
+    expect(widget.messagesContainer.contains(other)).toBe(true);
   });
 });
