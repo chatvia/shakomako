@@ -1,17 +1,24 @@
 <p align="center">
-  <img src="logo.png" alt="ChatVia Logo" width="120" height="120">
+  <img src="logo.png" alt="Shakomako logo" width="120" height="120">
 </p>
 
-A customizable, embeddable chat widget with Markdown support, designed to connect via Server-Sent Events (SSE).
+# Shakomako
+
+Shakomako is the embeddable chat widget of [Chatvia](https://github.com/chatvia/chatvia):
+a chat bubble or a command bar that a website adds with one `<script>` tag. It
+streams the agent's answers from a Chatvia server with Server-Sent Events
+(SSE). The name is Iraqi slang, roughly "what's up?".
+
+It is a separate project: it imports nothing from Chatvia. A Chatvia server
+builds one release of it (a `v*` tag of this repository) and serves it. Open
+widget issues and pull requests here.
 
 ## Features
 
 *   **Embeddable:** Easily integrate the chat widget into any web page.
-*   **Customizable:** Adapt the look and feel (though details on customization need implementation/documentation).
+*   **Two launchers:** a chat bubble in the corner, or a floating "ask anything" bar.
 *   **Markdown Support:** Renders messages formatted with Markdown.
-*   **SSE Communication:** Connects to an SSE backend for real-time messaging.
-*   **Streaming Responses:** Simulates streaming responses from the backend.
-*   **Search Widget:** New standalone search component with side-panel results.
+*   **Streaming Responses:** Shows the agent's reply as it streams from the server (Server-Sent Events).
 
 ## Getting Started
 
@@ -31,152 +38,111 @@ npm run dev
 
 ### Configuration
 
-The project uses environment variables for configuration, managed via `.env` files.
+Every setting is optional. A build with no `.env` works wherever a Chatvia
+server serves it:
 
-1.  **Create a `.env` file:**
-    ```bash
-    touch .env
-    ```
-2.  **Edit `.env`:** Add the following required variables:
-    ```dotenv
-    # Required: Application version for cache-busting
-    VITE_APP_VERSION=1.0.0
-    
-    # Required: Backend API URL
-    VITE_API_URL=https://chatvia.test/api/widget
-    
-    # Required: CDN/Script URL where the widget files are hosted
-    VITE_SCRIPT_URL=https://chatvia.test
-    
-    # Optional: Reverb/Pusher configuration for live handoff feature
-    VITE_REVERB_APP_KEY=laravel-herd
-    VITE_REVERB_HOST=reverb.herd.test
-    VITE_REVERB_PORT=443
-    VITE_REVERB_SCHEME=https
-    
-    # Build environment
-    NODE_ENV=production
-    
-    # API endpoints will be appended to VITE_API_URL:
-    # - Sessions: https://chatvia.test/api/widget/sessions
-    # - Conversations: https://chatvia.test/api/widget/conversations
-    # - Agent verification: https://chatvia.test/api/widget/agents/verify
-    # - SSE Stream: https://chatvia.test/api/widget/stream
-    ```
+- the loader (`embed.js`) loads the other files from its own folder;
+- the widget uses the `/widget` API on the server `embed.js` came from;
+- the widget gets the live-chat (Reverb) settings from that server, with the
+  agent settings.
 
-⚠️ **Important:** Make sure to set `VITE_APP_VERSION` before building. This version determines the directory structure in `dist/` for cache-busting.
+This is how a Chatvia server builds it. Chatvia's Docker image, and
+`npm run shakomako:build` in the Chatvia repository, build the release named by
+`SHAKOMAKO_VERSION` in Chatvia's `Dockerfile` into `public/shakomako`.
+
+Set values in `.env` (copy `.env.example`) when the widget runs somewhere
+else, for example on the dev server or a CDN:
+
+| Variable | Meaning | When it is not set |
+|---|---|---|
+| `VITE_API_URL` | The widget API, for example `https://chat.example.com/widget`. | `/widget` on the server `embed.js` loads from. |
+| `VITE_SCRIPT_URL` | Where `embed.js`, `version.json` and the release folders are served from. | The folder `embed.js` loads from. |
+| `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT`, `VITE_REVERB_SCHEME` | The live-chat server. | The values the server sends. Without a host there, the API's own server. |
+| `VITE_APP_VERSION` | The name of the release folder. | The package version plus a hash of the sources. |
+
+The API endpoints are added to the API URL, for example `{api}/sessions/init`,
+`{api}/conversations`, `{api}/agents/verify` and `{api}/stream`.
+
+### Point a built widget at your own server
+
+You can also set the server on the embed script tag. These optional attributes
+win over the build values and the server values:
+
+| Attribute | Example |
+|---|---|
+| `data-api-url` | `https://chat.example.com/widget` |
+| `data-reverb-host` | `ws.example.com` |
+| `data-reverb-port` | `443` |
+| `data-reverb-key` | `your-reverb-app-key` |
+| `data-reverb-scheme` | `https` or `http` |
+
+```html
+<script id="chatbot-embed-script"
+    src="https://cdn.example.com/shakomako/embed.js"
+    data-agent-id="YOUR_AGENT_ID"
+    data-api-url="https://chat.example.com/widget"
+    defer></script>
+```
 
 ## Running Locally
 
-To run the project locally, you'll typically need to run both the frontend development server and the backend simulation server.
+The widget talks to a running Chatvia server. Set `VITE_API_URL` in `.env` to
+that server's widget API (for example `http://localhost:8000/widget`), then
+start the development server:
 
-1.  **Start the Backend Simulation Server:**
-    This server simulates responses for the chat widget.
-    ```bash
-    node server.js
-    ```
-    This will start the SSE server, usually on port 8080 (or the port specified by the `PORT` environment variable).
+```bash
+npm run dev
+```
 
-2.  **Start the Frontend Development Server:**
-    This command uses Vite to serve the frontend with hot module replacement.
-    ```bash
-    npm run dev
-    ```
-    Vite will output the URL where you can access the development version (likely `http://localhost:5173` or similar, check the console output). Open `dev.html` or `index.html` in your browser through this URL.
+Vite serves the widget on `http://localhost:3000` and opens `index.html`.
+`bar.html` shows the bar launcher.
 
 ## Building for Production
 
-⚠️ **Before building, ensure you have configured the `.env` file with `VITE_APP_VERSION`!**
-
-To create optimized static assets for deployment:
+To create optimized static files for deployment:
 
 ```bash
-# Set the version in .env first
-# VITE_APP_VERSION=1.0.5
-
-# Build for production
-npm run build:prod
+npm run build
 ```
 
-This will generate the following structure:
+This generates:
 
 ```
 dist/
-  ├── embed.js               # Minimal embed script (users embed this)
-  ├── version.json           # Current version info (cache-busted)
-  └── {VERSION}/             # Version-specific directory (e.g., 1.0.5/)
-      ├── bootstrap.js       # Versioned bootstrap script
-      ├── widget.min.js      # Main chat widget bundle
-      ├── search.min.js      # Search widget bundle
-      └── version.json       # Version info (for this specific version)
+  ├── embed.js               # Small loader script (sites embed this)
+  ├── version.json           # Current release, read by embed.js
+  └── {VERSION}/             # Release folder (e.g. 1.0.0-2730bfd924/)
+      └── widget.min.js      # The widget bundle (bubble and bar modes)
 ```
 
-### Build Output Files:
-- `dist/embed.js` - Minimal embed script (what users embed on their sites)
-- `dist/{VERSION}/bootstrap.js` - Versioned bootstrap script for loading either widget or search
-- `dist/{VERSION}/widget.min.js` - Main chat widget
-- `dist/{VERSION}/search.min.js` - Search widget
-- `dist/version.json` - Version information for cache-busting
+Every change to the sources gives a new release folder name, so release
+folders can stay in caches for a long time. Production builds also write `.gz`
+and `.br` copies next to each file.
 
 ### Versioning Strategy
 See [VERSIONING.md](./VERSIONING.md) for detailed information about the three-layer versioning architecture.
 
-## Search Widget
+## Embed Options
 
-The search widget provides AI-powered search with a side-panel interface. It uses the same embed script as the chat widget but with `type="search"`.
+All options are `data-` attributes on the embed script tag.
 
-### Features
+- `data-agent-id` (required): the agent's public ID.
+- `data-mode`: `bubble` (default, a chat bubble in the corner) or `bar` (a floating "ask anything" bar).
+- `data-language`: a language code, or `auto` (default) to follow the visitor's browser. Supported codes: `ar`, `da`, `de`, `en`, `es`, `fa`, `fi`, `fr`, `hi`, `id`, `ja`, `ko`, `no`, `pl`, `pt`, `ru`, `sv`, `tr`, `vi`, `zh`. Other codes fall back to English.
+- `data-theme`: `auto`, `light` or `dark`. Without it, the widget uses the agent's setting.
+- `data-auth`: a signed token, needed only for protected (non-public) agents.
+- `data-mount-id`: the ID of an element to render the widget into, instead of the page corner.
 
-- **Flexible Positioning:** Can be positioned at the top or bottom of the page
-- **Side Panel Interface:** Opens a beautiful side panel on the right for results
-- **Real-time Streaming:** Streams AI responses using SSE
-- **Markdown Support:** Renders formatted responses
-- **Responsive Design:** Works on all devices
-- **Same Infrastructure:** Uses the same embed.js as the chat widget
-
-### Usage
-
-Use the embed script with `type="search"`:
+`data-type="widget"` and `data-type="search"` still work for older embeds (they mean `bubble` and `bar`), but they are deprecated.
 
 ```html
-<!-- For Chat Widget (default) -->
-<script src="https://your-cdn.com/embed.js" agent-id="YOUR_AGENT_ID"></script>
-
-<!-- For Search Widget -->
-<script 
-  src="https://your-cdn.com/embed.js" 
-  agent-id="YOUR_AGENT_ID"
-  type="search"
-  data-search-position="top"
-  data-search-placeholder="Ask a question..."
-></script>
-
-<!-- Chat Widget in Arabic -->
-<script 
-  src="https://your-cdn.com/embed.js" 
-  agent-id="YOUR_AGENT_ID"
-  language="ar"
-></script>
-
-<!-- Search Widget with Auto-detect Language -->
-<script 
-  src="https://your-cdn.com/embed.js" 
-  agent-id="YOUR_AGENT_ID"
-  type="search"
-  language="auto"
-></script>
+<script id="chatbot-embed-script"
+    src="https://your-cdn.com/embed.js"
+    data-agent-id="YOUR_AGENT_ID"
+    data-mode="bar"
+    data-language="auto"
+    defer></script>
 ```
-
-#### Configuration Options
-
-- `type`: `'widget'` (default) or `'search'` - Which component to load
-- `language`: `'en'`, `'ar'`, or `'auto'` (default) - Language for the widget interface
-- `data-search-position`: `'top'` or `'bottom'` - Where to display the search bar (default: `'top'`)
-- `data-search-placeholder`: String - Placeholder text for the search input (default: `'Ask a question...'`)
-
-### Demo
-
-Open `search.html` in your browser to see the search widget in action.
 
 ## JavaScript API
 
@@ -185,7 +151,7 @@ The widget exposes a JavaScript API that allows you to control the chat programm
 ### Basic Usage
 
 ```html
-<script src="https://your-cdn.com/embed.js" agent-id="YOUR_AGENT_ID"></script>
+<script id="chatbot-embed-script" src="https://your-cdn.com/embed.js" data-agent-id="YOUR_AGENT_ID" defer></script>
 
 <script>
   // Wait for widget to be ready
@@ -286,11 +252,19 @@ chatvia.on('ready', () => {
 });
 ```
 
-## Deployment CI/CD
+## Deployment
 
-```bash
-# Tag the release with v prefix
-git tag v2.0
-git push origin --tags
-```
+A Chatvia server builds and serves the widget itself (see "The chat widget"
+in its self-hosting guide), from the release named in its `Dockerfile`. CI
+(`.github/workflows/ci.yml`) lints, tests and builds the widget on every push
+and pull request. It does not publish it.
+
+To host the widget somewhere else, build it and upload the contents of `dist/`
+to any static host or CDN. Point it at your Chatvia server with `VITE_API_URL`
+or `data-api-url`. The host must send `Access-Control-Allow-Origin: *`,
+because `embed.js` reads `version.json` with `fetch()` from other sites.
+
+## License
+
+Shakomako is released under the MIT license. See [LICENSE](LICENSE).
 
