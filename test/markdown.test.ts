@@ -93,9 +93,15 @@ describe('parseMarkdown — image exfiltration guard', () => {
     expect(imageSources(html)).toEqual(['https://app.chatvia.test/storage/chunk.png']);
   });
 
-  it('keeps same-origin images (the page the widget runs on)', () => {
-    const src = `${window.location.origin}/images/product.png`;
-    expect(imageSources(parseMarkdown(`![p](${src})`))).toEqual([src]);
+  it('does not load images from the host page itself (open redirects could leak data)', () => {
+    const src = `${window.location.origin}/out?to=https://attacker.example/pixel.gif`;
+    expect(imageSources(parseMarkdown(`![p](${src})`))).toEqual([]);
+    expect(imageSources(parseMarkdown('![p](/images/product.png)'))).toEqual([]);
+    expect(parseMarkdown('![Product](/images/product.png)')).toContain('>Product</a>');
+  });
+
+  it('keeps host-page images when the widget runs on the API origin', () => {
+    configureEndpoints({ apiUrl: `${window.location.origin}/widget` });
     expect(imageSources(parseMarkdown('![p](/images/product.png)'))).toEqual([
       '/images/product.png'
     ]);
