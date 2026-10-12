@@ -9,6 +9,7 @@ import StorageManager from './storage.js';
 import { AgentManager } from './agent.js';
 import { AuthManager } from './auth.js';
 import { getSettings } from './settings.js';
+import { configureServerReverb } from './endpoints.js';
 import { SessionManager } from './sessions.js';
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug, safeImageUrl, formatBytes } from './utils.js';
 import { createElement, createIcon } from './ui.js';
@@ -267,6 +268,9 @@ export class ChatWidget {
       const verification = await this.agentManager.verifyClient();
 
       this.settings = await getSettings(this.agentId);
+      // Where this server's live chat (Reverb) runs, for builds that carry no
+      // Reverb settings of their own.
+      configureServerReverb(this.settings.reverb);
       // The API sends the semantic window size ('small' / 'medium' / 'large');
       // the window-size logic works in CSS-class terms, so normalize once here.
       this.settings.window_size = config.normalizeWindowSize(this.settings.window_size);

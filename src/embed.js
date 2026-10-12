@@ -1,3 +1,5 @@
+import { readEndpointOverrides } from './endpoints.js';
+
 window.chatvia =
   window.chatvia ||
   function () {
@@ -97,9 +99,16 @@ window.chatvia =
   if (mountId) window[namespace].mountId = mountId;
   if (auth) window[namespace].auth = auth;
 
+  // Server endpoints: the optional data-api-url / data-reverb-* attributes,
+  // and the API on the server this script was loaded from. The widget bundle
+  // decides between them and its build values (see endpoints.js).
+  window[namespace].endpoints = readEndpointOverrides(embedScriptTag);
+
   /* global __SCRIPT_URL__ */
-  // Determine script host: use __SCRIPT_URL__ if set, otherwise detect from script src
-  const scriptHost = __SCRIPT_URL__;
+  // Script host: the build value when set, otherwise the folder this embed
+  // script was loaded from (a self-hosted copy serves the bundle next to it).
+  const buildScriptHost = typeof __SCRIPT_URL__ !== 'undefined' ? __SCRIPT_URL__ : '';
+  const scriptHost = buildScriptHost || detectScriptHostFromSrc();
 
   // Function to detect script host from embed script's src attribute (fallback)
   function detectScriptHostFromSrc() {
@@ -201,7 +210,9 @@ window.chatvia =
     }
   }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadBundle);
+    // Wrap the call: passing loadBundle directly would hand it the Event
+    // object as `primaryHost` and fetch "[object Event]/version.json".
+    document.addEventListener('DOMContentLoaded', () => loadBundle(), { once: true });
     console.log('chatvia: DOMContentLoaded listener added.');
   } else {
     console.log('chatvia: DOM already loaded or script deferred, loading bundle immediately.');
