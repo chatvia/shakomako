@@ -13,6 +13,33 @@ It is a separate project: it imports nothing from Chatvia. A Chatvia server
 builds one release of it (a `v*` tag of this repository) and serves it. Open
 widget issues and pull requests here.
 
+## Screenshots
+
+Click a screenshot to open it at full size.
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <a href="docs/screenshots/light.png"><img src="docs/screenshots/light.png" width="170" alt="Light theme: a conversation with a Markdown answer, feedback buttons and timestamps"></a>
+    </td>
+    <td align="center">
+      <a href="docs/screenshots/dark.png"><img src="docs/screenshots/dark.png" width="170" alt="Dark theme: the same conversation in violet"></a>
+    </td>
+    <td align="center">
+      <a href="docs/screenshots/welcome.png"><img src="docs/screenshots/welcome.png" width="170" alt="A new conversation with a welcome message and three conversation starters"></a>
+    </td>
+    <td align="center">
+      <a href="docs/screenshots/mobile.png"><img src="docs/screenshots/mobile.png" width="170" alt="The widget full screen on a phone"></a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Light theme</sub></td>
+    <td align="center"><sub>Dark theme</sub></td>
+    <td align="center"><sub>Welcome and starters</sub></td>
+    <td align="center"><sub>Mobile</sub></td>
+  </tr>
+</table>
+
 ## Features
 
 *   **Embeddable:** Easily integrate the chat widget into any web page.
