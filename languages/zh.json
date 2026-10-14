@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "AI 助手",
     "human_agent": "人工客服"
+  },
+  "sources": {
+    "title": "来源",
+    "with_page": "{label}，第 {page} 页"
+  },
+  "voice": {
+    "start": "用语音交谈",
+    "title": "语音对话",
+    "connecting": "正在连接…",
+    "listening": "正在聆听",
+    "thinking": "正在思考…",
+    "speaking": "正在说话",
+    "muted": "麦克风已关闭",
+    "ended": "通话已结束",
+    "mute": "关闭麦克风",
+    "unmute": "打开麦克风",
+    "end": "结束通话",
+    "close": "关闭",
+    "errors": {
+      "not_supported": "此浏览器无法进行语音通话。",
+      "microphone_denied": "请允许使用麦克风，以便与助手交谈。",
+      "microphone_not_found": "未找到麦克风。",
+      "busy": "语音服务正忙，请稍后再试。",
+      "failed": "无法开始语音通话，请重试。"
+    }
   }
 }

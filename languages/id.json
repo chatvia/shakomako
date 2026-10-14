@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "Asisten AI",
     "human_agent": "Agen manusia"
+  },
+  "sources": {
+    "title": "Sumber",
+    "with_page": "{label}, halaman {page}"
+  },
+  "voice": {
+    "start": "Bicara dengan suara",
+    "title": "Percakapan suara",
+    "connecting": "Menghubungkan…",
+    "listening": "Mendengarkan",
+    "thinking": "Berpikir…",
+    "speaking": "Berbicara",
+    "muted": "Mikrofon mati",
+    "ended": "Panggilan berakhir",
+    "mute": "Matikan mikrofon",
+    "unmute": "Nyalakan mikrofon",
+    "end": "Akhiri panggilan",
+    "close": "Tutup",
+    "errors": {
+      "not_supported": "Browser ini tidak dapat melakukan panggilan suara.",
+      "microphone_denied": "Izinkan akses mikrofon untuk berbicara dengan agen.",
+      "microphone_not_found": "Mikrofon tidak ditemukan.",
+      "busy": "Suara sedang sibuk. Silakan coba lagi sebentar lagi.",
+      "failed": "Panggilan suara tidak dapat dimulai. Silakan coba lagi."
+    }
   }
 }

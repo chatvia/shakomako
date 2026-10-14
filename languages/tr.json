@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "Yapay zekâ asistanı",
     "human_agent": "Canlı temsilci"
+  },
+  "sources": {
+    "title": "Kaynaklar",
+    "with_page": "{label}, sayfa {page}"
+  },
+  "voice": {
+    "start": "Sesle konuş",
+    "title": "Sesli görüşme",
+    "connecting": "Bağlanıyor…",
+    "listening": "Dinliyor",
+    "thinking": "Düşünüyor…",
+    "speaking": "Konuşuyor",
+    "muted": "Mikrofon kapalı",
+    "ended": "Görüşme bitti",
+    "mute": "Mikrofonu kapat",
+    "unmute": "Mikrofonu aç",
+    "end": "Görüşmeyi bitir",
+    "close": "Kapat",
+    "errors": {
+      "not_supported": "Bu tarayıcı sesli görüşme yapamıyor.",
+      "microphone_denied": "Ajanla konuşmak için mikrofon erişimine izin verin.",
+      "microphone_not_found": "Mikrofon bulunamadı.",
+      "busy": "Ses şu anda meşgul. Lütfen biraz sonra tekrar deneyin.",
+      "failed": "Sesli görüşme başlatılamadı. Lütfen tekrar deneyin."
+    }
   }
 }

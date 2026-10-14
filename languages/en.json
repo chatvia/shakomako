@@ -118,5 +118,30 @@
   "disclosure": {
     "ai_assistant": "AI assistant",
     "human_agent": "Human agent"
+  },
+  "sources": {
+    "title": "Sources",
+    "with_page": "{label}, page {page}"
+  },
+  "voice": {
+    "start": "Talk with voice",
+    "title": "Voice conversation",
+    "connecting": "Connecting…",
+    "listening": "Listening",
+    "thinking": "Thinking…",
+    "speaking": "Speaking",
+    "muted": "Microphone off",
+    "ended": "Call ended",
+    "mute": "Turn microphone off",
+    "unmute": "Turn microphone on",
+    "end": "End call",
+    "close": "Close",
+    "errors": {
+      "not_supported": "This browser can't make voice calls.",
+      "microphone_denied": "Allow microphone access to talk with the agent.",
+      "microphone_not_found": "No microphone was found.",
+      "busy": "Voice is busy right now. Please try again in a moment.",
+      "failed": "The voice call could not start. Please try again."
+    }
   }
 }

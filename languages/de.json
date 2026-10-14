@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "KI-Assistent",
     "human_agent": "Menschlicher Mitarbeiter"
+  },
+  "sources": {
+    "title": "Quellen",
+    "with_page": "{label}, Seite {page}"
+  },
+  "voice": {
+    "start": "Per Sprache sprechen",
+    "title": "Sprachgespräch",
+    "connecting": "Verbinde…",
+    "listening": "Hört zu",
+    "thinking": "Denkt nach…",
+    "speaking": "Spricht",
+    "muted": "Mikrofon aus",
+    "ended": "Anruf beendet",
+    "mute": "Mikrofon ausschalten",
+    "unmute": "Mikrofon einschalten",
+    "end": "Anruf beenden",
+    "close": "Schließen",
+    "errors": {
+      "not_supported": "Dieser Browser kann keine Sprachanrufe führen.",
+      "microphone_denied": "Erlaube den Zugriff auf das Mikrofon, um mit dem Agenten zu sprechen.",
+      "microphone_not_found": "Kein Mikrofon gefunden.",
+      "busy": "Die Sprachfunktion ist gerade ausgelastet. Bitte versuche es gleich noch einmal.",
+      "failed": "Der Sprachanruf konnte nicht starten. Bitte versuche es erneut."
+    }
   }
 }

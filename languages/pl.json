@@ -118,5 +118,30 @@
   "disclosure": {
     "ai_assistant": "Asystent AI",
     "human_agent": "Konsultant (człowiek)"
+  },
+  "sources": {
+    "title": "Źródła",
+    "with_page": "{label}, strona {page}"
+  },
+  "voice": {
+    "start": "Mów głosem",
+    "title": "Rozmowa głosowa",
+    "connecting": "Łączenie…",
+    "listening": "Słucham",
+    "thinking": "Myślę…",
+    "speaking": "Mówię",
+    "muted": "Mikrofon wyłączony",
+    "ended": "Rozmowa zakończona",
+    "mute": "Wyłącz mikrofon",
+    "unmute": "Włącz mikrofon",
+    "end": "Zakończ rozmowę",
+    "close": "Zamknij",
+    "errors": {
+      "not_supported": "Ta przeglądarka nie obsługuje rozmów głosowych.",
+      "microphone_denied": "Zezwól na dostęp do mikrofonu, aby rozmawiać z agentem.",
+      "microphone_not_found": "Nie znaleziono mikrofonu.",
+      "busy": "Głos jest teraz zajęty. Spróbuj ponownie za chwilę.",
+      "failed": "Nie udało się rozpocząć rozmowy głosowej. Spróbuj ponownie."
+    }
   }
 }

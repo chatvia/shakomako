@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "AI 어시스턴트",
     "human_agent": "상담원"
+  },
+  "sources": {
+    "title": "출처",
+    "with_page": "{label}, {page}쪽"
+  },
+  "voice": {
+    "start": "음성으로 대화",
+    "title": "음성 대화",
+    "connecting": "연결 중…",
+    "listening": "듣는 중",
+    "thinking": "생각 중…",
+    "speaking": "말하는 중",
+    "muted": "마이크 꺼짐",
+    "ended": "통화가 종료되었습니다",
+    "mute": "마이크 끄기",
+    "unmute": "마이크 켜기",
+    "end": "통화 종료",
+    "close": "닫기",
+    "errors": {
+      "not_supported": "이 브라우저에서는 음성 통화를 할 수 없습니다.",
+      "microphone_denied": "에이전트와 대화하려면 마이크 접근을 허용하세요.",
+      "microphone_not_found": "마이크를 찾을 수 없습니다.",
+      "busy": "지금은 음성이 혼잡합니다. 잠시 후 다시 시도하세요.",
+      "failed": "음성 통화를 시작할 수 없습니다. 다시 시도하세요."
+    }
   }
 }

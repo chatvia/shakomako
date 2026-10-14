@@ -118,5 +118,30 @@
   "disclosure": {
     "ai_assistant": "AI-assistent",
     "human_agent": "Mänsklig medarbetare"
+  },
+  "sources": {
+    "title": "Källor",
+    "with_page": "{label}, sida {page}"
+  },
+  "voice": {
+    "start": "Prata med rösten",
+    "title": "Röstsamtal",
+    "connecting": "Ansluter…",
+    "listening": "Lyssnar",
+    "thinking": "Tänker…",
+    "speaking": "Pratar",
+    "muted": "Mikrofonen av",
+    "ended": "Samtalet avslutat",
+    "mute": "Stäng av mikrofonen",
+    "unmute": "Slå på mikrofonen",
+    "end": "Avsluta samtal",
+    "close": "Stäng",
+    "errors": {
+      "not_supported": "Den här webbläsaren kan inte ringa röstsamtal.",
+      "microphone_denied": "Tillåt åtkomst till mikrofonen för att prata med agenten.",
+      "microphone_not_found": "Ingen mikrofon hittades.",
+      "busy": "Röst är upptaget just nu. Försök igen om en stund.",
+      "failed": "Röstsamtalet kunde inte starta. Försök igen."
+    }
   }
 }

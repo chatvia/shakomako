@@ -20,6 +20,8 @@ import { createElement, createIcon } from './ui';
 import type { ElementAttributes, IconName } from './ui';
 import { initI18n, t, getDirection, pickLocalized } from './i18n';
 import { triggerLabel } from './keyboardTrigger';
+import { isVoiceCallSupported } from './voice/realtimeCall';
+import { VoiceView } from './voice/voiceView';
 import type {
   AddMessageOptions,
   Attachment,
@@ -189,6 +191,10 @@ export class ChatWidget {
   barButton?: HTMLButtonElement;
   fileInput?: HTMLInputElement;
   attachButton?: HTMLDivElement;
+  /** The voice-conversation button (only when the agent offers voice calls). */
+  voiceButton?: HTMLButtonElement;
+  /** The voice mode while a call is open. */
+  voiceView?: VoiceView | null;
   fetchSpinner?: HTMLDivElement | null;
 
   // Timers and animation frames
@@ -1489,6 +1495,20 @@ export class ChatWidget {
       });
     }
 
+    // The voice-conversation button opens a live spoken call with the agent.
+    // The server sends voice_conversation only when the owner turned it on
+    // and the install has voice set up; the browser must also do WebRTC.
+    if (this.settings?.voice_conversation === true && isVoiceCallSupported()) {
+      this.voiceButton = createElement('button', {
+        type: 'button',
+        className: CSS_CLASSES.VOICE_BUTTON,
+        'aria-label': t('voice.start'),
+        title: t('voice.start')
+      });
+      this.voiceButton.appendChild(createIcon('audio-lines'));
+      this.voiceButton.addEventListener('click', () => this.openVoiceCall());
+    }
+
     this.sendButton = createElement('button', {
       type: 'button',
       className: CSS_CLASSES.SEND_BUTTON,
@@ -1505,9 +1525,22 @@ export class ChatWidget {
     if (this.attachButton) inputRow.appendChild(this.attachButton);
     inputRow.appendChild(this.chatInput);
     if (this.fileInput) inputRow.appendChild(this.fileInput);
+    // After the textarea, so the `placeholder-shown ~ send` rule still holds.
+    if (this.voiceButton) inputRow.appendChild(this.voiceButton);
     inputRow.appendChild(this.sendButton);
     container.appendChild(inputRow);
     return container;
+  }
+
+  /** Open the voice mode over the chat window and start a call. */
+  openVoiceCall(): void {
+    if (this.voiceView || !this.chatWindow) return;
+
+    this.voiceView = new VoiceView(this, () => {
+      this.voiceView = null;
+      this.voiceButton?.focus();
+    });
+    this.voiceView.open();
   }
 
   async _handleFileSelected(event: Event): Promise<void> {
@@ -1842,6 +1875,7 @@ export class ChatWidget {
 
   destroy(): void {
     this._destroyed = true;
+    void this.voiceView?.end();
     this._confirmDialog?.remove();
     this._confirmDialog = null;
     this._cancelTrackedRafs(['_scrollRAF', '_resizeRAF', '_streamRenderRAF']);

@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "Trợ lý AI",
     "human_agent": "Nhân viên hỗ trợ"
+  },
+  "sources": {
+    "title": "Nguồn",
+    "with_page": "{label}, trang {page}"
+  },
+  "voice": {
+    "start": "Nói bằng giọng",
+    "title": "Cuộc trò chuyện bằng giọng nói",
+    "connecting": "Đang kết nối…",
+    "listening": "Đang nghe",
+    "thinking": "Đang suy nghĩ…",
+    "speaking": "Đang nói",
+    "muted": "Micrô đã tắt",
+    "ended": "Cuộc gọi đã kết thúc",
+    "mute": "Tắt micrô",
+    "unmute": "Bật micrô",
+    "end": "Kết thúc cuộc gọi",
+    "close": "Đóng",
+    "errors": {
+      "not_supported": "Trình duyệt này không thể gọi thoại.",
+      "microphone_denied": "Hãy cho phép truy cập micrô để nói chuyện với trợ lý.",
+      "microphone_not_found": "Không tìm thấy micrô.",
+      "busy": "Giọng nói đang bận. Vui lòng thử lại sau giây lát.",
+      "failed": "Không thể bắt đầu cuộc gọi thoại. Vui lòng thử lại."
+    }
   }
 }

@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "Asistente de IA",
     "human_agent": "Agente humano"
+  },
+  "sources": {
+    "title": "Fuentes",
+    "with_page": "{label}, página {page}"
+  },
+  "voice": {
+    "start": "Hablar con voz",
+    "title": "Conversación de voz",
+    "connecting": "Conectando…",
+    "listening": "Escuchando",
+    "thinking": "Pensando…",
+    "speaking": "Hablando",
+    "muted": "Micrófono apagado",
+    "ended": "Llamada finalizada",
+    "mute": "Apagar el micrófono",
+    "unmute": "Encender el micrófono",
+    "end": "Finalizar llamada",
+    "close": "Cerrar",
+    "errors": {
+      "not_supported": "Este navegador no puede hacer llamadas de voz.",
+      "microphone_denied": "Permite el acceso al micrófono para hablar con el agente.",
+      "microphone_not_found": "No se encontró ningún micrófono.",
+      "busy": "La voz está ocupada ahora mismo. Inténtalo de nuevo en un momento.",
+      "failed": "No se pudo iniciar la llamada de voz. Inténtalo de nuevo."
+    }
   }
 }

@@ -1527,6 +1527,196 @@
   height: 16px;
 }
 
+/* Voice-conversation button: same footprint as the paperclip, beside send. */
+.chatvia-widget .chatvia-widget-voice-call-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--chat-text-muted);
+  transition: background 0.2s, color 0.2s;
+}
+
+.chatvia-widget .chatvia-widget-voice-call-btn:hover {
+  background: color-mix(in srgb, var(--chat-text) 8%, transparent);
+  color: var(--chat-text);
+}
+
+.chatvia-widget .chatvia-widget-voice-call-btn:focus-visible {
+  outline: 2px solid var(--chat-focus-ring-color);
+  outline-offset: 2px;
+}
+
+.chatvia-widget .chatvia-widget-voice-call-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ============================================
+   VOICE MODE
+   Covers the chat window during a live voice call: the orb in the middle,
+   the status line and captions under it, Mute and End at the bottom.
+   ============================================ */
+.chatvia-widget .chatvia-widget-voice {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 28px 20px 24px;
+  background: color-mix(in srgb, var(--chat-bg, #ffffff) 96%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--chat-text, #0f172a);
+  border-radius: inherit;
+  animation: chatvia-voice-in 0.2s ease-out;
+}
+
+@keyframes chatvia-voice-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.chatvia-widget .chatvia-widget-voice-timer {
+  min-height: 18px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--chat-text-muted);
+}
+
+.chatvia-widget .chatvia-widget-voice-center {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 0;
+}
+
+.chatvia-widget .chatvia-widget-voice-orb {
+  display: block;
+  width: min(220px, 62vw);
+  height: min(220px, 62vw);
+}
+
+.chatvia-widget .chatvia-widget-voice-status {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--chat-text, #0f172a);
+}
+
+/* Live captions: a fixed four-line box that keeps the newest words in view
+   (voiceView scrolls it down as the text grows), like subtitles. */
+.chatvia-widget .chatvia-widget-voice-caption,
+.chatvia-widget .chatvia-widget-voice-error {
+  margin: 0;
+  width: 100%;
+  max-width: 300px;
+  height: 80px;
+  font-size: 13px;
+  line-height: 20px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.chatvia-widget .chatvia-widget-voice-caption {
+  color: var(--chat-text-muted);
+  scroll-behavior: smooth;
+}
+
+/* Once the answer outgrows the box, the lines above fade out. */
+.chatvia-widget .chatvia-widget-voice-caption.chatvia-widget-voice-caption-overflow {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px);
+  mask-image: linear-gradient(to bottom, transparent, #000 24px);
+}
+
+.chatvia-widget .chatvia-widget-voice-error {
+  color: #dc2626;
+}
+
+.chatvia-widget .chatvia-widget-voice-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.chatvia-widget .chatvia-widget-voice-btn {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+
+.chatvia-widget .chatvia-widget-voice-btn[hidden] {
+  display: none;
+}
+
+.chatvia-widget .chatvia-widget-voice-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.chatvia-widget .chatvia-widget-voice-btn:focus-visible {
+  outline: 2px solid var(--chat-focus-ring-color);
+  outline-offset: 3px;
+}
+
+.chatvia-widget .chatvia-widget-voice-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.chatvia-widget .chatvia-widget-voice-mute {
+  border: 1px solid var(--chat-border, rgba(15, 23, 42, 0.12));
+  background: var(--chat-surface, #ffffff);
+  color: var(--chat-text, #0f172a);
+}
+
+.chatvia-widget .chatvia-widget-voice-mute[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--chat-text, #0f172a) 10%, transparent);
+}
+
+.chatvia-widget .chatvia-widget-voice-end {
+  border: 0;
+  background: color-mix(in srgb, var(--chat-text, #0f172a) 10%, transparent);
+  color: var(--chat-text, #0f172a);
+}
+
+.chatvia-widget .chatvia-widget-voice-end.chatvia-widget-voice-end-live {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.chatvia-widget .chatvia-widget-voice-end.chatvia-widget-voice-end-live:hover {
+  background: #b91c1c;
+}
+
+.chatvia-widget .chatvia-widget-voice-end svg {
+  fill: currentColor;
+}
+
 .chatvia-widget .chatvia-widget-input {
   /* Flex child of .chatvia-widget-input-row. min-width:0 lets it shrink so the
      buttons never get pushed out of the pill. */
@@ -3302,6 +3492,14 @@
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
   .chatvia-widget .chatvia-widget-messages {
+    scroll-behavior: auto;
+  }
+
+  .chatvia-widget .chatvia-widget-voice {
+    animation: none;
+  }
+
+  .chatvia-widget .chatvia-widget-voice-caption {
     scroll-behavior: auto;
   }
 

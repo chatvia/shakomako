@@ -93,6 +93,7 @@ export const CSS_CLASSES = {
   INPUT: 'chatvia-widget-input',
   SEND_BUTTON: 'chatvia-widget-send-btn',
   ATTACH_BUTTON: 'chatvia-widget-attach-btn',
+  VOICE_BUTTON: 'chatvia-widget-voice-call-btn',
   ATTACHMENTS_STRIP: 'chatvia-widget-attachments-strip',
   ATTACHMENT_CHIP: 'chatvia-widget-attachment-chip',
   ATTACHMENT_CHIP_ICON: 'chatvia-widget-attachment-chip-icon',

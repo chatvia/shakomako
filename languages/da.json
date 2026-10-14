@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "AI-assistent",
     "human_agent": "Menneskelig agent"
+  },
+  "sources": {
+    "title": "Kilder",
+    "with_page": "{label}, side {page}"
+  },
+  "voice": {
+    "start": "Tal med stemmen",
+    "title": "Stemmesamtale",
+    "connecting": "Forbinder…",
+    "listening": "Lytter",
+    "thinking": "Tænker…",
+    "speaking": "Taler",
+    "muted": "Mikrofon slået fra",
+    "ended": "Opkaldet er afsluttet",
+    "mute": "Slå mikrofonen fra",
+    "unmute": "Slå mikrofonen til",
+    "end": "Afslut opkald",
+    "close": "Luk",
+    "errors": {
+      "not_supported": "Denne browser kan ikke foretage stemmeopkald.",
+      "microphone_denied": "Giv adgang til mikrofonen for at tale med agenten.",
+      "microphone_not_found": "Der blev ikke fundet nogen mikrofon.",
+      "busy": "Stemme er optaget lige nu. Prøv igen om et øjeblik.",
+      "failed": "Stemmeopkaldet kunne ikke starte. Prøv igen."
+    }
   }
 }

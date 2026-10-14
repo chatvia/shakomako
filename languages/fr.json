@@ -76,5 +76,30 @@
   "disclosure": {
     "ai_assistant": "Assistant IA",
     "human_agent": "Agent humain"
+  },
+  "sources": {
+    "title": "Sources",
+    "with_page": "{label}, page {page}"
+  },
+  "voice": {
+    "start": "Parler à voix haute",
+    "title": "Conversation vocale",
+    "connecting": "Connexion…",
+    "listening": "À l'écoute",
+    "thinking": "Réflexion…",
+    "speaking": "Parle",
+    "muted": "Micro coupé",
+    "ended": "Appel terminé",
+    "mute": "Couper le micro",
+    "unmute": "Activer le micro",
+    "end": "Terminer l'appel",
+    "close": "Fermer",
+    "errors": {
+      "not_supported": "Ce navigateur ne peut pas passer d'appels vocaux.",
+      "microphone_denied": "Autorisez l'accès au micro pour parler avec l'agent.",
+      "microphone_not_found": "Aucun micro n'a été trouvé.",
+      "busy": "La voix est occupée pour le moment. Réessayez dans un instant.",
+      "failed": "L'appel vocal n'a pas pu démarrer. Veuillez réessayer."
+    }
   }
 }

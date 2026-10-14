@@ -118,5 +118,30 @@
   "disclosure": {
     "ai_assistant": "AI-assistent",
     "human_agent": "Menneskelig medarbeider"
+  },
+  "sources": {
+    "title": "Kilder",
+    "with_page": "{label}, side {page}"
+  },
+  "voice": {
+    "start": "Snakk med stemmen",
+    "title": "Stemmesamtale",
+    "connecting": "Kobler til…",
+    "listening": "Lytter",
+    "thinking": "Tenker…",
+    "speaking": "Snakker",
+    "muted": "Mikrofon av",
+    "ended": "Samtalen er avsluttet",
+    "mute": "Slå av mikrofonen",
+    "unmute": "Slå på mikrofonen",
+    "end": "Avslutt samtalen",
+    "close": "Lukk",
+    "errors": {
+      "not_supported": "Denne nettleseren kan ikke ta stemmesamtaler.",
+      "microphone_denied": "Gi tilgang til mikrofonen for å snakke med agenten.",
+      "microphone_not_found": "Fant ingen mikrofon.",
+      "busy": "Stemme er opptatt akkurat nå. Prøv igjen om litt.",
+      "failed": "Stemmesamtalen kunne ikke starte. Prøv igjen."
+    }
   }
 }
