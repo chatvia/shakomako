@@ -200,6 +200,18 @@ export interface Conversation {
 // Streaming and live-agent handoff
 // ========================================
 
+/**
+ * A source an agent reply was given, as the server streams it: its name, the
+ * page of a PDF, and a public link for a website page or a video.
+ */
+export interface StreamSource {
+  id: string | null;
+  label: string;
+  kind: string;
+  url: string | null;
+  page: number | null;
+}
+
 /** Lifecycle of a function or MCP tool call during a streamed turn. */
 export interface ToolEvent {
   type?: string;
@@ -231,6 +243,7 @@ export interface StreamMessage extends ToolEvent, HandoffEventData {
   content?: string;
   code?: string;
   handoff?: HandoffEventData;
+  sources?: StreamSource[];
 }
 
 /** Payload of a `handoff` event fired to host-page listeners. */

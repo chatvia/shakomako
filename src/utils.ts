@@ -143,6 +143,10 @@ export const CSS_CLASSES = {
   // cleared once a stream works again without matching their translated text.
   CONNECTION_ERROR: 'chatvia-widget-connection-error',
   TOOL_ACTIVITY: 'chatvia-widget-tool-activity',
+  // The sources list under an agent reply.
+  SOURCES: 'chatvia-widget-sources',
+  SOURCES_TITLE: 'chatvia-widget-sources-title',
+  SOURCES_LIST: 'chatvia-widget-sources-list',
   TOOL_CALLING: 'chatvia-widget-tool-calling',
   // Bar mode classes (the floating-bar variant of the launcher)
   BAR_CONTAINER: 'chatvia-widget-bar-container',

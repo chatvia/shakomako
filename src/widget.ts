@@ -29,7 +29,8 @@ import type {
   Conversation,
   FormArtifact,
   WidgetEventEmitter,
-  WidgetSettings
+  WidgetSettings,
+  StreamSource
 } from './types';
 import type { ThemePreference } from './state/config';
 import type { HandoffMode } from './state/handoff';
@@ -233,6 +234,8 @@ export class ChatWidget {
   _streamErrorShown?: boolean;
   _activeToolCalls?: Set<string>;
   _streamFormArtifacts?: FormArtifact[];
+  /** The sources the streaming reply was given, shown under it once it is done. */
+  _streamSources?: StreamSource[];
 
   // Arrow-key recall of sent messages (state/events.ts)
   _historyIndex!: number;

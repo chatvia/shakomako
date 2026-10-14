@@ -174,6 +174,13 @@ export async function handleReceivedMessage(
     return;
   }
 
+  // The sources of the reply arrive before `done`; they are shown under it
+  // when it is finalized.
+  if (messageType === 'sources') {
+    widget._streamSources = message.sources ?? [];
+    return;
+  }
+
   // Backend-signalled error — surface it and stop.
   if (messageType === 'error') {
     widget._streamHandled = true;

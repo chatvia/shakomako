@@ -28,7 +28,8 @@ import type {
   MessageFeedback,
   MessageRole,
   MessageTimestamp,
-  ToolEvent
+  ToolEvent,
+  StreamSource
 } from '../types';
 import type { ChatWidget } from '../widget';
 export { parseMarkdown, escapeHtml };
@@ -766,6 +767,7 @@ export function startStreamingMessage(widget: ChatWidget): void {
   // Form artifacts surfaced by tools this turn — rendered onto the persisted
   // message at finalize (the tool-activity node is transient).
   widget._streamFormArtifacts = [];
+  widget._streamSources = [];
 
   const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
   // Hidden until the first text delta arrives, so a tool-call shimmer shows on
@@ -841,6 +843,45 @@ export function updateMessageBubbleContent(messageBubble: Element, content: stri
 /**
  * Finalize streaming message
  */
+/**
+ * The sources a reply was given, as a short list under it: each one's name,
+ * the page of a PDF, and a link for a website page or a video. Built with
+ * text nodes only, so a source name can never inject markup.
+ */
+function createSourcesList(sources: StreamSource[]): HTMLElement | null {
+  const usable = sources.filter(source => typeof source?.label === 'string' && source.label !== '');
+  if (usable.length === 0) return null;
+
+  const container = createElement('div', { className: CSS_CLASSES.SOURCES });
+  container.appendChild(
+    createElement('span', { className: CSS_CLASSES.SOURCES_TITLE, textContent: t('sources.title') })
+  );
+
+  const list = createElement('ol', { className: CSS_CLASSES.SOURCES_LIST });
+  for (const source of usable) {
+    const text = source.page
+      ? t('sources.with_page', { label: source.label, page: String(source.page) })
+      : source.label;
+    const item = createElement('li');
+    if (source.url && /^https?:\/\//i.test(source.url)) {
+      item.appendChild(
+        createElement('a', {
+          href: source.url,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          textContent: text
+        })
+      );
+    } else {
+      item.textContent = text;
+    }
+    list.appendChild(item);
+  }
+  container.appendChild(list);
+
+  return container;
+}
+
 export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void> {
   if (!widget.isStreaming) return;
 
@@ -880,6 +921,8 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
         if (wrapper) wrapper.style.display = '';
         await updateMessageBubbleContent(messageBubble, finalMessage);
       }
+      const sourcesList = createSourcesList(widget._streamSources ?? []);
+      if (sourcesList) streamingMsgElement.appendChild(sourcesList);
       const actionsContainer = createMessageActions(
         widget,
         finalMessage,
@@ -918,6 +961,7 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
   }
 
   widget._streamFormArtifacts = [];
+  widget._streamSources = [];
 
   widget.isStreaming = false;
   widget.currentStreamedMessage = '';

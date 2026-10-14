@@ -48,6 +48,54 @@ describe('stream client', () => {
     expect(client.isConnected()).toBe(false);
   });
 
+  it('passes on the sources of a reply, with its id', async () => {
+    const events = [
+      { type: 'start', data: { assistant_message_id: 'msg-1' } },
+      { type: 'delta', data: { text: 'Returns are free.' } },
+      {
+        type: 'sources',
+        data: {
+          sources: [
+            {
+              id: 'c-1',
+              label: 'Returns',
+              kind: 'website',
+              url: 'https://shop.test/returns',
+              page: null
+            }
+          ]
+        }
+      },
+      { type: 'done', data: {} }
+    ];
+    const body = events.map(event => `data: ${JSON.stringify(event)}\n\n`).join('');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response(body, { status: 200 })))
+    );
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const onMessage = vi.fn();
+    const onClose = vi.fn();
+    const client = createSSEClient('agent-1', 'sess-1', 'conv-1', { onMessage, onClose });
+
+    await client.send(turn);
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalled());
+
+    expect(onMessage).toHaveBeenCalledWith({
+      type: 'sources',
+      id: 'msg-1',
+      sources: [
+        {
+          id: 'c-1',
+          label: 'Returns',
+          kind: 'website',
+          url: 'https://shop.test/returns',
+          page: null
+        }
+      ]
+    });
+  });
+
   it('treats closing the client as a teardown, not a failure', async () => {
     vi.stubGlobal('fetch', hangingFetch());
     vi.spyOn(console, 'log').mockImplementation(() => {});

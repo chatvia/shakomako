@@ -1258,6 +1258,32 @@
   }
 }
 
+/* The sources an agent reply was given, as a short list under it. */
+.chatvia-widget .chatvia-widget-sources {
+  margin: 4px 0 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--chat-text-muted);
+}
+
+.chatvia-widget .chatvia-widget-sources-title {
+  font-weight: 600;
+}
+
+.chatvia-widget .chatvia-widget-sources-list {
+  margin: 2px 0 0;
+  padding-inline-start: 18px;
+}
+
+.chatvia-widget .chatvia-widget-sources-list li {
+  overflow-wrap: anywhere;
+}
+
+.chatvia-widget .chatvia-widget-sources-list a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 /* Tool activity: a transient "calling external tool" shimmer shown while a
    function/MCP call runs, then removed so the answer can stream in below. */
 .chatvia-widget .chatvia-widget-tool-activity {

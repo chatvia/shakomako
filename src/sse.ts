@@ -2,7 +2,7 @@ import { requestHeaders } from './api';
 import { authHeaders } from './auth';
 import { getApiUrl } from './endpoints';
 import { debug } from './utils';
-import type { Attachment, HandoffEventData, StreamMessage, ToolEvent } from './types';
+import type { Attachment, HandoffEventData, StreamMessage, StreamSource, ToolEvent } from './types';
 
 /** One visitor turn, posted to the stream endpoint. */
 export interface StreamRequest {
@@ -51,6 +51,7 @@ interface StreamEnvelopeData extends ToolEvent {
   key?: string;
   value?: HandoffEventData;
   status?: string;
+  sources?: StreamSource[];
 }
 
 /**
@@ -251,6 +252,18 @@ export function createSSEClient(
                 continue;
               }
 
+              // the sources the reply was given; shown under it once it is done
+              if (type === 'sources') {
+                if (Array.isArray(d.sources)) {
+                  sseCallbacks.onMessage({
+                    type: 'sources',
+                    id: assistantMessageId,
+                    sources: d.sources
+                  });
+                }
+                continue;
+              }
+
               // handoff now rides inside meta{key:'handoff', value:{status,…}}
               if (type === 'meta' && d.key === 'handoff' && d.value) {
                 sseCallbacks.onMessage({ ...d.value, status: d.value.status });
@@ -266,7 +279,7 @@ export function createSSEClient(
 
               // backward-compat: flat { content } (old format + server.js mock)
               if (event.content) sseCallbacks.onMessage(event);
-              // meta(non-handoff) / sources / unknown types: ignored
+              // meta(non-handoff) / unknown types: ignored
             }
           }
 
