@@ -28,3 +28,39 @@ describe('StorageManager.deleteAllConversations', () => {
     );
   });
 });
+
+describe('StorageManager.generateConversationTitle', () => {
+  beforeEach(() => {
+    apiMock.mockReset();
+  });
+
+  it('asks the server to name the conversation and returns its title', async () => {
+    apiMock.mockResolvedValue({ ok: true, json: async () => ({ title: 'Order status' }) });
+
+    await expect(
+      new StorageManager('agent-1', 'sess-1').generateConversationTitle('conv-1')
+    ).resolves.toBe('Order status');
+
+    expect(apiMock).toHaveBeenCalledWith({
+      endpoint: 'conversations/title',
+      method: 'POST',
+      headers: { 'X-AGENT-ID': 'agent-1', 'X-SESSION-ID': 'sess-1', 'X-CONVERSATION-ID': 'conv-1' }
+    });
+  });
+
+  it('returns null while the conversation has no title', async () => {
+    apiMock.mockResolvedValue({ ok: true, json: async () => ({ title: null }) });
+
+    await expect(
+      new StorageManager('agent-1', 'sess-1').generateConversationTitle('conv-1')
+    ).resolves.toBeNull();
+  });
+
+  it('fails when the server refuses', async () => {
+    apiMock.mockResolvedValue({ ok: false, status: 404 });
+
+    await expect(
+      new StorageManager('agent-1', 'sess-1').generateConversationTitle('conv-1')
+    ).rejects.toThrow();
+  });
+});

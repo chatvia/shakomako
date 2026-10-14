@@ -137,6 +137,30 @@ export default class StorageManager {
     return true;
   }
 
+  /**
+   * Ask the server to name a conversation from its first question and answer.
+   * Returns the title, or null while it has none. The server keeps a title
+   * that is already there, so asking twice costs nothing.
+   */
+  async generateConversationTitle(conversationId: string): Promise<string | null> {
+    const response = await api({
+      endpoint: 'conversations/title',
+      method: 'POST',
+      headers: {
+        'X-AGENT-ID': this.agentId,
+        'X-SESSION-ID': this.sessionId,
+        'X-CONVERSATION-ID': conversationId
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to name the conversation');
+    }
+
+    const data: { title?: string | null } = await response.json();
+    return data.title ?? null;
+  }
+
   async deleteAllConversations(): Promise<boolean> {
     try {
       const response = await api({

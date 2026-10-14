@@ -15,6 +15,7 @@ import {
   renderStreamError
 } from './messages';
 import { handleHandoffEvent } from './handoff';
+import { requestConversationTitle } from './conversations';
 import { t } from '../i18n';
 import type { SSECloseInfo } from '../sse';
 import type { StreamMessage } from '../types';
@@ -67,6 +68,11 @@ export function setupSSE(widget: ChatWidget): void {
         // Skip when aborted (teardown/supersede): that's not a failed turn.
         if (!info.aborted && !widget._streamHandled && !widget._streamErrorShown) {
           renderStreamError(widget);
+        }
+
+        // A reply landed: name the conversation now (once), not a minute later.
+        if (!info.aborted && widget._streamHandled && !widget._streamErrorShown) {
+          void requestConversationTitle(widget);
         }
         widget._streamHandled = false;
         widget._streamErrorShown = false;

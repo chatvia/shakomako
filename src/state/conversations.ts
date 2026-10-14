@@ -122,6 +122,33 @@ export async function createNewConversation(widget: ChatWidget): Promise<Convers
   }
 }
 
+/** The conversations each widget has asked a title for, so it asks once per conversation. */
+const titleRequested = new WeakMap<ChatWidget, Set<string>>();
+
+/**
+ * Name the active conversation right after its first reply, as the hosted
+ * chat does, so the title is there when the visitor opens the history. Asks
+ * once per conversation; a failure is only logged, as the server names the
+ * conversation itself a minute later.
+ */
+export async function requestConversationTitle(widget: ChatWidget): Promise<void> {
+  const conversationId = widget.activeConversationId;
+  if (!conversationId || !widget.storageManager) return;
+
+  const requested = titleRequested.get(widget) ?? new Set<string>();
+  titleRequested.set(widget, requested);
+  if (requested.has(conversationId)) return;
+  requested.add(conversationId);
+
+  try {
+    const title = await widget.storageManager.generateConversationTitle(conversationId);
+    const conversation = widget.conversations.find(c => c.id === conversationId);
+    if (title && conversation) conversation.title = title;
+  } catch (error) {
+    console.warn('Could not name the conversation yet; the server will name it.', error);
+  }
+}
+
 /**
  * Get the active conversation
  */
