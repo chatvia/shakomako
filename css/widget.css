@@ -1553,7 +1553,9 @@
   height: 16px;
 }
 
-/* Voice-conversation button: same footprint as the paperclip, beside send. */
+/* Voice-conversation button and the dictation mic: same footprint as the
+   paperclip, beside send. */
+.chatvia-widget .chatvia-widget-mic-btn,
 .chatvia-widget .chatvia-widget-voice-call-btn {
   flex-shrink: 0;
   width: 34px;
@@ -1570,19 +1572,55 @@
   transition: background 0.2s, color 0.2s;
 }
 
+.chatvia-widget .chatvia-widget-mic-btn:hover,
 .chatvia-widget .chatvia-widget-voice-call-btn:hover {
   background: color-mix(in srgb, var(--chat-text) 8%, transparent);
   color: var(--chat-text);
 }
 
+.chatvia-widget .chatvia-widget-mic-btn:focus-visible,
 .chatvia-widget .chatvia-widget-voice-call-btn:focus-visible {
   outline: 2px solid var(--chat-focus-ring-color);
   outline-offset: 2px;
 }
 
+.chatvia-widget .chatvia-widget-mic-btn svg,
 .chatvia-widget .chatvia-widget-voice-call-btn svg {
   width: 18px;
   height: 18px;
+}
+
+.chatvia-widget .chatvia-widget-mic-btn:disabled,
+.chatvia-widget .chatvia-widget-voice-call-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.chatvia-widget .chatvia-widget-mic-btn:disabled:hover,
+.chatvia-widget .chatvia-widget-voice-call-btn:disabled:hover {
+  background: transparent;
+  color: var(--chat-text-muted);
+}
+
+/* Recording: a red, pulsing mic; pressing it again stops. */
+.chatvia-widget .chatvia-widget-mic-btn[aria-pressed='true'],
+.chatvia-widget .chatvia-widget-mic-btn[aria-pressed='true']:hover {
+  background: #ef4444;
+  color: #fff;
+  animation: chatvia-mic-pulse 1.4s ease-in-out infinite;
+}
+
+/* Writing the recording down. */
+.chatvia-widget .chatvia-widget-mic-btn[aria-busy='true'] {
+  opacity: 1;
+}
+
+.chatvia-widget .chatvia-widget-mic-btn[aria-busy='true'] svg {
+  animation: chatvia-widget-spin 1s linear infinite;
+}
+
+@keyframes chatvia-mic-pulse {
+  50% { opacity: 0.6; }
 }
 
 /* ============================================
@@ -3494,6 +3532,8 @@
    handled by `[disabled]` — these rules cover the `<div role="button">`
    buttons that can't use that attribute. */
 .chatvia-widget.chatvia-widget-locked .chatvia-widget-attach-btn,
+.chatvia-widget.chatvia-widget-locked .chatvia-widget-mic-btn,
+.chatvia-widget.chatvia-widget-locked .chatvia-widget-voice-call-btn,
 .chatvia-widget.chatvia-widget-locked .chatvia-widget-menu-btn,
 .chatvia-widget.chatvia-widget-locked .chatvia-widget-input,
 .chatvia-widget.chatvia-widget-locked .chatvia-widget-send-btn {
@@ -3541,6 +3581,7 @@
   .chatvia-widget .chatvia-widget-theme-toggle.chatvia-widget-animating svg,
   .chatvia-widget .chatvia-widget-typing-dot,
   .chatvia-widget .chatvia-widget-human-typing,
+  .chatvia-widget .chatvia-widget-mic-btn[aria-pressed='true'],
   .chatvia-widget .chatvia-widget-window.chatvia-widget-pending-mode .chatvia-widget-header::before,
   .chatvia-widget-confirm-dialog,
   .chatvia-widget-confirm-content {

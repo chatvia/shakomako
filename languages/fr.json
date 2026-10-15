@@ -101,5 +101,15 @@
       "busy": "La voix est occupée pour le moment. Réessayez dans un instant.",
       "failed": "L'appel vocal n'a pas pu démarrer. Veuillez réessayer."
     }
+  },
+  "dictation": {
+    "start": "Démarrer la saisie vocale",
+    "stop": "Arrêter l'enregistrement",
+    "errors": {
+      "microphone_denied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone pour enregistrer.",
+      "microphone_not_found": "Aucun microphone trouvé. Veuillez connecter un microphone et réessayer.",
+      "microphone_failed": "Impossible d'accéder au microphone",
+      "failed": "Échec de la transcription"
+    }
   }
 }

@@ -143,5 +143,15 @@
       "busy": "Puhe on juuri nyt varattu. Yritä hetken kuluttua uudelleen.",
       "failed": "Puhelua ei voitu aloittaa. Yritä uudelleen."
     }
+  },
+  "dictation": {
+    "start": "Aloita puhesyöte",
+    "stop": "Lopeta nauhoitus",
+    "errors": {
+      "microphone_denied": "Mikrofonin käyttö estettiin. Salli mikrofonin käyttö tallentaaksesi.",
+      "microphone_not_found": "Mikrofonia ei löytynyt. Liitä mikrofoni ja yritä uudelleen.",
+      "microphone_failed": "Mikrofonin käyttö epäonnistui",
+      "failed": "Litterointi epäonnistui"
+    }
   }
 }

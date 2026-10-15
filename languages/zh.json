@@ -101,5 +101,15 @@
       "busy": "语音服务正忙，请稍后再试。",
       "failed": "无法开始语音通话，请重试。"
     }
+  },
+  "dictation": {
+    "start": "开始语音输入",
+    "stop": "停止录音",
+    "errors": {
+      "microphone_denied": "麦克风访问被拒绝。请允许访问麦克风以进行录音。",
+      "microphone_not_found": "未找到麦克风。请连接麦克风后重试。",
+      "microphone_failed": "无法访问麦克风",
+      "failed": "转写失败"
+    }
   }
 }

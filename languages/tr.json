@@ -101,5 +101,15 @@
       "busy": "Ses şu anda meşgul. Lütfen biraz sonra tekrar deneyin.",
       "failed": "Sesli görüşme başlatılamadı. Lütfen tekrar deneyin."
     }
+  },
+  "dictation": {
+    "start": "Sesli girişi başlat",
+    "stop": "Kaydı durdur",
+    "errors": {
+      "microphone_denied": "Mikrofon erişimi reddedildi. Kayıt yapmak için lütfen mikrofon erişimine izin verin.",
+      "microphone_not_found": "Mikrofon bulunamadı. Lütfen bir mikrofon bağlayıp tekrar deneyin.",
+      "microphone_failed": "Mikrofona erişilemedi",
+      "failed": "Metne dönüştürme başarısız oldu"
+    }
   }
 }

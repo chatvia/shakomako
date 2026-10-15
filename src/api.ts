@@ -34,8 +34,12 @@ export interface ApiRequest {
 export interface UploadRequest {
   /** e.g. 'conversations/attachments' */
   endpoint: string;
-  /** The File object to upload. */
-  file: File;
+  /** The file to upload. */
+  file: Blob;
+  /** Its file name; a File keeps its own name when this is absent. */
+  filename?: string;
+  /** The form field the file goes in. */
+  field?: string;
   /** X-AGENT-ID, X-SESSION-ID, X-CONVERSATION-ID, etc. */
   headers?: ApiHeaders;
 }
@@ -91,6 +95,8 @@ export default async function api({
 export async function uploadFile({
   endpoint,
   file,
+  filename,
+  field = 'file',
   headers = {}
 }: UploadRequest): Promise<Response> {
   const mergedHeaders: ApiHeaders = { Accept: 'application/json', ...headers };
@@ -99,7 +105,8 @@ export async function uploadFile({
   delete mergedHeaders['Content-Type'];
 
   const form = new FormData();
-  form.append('file', file);
+  if (filename) form.append(field, file, filename);
+  else form.append(field, file);
 
   const apiUrl = getApiUrl();
 

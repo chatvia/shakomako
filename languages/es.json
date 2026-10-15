@@ -101,5 +101,15 @@
       "busy": "La voz está ocupada ahora mismo. Inténtalo de nuevo en un momento.",
       "failed": "No se pudo iniciar la llamada de voz. Inténtalo de nuevo."
     }
+  },
+  "dictation": {
+    "start": "Iniciar entrada de voz",
+    "stop": "Detener grabación",
+    "errors": {
+      "microphone_denied": "Acceso al micrófono denegado. Permite el acceso al micrófono para grabar.",
+      "microphone_not_found": "No se encontró ningún micrófono. Conecta un micrófono e inténtalo de nuevo.",
+      "microphone_failed": "No se pudo acceder al micrófono",
+      "failed": "La transcripción falló"
+    }
   }
 }

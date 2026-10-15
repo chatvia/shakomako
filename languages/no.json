@@ -143,5 +143,15 @@
       "busy": "Stemme er opptatt akkurat nå. Prøv igjen om litt.",
       "failed": "Stemmesamtalen kunne ikke starte. Prøv igjen."
     }
+  },
+  "dictation": {
+    "start": "Start stemmeinndata",
+    "stop": "Stopp opptak",
+    "errors": {
+      "microphone_denied": "Tilgang til mikrofonen ble avslått. Tillat tilgang til mikrofonen for å ta opp.",
+      "microphone_not_found": "Fant ingen mikrofon. Koble til en mikrofon og prøv igjen.",
+      "microphone_failed": "Kunne ikke få tilgang til mikrofonen",
+      "failed": "Transkripsjonen mislyktes"
+    }
   }
 }

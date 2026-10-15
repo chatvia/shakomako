@@ -101,5 +101,15 @@
       "busy": "Stemme er optaget lige nu. Prøv igen om et øjeblik.",
       "failed": "Stemmeopkaldet kunne ikke starte. Prøv igen."
     }
+  },
+  "dictation": {
+    "start": "Start taleinput",
+    "stop": "Stop optagelse",
+    "errors": {
+      "microphone_denied": "Adgang til mikrofonen blev nægtet. Tillad adgang til mikrofonen for at optage.",
+      "microphone_not_found": "Ingen mikrofon fundet. Tilslut en mikrofon, og prøv igen.",
+      "microphone_failed": "Kunne ikke få adgang til mikrofonen",
+      "failed": "Transskription mislykkedes"
+    }
   }
 }

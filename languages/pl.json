@@ -143,5 +143,15 @@
       "busy": "Głos jest teraz zajęty. Spróbuj ponownie za chwilę.",
       "failed": "Nie udało się rozpocząć rozmowy głosowej. Spróbuj ponownie."
     }
+  },
+  "dictation": {
+    "start": "Rozpocznij wprowadzanie głosowe",
+    "stop": "Zatrzymaj nagrywanie",
+    "errors": {
+      "microphone_denied": "Odmówiono dostępu do mikrofonu. Zezwól na dostęp do mikrofonu, aby nagrywać.",
+      "microphone_not_found": "Nie znaleziono mikrofonu. Podłącz mikrofon i spróbuj ponownie.",
+      "microphone_failed": "Nie udało się uzyskać dostępu do mikrofonu",
+      "failed": "Transkrypcja nie powiodła się"
+    }
   }
 }

@@ -143,5 +143,15 @@
       "busy": "Röst är upptaget just nu. Försök igen om en stund.",
       "failed": "Röstsamtalet kunde inte starta. Försök igen."
     }
+  },
+  "dictation": {
+    "start": "Starta röstinmatning",
+    "stop": "Stoppa inspelning",
+    "errors": {
+      "microphone_denied": "Åtkomst till mikrofonen nekades. Tillåt åtkomst till mikrofonen för att spela in.",
+      "microphone_not_found": "Ingen mikrofon hittades. Anslut en mikrofon och försök igen.",
+      "microphone_failed": "Det gick inte att komma åt mikrofonen",
+      "failed": "Transkriberingen misslyckades"
+    }
   }
 }

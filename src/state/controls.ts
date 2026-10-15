@@ -87,6 +87,8 @@ export function toggleChat(widget: ChatWidget, open?: boolean): void {
     // Closing hides the window; if focus was inside it, hand it back to the
     // control that reopens the chat rather than dropping it to the page.
     const focusWasInside = widget.chatWindow?.contains(document.activeElement) ?? false;
+    // Leave no microphone on behind a hidden window.
+    widget.dictation?.cancel();
     widget.chatWindow?.classList.remove(CSS_CLASSES.WINDOW_OPEN);
     widget.chatWindow?.removeAttribute('aria-modal');
 

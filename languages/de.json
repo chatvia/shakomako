@@ -101,5 +101,15 @@
       "busy": "Die Sprachfunktion ist gerade ausgelastet. Bitte versuche es gleich noch einmal.",
       "failed": "Der Sprachanruf konnte nicht starten. Bitte versuche es erneut."
     }
+  },
+  "dictation": {
+    "start": "Spracheingabe starten",
+    "stop": "Aufnahme stoppen",
+    "errors": {
+      "microphone_denied": "Mikrofonzugriff verweigert. Bitte erlauben Sie den Zugriff auf das Mikrofon, um aufzunehmen.",
+      "microphone_not_found": "Kein Mikrofon gefunden. Bitte schließen Sie ein Mikrofon an und versuchen Sie es erneut.",
+      "microphone_failed": "Zugriff auf das Mikrofon fehlgeschlagen",
+      "failed": "Transkription fehlgeschlagen"
+    }
   }
 }

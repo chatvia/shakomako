@@ -101,5 +101,15 @@
       "busy": "Giọng nói đang bận. Vui lòng thử lại sau giây lát.",
       "failed": "Không thể bắt đầu cuộc gọi thoại. Vui lòng thử lại."
     }
+  },
+  "dictation": {
+    "start": "Bắt đầu nhập giọng nói",
+    "stop": "Dừng ghi âm",
+    "errors": {
+      "microphone_denied": "Quyền truy cập micrô bị từ chối. Vui lòng cho phép truy cập micrô để ghi âm.",
+      "microphone_not_found": "Không tìm thấy micrô. Vui lòng kết nối micrô và thử lại.",
+      "microphone_failed": "Không thể truy cập micrô",
+      "failed": "Chuyển giọng nói thành văn bản thất bại"
+    }
   }
 }

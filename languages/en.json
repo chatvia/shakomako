@@ -143,5 +143,15 @@
       "busy": "Voice is busy right now. Please try again in a moment.",
       "failed": "The voice call could not start. Please try again."
     }
+  },
+  "dictation": {
+    "start": "Start voice input",
+    "stop": "Stop recording",
+    "errors": {
+      "microphone_denied": "Microphone access denied. Please allow microphone access to record.",
+      "microphone_not_found": "No microphone found. Please connect a microphone and try again.",
+      "microphone_failed": "Failed to access microphone",
+      "failed": "Transcription failed"
+    }
   }
 }

@@ -83,6 +83,8 @@ export interface WidgetSettings {
   branding?: BrandingSettings | null;
 
   allow_file_uploads?: boolean;
+  /** The composer mic (dictation): allowed for the agent and speech to text is set up. */
+  allow_voice_input?: boolean;
   /** The voice-conversation button: on for the agent and set up on the server. */
   voice_conversation?: boolean;
   max_files_per_chat?: number;

@@ -20,6 +20,7 @@ import { createElement, createIcon } from './ui';
 import type { ElementAttributes, IconName } from './ui';
 import { initI18n, t, getDirection, pickLocalized } from './i18n';
 import { triggerLabel } from './keyboardTrigger';
+import { Dictation, isDictationSupported, type DictationState } from './voice/dictation';
 import { isVoiceCallSupported } from './voice/realtimeCall';
 import { VoiceView } from './voice/voiceView';
 import type {
@@ -194,6 +195,9 @@ export class ChatWidget {
   attachButton?: HTMLDivElement;
   /** The voice-conversation button (only when the agent offers voice calls). */
   voiceButton?: HTMLButtonElement;
+  /** The composer mic (only when the agent allows voice input). */
+  micButton?: HTMLButtonElement;
+  dictation?: Dictation;
   /** The voice mode while a call is open. */
   voiceView?: VoiceView | null;
   fetchSpinner?: HTMLDivElement | null;
@@ -1498,6 +1502,28 @@ export class ChatWidget {
       });
     }
 
+    // The mic records the visitor and puts their words in the composer, like
+    // the hosted chat's. The server sends allow_voice_input only when the
+    // owner allows it and speech to text is set up.
+    if (this.settings?.allow_voice_input === true && isDictationSupported()) {
+      this.micButton = createElement('button', {
+        type: 'button',
+        className: CSS_CLASSES.MIC_BUTTON
+      });
+      this.dictation = new Dictation({
+        transcribe: (audio, filename) => this._transcribeDictation(audio, filename),
+        messages: {
+          microphoneDenied: t('dictation.errors.microphone_denied'),
+          microphoneNotFound: t('dictation.errors.microphone_not_found'),
+          microphoneFailed: t('dictation.errors.microphone_failed'),
+          failed: t('dictation.errors.failed')
+        },
+        onState: state => this._renderDictationState(state)
+      });
+      this._renderDictationState('idle');
+      this.micButton.addEventListener('click', () => void this.toggleDictation());
+    }
+
     // The voice-conversation button opens a live spoken call with the agent.
     // The server sends voice_conversation only when the owner turned it on
     // and the install has voice set up; the browser must also do WebRTC.
@@ -1529,10 +1555,74 @@ export class ChatWidget {
     inputRow.appendChild(this.chatInput);
     if (this.fileInput) inputRow.appendChild(this.fileInput);
     // After the textarea, so the `placeholder-shown ~ send` rule still holds.
+    if (this.micButton) inputRow.appendChild(this.micButton);
     if (this.voiceButton) inputRow.appendChild(this.voiceButton);
     inputRow.appendChild(this.sendButton);
     container.appendChild(inputRow);
     return container;
+  }
+
+  /** The composer mic: start recording, or stop and put the words in the composer. */
+  async toggleDictation(): Promise<void> {
+    const dictation = this.dictation;
+    if (!dictation || dictation.state === 'transcribing') return;
+
+    try {
+      if (dictation.state === 'idle') {
+        await dictation.start();
+        return;
+      }
+      const text = await dictation.stop();
+      if (text && !this._destroyed) this._insertDictation(text);
+    } catch (error) {
+      if (this._destroyed) return;
+      const el = await this.addMessage(CSS_CLASSES.MESSAGE_SYSTEM, (error as Error).message, false);
+      el?.classList.add('error');
+    }
+  }
+
+  /** POST transcribe: the recording as text, '' when nothing was heard. */
+  async _transcribeDictation(audio: Blob, filename: string): Promise<string> {
+    const { uploadFile } = await import('./api');
+    const response = await uploadFile({
+      endpoint: 'transcribe',
+      file: audio,
+      filename,
+      field: 'audio',
+      headers: { 'X-AGENT-ID': this.agentId, 'X-SESSION-ID': this.sessionId }
+    });
+    if (!response.ok) throw new Error(`Transcription failed with status ${response.status}`);
+
+    const body = (await response.json().catch(() => ({}))) as { text?: string };
+    return body.text ?? '';
+  }
+
+  /** Adds the dictated words after whatever the visitor already typed. */
+  _insertDictation(text: string): void {
+    const input = this.chatInput;
+    const typed = input.value.trimEnd();
+    input.value = typed ? `${typed} ${text}` : text;
+    // Resizes the textarea and, in a live chat, sends the typing indicator.
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    if (!input.disabled) {
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }
+
+  /** The mic shows whether it records; a call cannot start while it does. */
+  _renderDictationState(state: DictationState): void {
+    const button = this.micButton;
+    if (!button) return;
+
+    const label = t(state === 'recording' ? 'dictation.stop' : 'dictation.start');
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.setAttribute('aria-pressed', String(state === 'recording'));
+    button.setAttribute('aria-busy', String(state === 'transcribing'));
+    button.disabled = state === 'transcribing';
+    button.replaceChildren(createIcon(state === 'transcribing' ? 'spinner' : 'mic'));
+    if (this.voiceButton) this.voiceButton.disabled = state !== 'idle';
   }
 
   /** Open the voice mode over the chat window and start a call. */
@@ -1879,6 +1969,7 @@ export class ChatWidget {
   destroy(): void {
     this._destroyed = true;
     void this.voiceView?.end();
+    this.dictation?.cancel();
     this._confirmDialog?.remove();
     this._confirmDialog = null;
     this._cancelTrackedRafs(['_scrollRAF', '_resizeRAF', '_streamRenderRAF']);

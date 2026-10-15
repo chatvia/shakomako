@@ -101,5 +101,15 @@
       "busy": "Suara sedang sibuk. Silakan coba lagi sebentar lagi.",
       "failed": "Panggilan suara tidak dapat dimulai. Silakan coba lagi."
     }
+  },
+  "dictation": {
+    "start": "Mulai input suara",
+    "stop": "Hentikan perekaman",
+    "errors": {
+      "microphone_denied": "Akses mikrofon ditolak. Izinkan akses mikrofon untuk merekam.",
+      "microphone_not_found": "Mikrofon tidak ditemukan. Hubungkan mikrofon lalu coba lagi.",
+      "microphone_failed": "Gagal mengakses mikrofon",
+      "failed": "Transkripsi gagal"
+    }
   }
 }
