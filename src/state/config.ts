@@ -389,40 +389,25 @@ export function applyTitle(widget: ChatWidget): void {
  */
 export function applyBranding(widget: ChatWidget): void {
   if (!widget.brandFooter) return;
-  // `chatvia_branding` is the workspace-wide gate: the "remove branding"
-  // add-on subscription sets it to false. Absent (older payloads) → treat as
-  // true and fall back to the legacy branding.enabled flag, which the backend
-  // now drives from the same value.
+  // `chatvia_branding` is the install-wide gate: Chatvia sets it to false only
+  // when the install has a license that hides the credit. Absent (older
+  // payloads) → treat as true and fall back to the legacy branding.enabled
+  // flag, which the backend drives from the same value.
   const chatviaVisible = widget.settings.chatvia_branding !== false;
   const showBranding = chatviaVisible && widget.settings.branding?.enabled;
   if (showBranding) {
     widget.brandFooter.innerHTML = '';
 
     const brandName = widget.settings.branding!.name || '';
-    const brandUrl = widget.settings.branding!.url || '';
     const brandLogoUrl = widget.settings.branding!.logo_url || '';
 
-    // For the brand link href we allow http: as well as https: — http brand
-    // sites are rare but legal, and a click-through doesn't beacon the visitor
-    // the way a passive <img src=http://…> would.
-    const isValidLinkUrl = (url: string): boolean => {
-      if (!url) return false;
-      try {
-        const parsed = new URL(url, window.location.origin);
-        return ['http:', 'https:'].includes(parsed.protocol);
-      } catch {
-        return false;
-      }
-    };
-
-    const container =
-      brandUrl && isValidLinkUrl(brandUrl)
-        ? createElement('a', {
-            href: brandUrl,
-            target: '_blank',
-            rel: 'noopener noreferrer'
-          })
-        : createElement('span');
+    // The credit always links to chatvia.ai: fixed here, never taken from the
+    // settings payload, so no install can point it somewhere else.
+    const container = createElement('a', {
+      href: 'https://chatvia.ai',
+      target: '_blank',
+      rel: 'noopener'
+    });
 
     // Brand logo goes through the same image-URL allowlist as the agent
     // logo/avatar — https or data:image only, never http.
