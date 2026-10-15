@@ -244,6 +244,19 @@ export function createSSEClient(
                 continue;
               }
 
+              // the output guardrail's correction: the full safe answer that
+              // replaces everything streamed so far
+              if (type === 'replace') {
+                if (typeof d.text === 'string') {
+                  sseCallbacks.onMessage({
+                    type: 'replace',
+                    content: d.text,
+                    id: assistantMessageId
+                  });
+                }
+                continue;
+              }
+
               // function + MCP tool lifecycle
               if (type === 'tool') {
                 // `type` last: a tool payload's own `type` field must not hide that

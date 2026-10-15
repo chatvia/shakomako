@@ -9,6 +9,7 @@ import {
   startStreamingMessage,
   updateStreamingMessage,
   finalizeStreamingMessage,
+  replaceStreamedMessage,
   clearSSETimeouts,
   resetFinalizeTimeout,
   handleToolEvent,
@@ -181,6 +182,14 @@ export async function handleReceivedMessage(
     return;
   }
 
+  // The output guardrail masked personal data in the reply or replaced a
+  // harmful one: show the corrected text instead of what was streamed.
+  if (messageType === 'replace') {
+    widget._streamHandled = true;
+    replaceStreamedMessage(widget, messageContent);
+    return;
+  }
+
   // Backend-signalled error — surface it and stop.
   if (messageType === 'error') {
     widget._streamHandled = true;
@@ -197,10 +206,11 @@ export async function handleReceivedMessage(
   // 1. { type: 'handoff', status: 'human', ... }
   // 2. { handoff: { status: 'human', ... } }
   // 3. { status: 'human', conversation_id: '...', message: '...' }
+  // `pending` arrives when a guardrail topic hands the conversation to the team.
   const isHandoffEvent =
     messageType === 'handoff' ||
     message.handoff ||
-    (message.status && ['human', 'returned', 'ai'].includes(message.status));
+    (message.status && ['pending', 'human', 'returned', 'ai'].includes(message.status));
 
   if (isHandoffEvent) {
     widget._streamHandled = true;

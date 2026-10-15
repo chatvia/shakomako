@@ -841,8 +841,35 @@ export function updateMessageBubbleContent(messageBubble: Element, content: stri
 }
 
 /**
- * Finalize streaming message
+ * Apply the output guardrail's correction: the full safe answer (personal
+ * data masked, or a refusal in place of a harmful reply) replaces the text
+ * streamed so far. It normally lands while the reply is still streaming. When
+ * the idle timeout already finalized the reply (a slow safety check), the
+ * last agent bubble and its history entry are corrected instead.
  */
+export function replaceStreamedMessage(widget: ChatWidget, text: string): void {
+  if (widget.isStreaming) {
+    widget.currentStreamedMessage = text;
+    updateStreamingMessage(widget);
+    resetFinalizeTimeout(widget);
+    return;
+  }
+
+  const bubbles = widget.messagesContainer?.querySelectorAll(
+    `.${CSS_CLASSES.MESSAGE_AGENT} .${CSS_CLASSES.MESSAGE_BUBBLE}`
+  );
+  const lastBubble = bubbles?.[bubbles.length - 1];
+  if (lastBubble) updateMessageBubbleContent(lastBubble, text);
+
+  const entry = [...widget.messageHistory]
+    .reverse()
+    .find(message => message.type === CSS_CLASSES.MESSAGE_AGENT);
+  if (entry) {
+    entry.text = text;
+    entry.content = text;
+  }
+}
+
 /**
  * The sources a reply was given, as a short list under it: each one's name,
  * the page of a PDF, and a link for a website page or a video. Built with
