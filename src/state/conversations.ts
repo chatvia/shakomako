@@ -615,8 +615,8 @@ export function updateConversationActionButtons(widget: ChatWidget): void {
 
   const setState = (el: HTMLElement | undefined, disabled: boolean) => {
     if (!el) return;
-    el.style.pointerEvents = disabled ? 'none' : 'auto';
-    el.style.opacity = disabled ? '0.4' : '1';
+    // Visuals live in CSS on [aria-disabled] (theme-aware), deliberately
+    // separate from the handoff class toggles in _updateMenuForHandoffState.
     el.setAttribute('aria-disabled', String(disabled));
   };
 

@@ -1324,6 +1324,9 @@ export class ChatWidget {
       'clear-all',
       guardedAction(() => this.confirmClearAllConversations())
     );
+    // Destructive actions read in red (muted when the menu is disabled).
+    this.clearCurrentOption.classList.add('chatvia-widget-menu-danger');
+    this.clearAllOption.classList.add('chatvia-widget-menu-danger');
 
     dropdown.appendChild(this.newChatOption);
     dropdown.appendChild(this.historyOption);

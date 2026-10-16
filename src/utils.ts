@@ -183,8 +183,11 @@ export const CSS_CLASSES = {
 export const STREAMING_DONE_MARKER = '[DONE]';
 export const STREAMING_FINALIZE_TIMEOUT = 5000; // ms
 
+// A plain round speech bubble with a soft tail, filled white so it sits on
+// the brand-colored launcher. Liveliness comes from the periodic wiggle in
+// css/widget.css (chatvia-logo-wiggle), not from detail inside the mark.
 export const DEFAULT_LOGO_SVG =
-  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0yMCA0SDRjLTEuMSAwLTIgLjktMiAydjEwYzAgMS4xLjkgMiAyIDJoMTJsNCA0VjZjMC0xLjEtLjktMi0yLTJ6Ii8+PC9zdmc+';
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik03LjkgMjBBOSA5IDAgMSAwIDQgMTYuMUwyIDIyWiIvPjwvc3ZnPg==';
 
 // Allowlist for operator-configured image URLs (logo_url, avatar_url, bubble
 // logo, etc.). We accept:
