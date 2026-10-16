@@ -1,6 +1,6 @@
 {
   "name": "shakomako",
-  "version": "3.0.0",
+  "version": "1.0.0",
   "description": "Shakomako, the embeddable chat widget of Chatvia: a chat bubble and a command bar",
   "main": "dist/embed.js",
   "type": "module",
