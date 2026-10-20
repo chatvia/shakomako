@@ -1,0 +1,143 @@
+<svg width="1200" height="380" viewBox="0 0 1200 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <title>Hire me: Ahmad Mayahi, creator of Chatvia and Shakomako, is available for consulting and development work</title>
+    <defs>
+        <clipPath id="card">
+            <rect width="1200" height="380" rx="24" />
+        </clipPath>
+
+        <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="380" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#0A0F1F" />
+            <stop offset="1" stop-color="#0F1730" />
+        </linearGradient>
+
+        <linearGradient id="accent" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#1638B8" />
+            <stop offset="0.35" stop-color="#1E62F0" />
+            <stop offset="0.6" stop-color="#3B9BFF" />
+            <stop offset="0.8" stop-color="#22D3EE" />
+            <stop offset="1" stop-color="#7C3AED" />
+        </linearGradient>
+
+        <linearGradient id="button" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0">
+                <animate attributeName="stop-color" values="#1E62F0;#3B9BFF;#22D3EE;#7C3AED;#1E62F0" dur="8s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="0.5">
+                <animate attributeName="stop-color" values="#22D3EE;#7C3AED;#1E62F0;#3B9BFF;#22D3EE" dur="8s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="1">
+                <animate attributeName="stop-color" values="#7C3AED;#1E62F0;#3B9BFF;#22D3EE;#7C3AED" dur="8s" repeatCount="indefinite" />
+            </stop>
+        </linearGradient>
+
+        <!-- The logo's tile gradient, in the logo's own 512 box. -->
+        <linearGradient id="tile" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#3B9BFF" />
+            <stop offset="0.55" stop-color="#1E62F0" />
+            <stop offset="1" stop-color="#1638B8" />
+        </linearGradient>
+
+        <radialGradient id="glowBlue" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1010 170) scale(300 220)">
+            <stop offset="0" stop-color="#1E62F0" stop-opacity="0.32" />
+            <stop offset="1" stop-color="#1E62F0" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="glowCyan" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1100 380) scale(420 220)">
+            <stop offset="0" stop-color="#22D3EE" stop-opacity="0.16" />
+            <stop offset="1" stop-color="#22D3EE" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="glowLeft" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(40 0) scale(520 260)">
+            <stop offset="0" stop-color="#7C3AED" stop-opacity="0.16" />
+            <stop offset="1" stop-color="#7C3AED" stop-opacity="0" />
+        </radialGradient>
+
+        <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+            <path d="M32 0H0V32" stroke="#FFFFFF" stroke-opacity="0.035" />
+        </pattern>
+
+        <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="18" />
+        </filter>
+
+        <!-- The logo's two bubbles: the one that speaks and the one that replies. -->
+        <path id="front" d="M146 184H282A64 64 0 0 1 346 248V320A64 64 0 0 1 282 384H190C160 384 128 396 96 416C88 421 80 416 82 407C86 388 82 364 82 336V248A64 64 0 0 1 146 184Z" />
+        <path id="back" d="M254 96H358A60 60 0 0 1 418 156V221C418 246 414 268 418 285C420 293 413 297 405 293C377 275 348 264 321 264H254A60 60 0 0 1 194 204V156A60 60 0 0 1 254 96Z" />
+
+        <!-- Cuts a gap around the front bubble out of the back bubble. -->
+        <mask id="gap" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+            <rect width="512" height="512" fill="#FFFFFF" />
+            <use href="#front" fill="#000000" stroke="#000000" stroke-width="32" stroke-linejoin="round" />
+        </mask>
+    </defs>
+
+    <g clip-path="url(#card)">
+        <!-- Background -->
+        <rect width="1200" height="380" fill="url(#bg)" />
+        <rect width="1200" height="380" fill="url(#grid)" />
+        <rect width="1200" height="380" fill="url(#glowLeft)" />
+        <rect width="1200" height="380" fill="url(#glowBlue)" />
+        <rect width="1200" height="380" fill="url(#glowCyan)" />
+
+        <!-- Bubbles: a conversation with the agent typing -->
+        <g transform="translate(813 -2) scale(0.75)">
+            <use href="#front" fill="#1E62F0" opacity="0.55" filter="url(#soft)">
+                <animate attributeName="opacity" values="0.4;0.7;0.4" dur="5s" repeatCount="indefinite" />
+            </use>
+
+            <use href="#back" fill="#FFFFFF" fill-opacity="0.22" mask="url(#gap)" />
+            <use href="#front" fill="url(#tile)" />
+            <use href="#front" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2.5" />
+
+            <g fill="#FFFFFF">
+                <circle cx="154" cy="284" r="20">
+                    <animate attributeName="cy" values="284;262;284;284" keyTimes="0;0.2;0.4;1" dur="1.4s" repeatCount="indefinite" />
+                    <animate attributeName="fill-opacity" values="0.55;1;0.55;0.55" keyTimes="0;0.2;0.4;1" dur="1.4s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="214" cy="284" r="20">
+                    <animate attributeName="cy" values="284;262;284;284" keyTimes="0;0.2;0.4;1" dur="1.4s" begin="0.2s" repeatCount="indefinite" />
+                    <animate attributeName="fill-opacity" values="0.55;1;0.55;0.55" keyTimes="0;0.2;0.4;1" dur="1.4s" begin="0.2s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="274" cy="284" r="20">
+                    <animate attributeName="cy" values="284;262;284;284" keyTimes="0;0.2;0.4;1" dur="1.4s" begin="0.4s" repeatCount="indefinite" />
+                    <animate attributeName="fill-opacity" values="0.55;1;0.55;0.55" keyTimes="0;0.2;0.4;1" dur="1.4s" begin="0.4s" repeatCount="indefinite" />
+                </circle>
+            </g>
+        </g>
+
+        <!-- Accent bar -->
+        <rect width="1200" height="6" fill="url(#accent)" />
+    </g>
+
+    <!-- Card outline -->
+    <rect x="0.5" y="0.5" width="1199" height="379" rx="23.5" stroke="#FFFFFF" stroke-opacity="0.08" />
+
+    <!-- Copy -->
+    <g font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+        <!-- Availability pill -->
+        <rect x="64" y="52" width="244" height="36" rx="18" fill="#4DB748" fill-opacity="0.12" stroke="#4DB748" stroke-opacity="0.4" />
+        <circle cx="86" cy="70" r="9" fill="#4DB748" opacity="0.3">
+            <animate attributeName="r" values="5;11;5" dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="86" cy="70" r="5" fill="#5FD35A" />
+        <text x="102" y="76" fill="#8BE086" font-size="16" font-weight="600" letter-spacing="1.6">AVAILABLE FOR HIRE</text>
+
+        <!-- Headline -->
+        <text fill="#FFFFFF" font-size="50" font-weight="700" letter-spacing="-1">
+            <tspan x="62" y="150">Need a hand shipping</tspan>
+            <tspan x="62" y="210"><tspan fill="#3B9BFF">A</tspan><tspan fill="#33AEF8">I</tspan> <tspan fill="#2AC1F2">c</tspan><tspan fill="#22D3EE">h</tspan><tspan fill="#5FB3F3">a</tspan><tspan fill="#A78BFA">t</tspan> on your website?</tspan>
+        </text>
+
+        <!-- Subheading -->
+        <text fill="#B9BED0" font-size="21">
+            <tspan x="64" y="256">I'm Ahmad Mayahi, creator of Chatvia and Shakomako, and I'm</tspan>
+            <tspan x="64" y="285">available for consulting and development work.</tspan>
+        </text>
+
+        <!-- Button -->
+        <rect x="64" y="310" width="172" height="48" rx="24" fill="url(#button)" />
+        <rect x="66" y="312" width="168" height="44" rx="22" fill="#0E1428" />
+        <text x="138" y="341" text-anchor="middle" fill="#FFFFFF" font-size="18" font-weight="600">Hire me</text>
+        <path d="M181 335 H197 M191 329 L197 335 L191 341" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        <text x="256" y="341" fill="#9AA0B6" font-size="17" font-weight="500">mayahi.net/services</text>
+    </g>
+</svg>

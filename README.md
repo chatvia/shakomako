@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="logo.svg" alt="Shakomako logo" width="120" height="120">
+  <img src="docs/banner.svg" alt="Shakomako" width="500">
 </p>
 
-# Shakomako
+<p align="center">
+  <a href="https://mayahi.net/services"><img alt="Hire me — I'm available for consulting and development work" src="docs/hire-me.svg" width="100%" /></a>
+</p>
 
 Shakomako is the embeddable chat widget of [Chatvia](https://github.com/chatvia/chatvia):
 a chat bubble or a command bar that a website adds with one `<script>` tag. It

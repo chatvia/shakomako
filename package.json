@@ -70,5 +70,10 @@
   "dependencies": {
     "dompurify": "^3.4.8",
     "pusher-js": "^8.5.0"
+  },
+  "overrides": {
+    "rollup-plugin-postcss": {
+      "cssnano": "^7.1.9"
+    }
   }
 }
