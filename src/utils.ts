@@ -140,6 +140,8 @@ export const CSS_CLASSES = {
   WINDOW_MEDIUM: 'chatvia-widget-medium',
   WINDOW_LARGE: 'chatvia-widget-large',
   STREAMING: 'chatvia-widget-streaming',
+  // A stretch of streamed text that is fading in (streamFade.ts).
+  STREAM_FADE: 'chatvia-widget-stream-fade',
   // Marks error banners from a failed turn (send or stream), so they can be
   // cleared once a stream works again without matching their translated text.
   CONNECTION_ERROR: 'chatvia-widget-connection-error',

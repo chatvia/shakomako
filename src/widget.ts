@@ -15,6 +15,7 @@ import { getSettings } from './settings';
 import { configureServerReverb } from './endpoints';
 import { SessionManager } from './sessions';
 import type { SSEClient } from './sse';
+import type { StreamFade } from './streamFade';
 import { CSS_CLASSES, DEFAULT_LOGO_SVG, debug, safeImageUrl, formatBytes, isOneOf } from './utils';
 import { createElement, createIcon } from './ui';
 import type { ElementAttributes, IconName } from './ui';
@@ -92,7 +93,7 @@ type TimeoutField =
   | '_welcomeMessageTimeout';
 
 /** Instance fields holding a requestAnimationFrame id, cancelled by destroy(). */
-type AnimationFrameField = '_scrollRAF' | '_resizeRAF' | '_streamRenderRAF';
+type AnimationFrameField = '_scrollRAF' | '_resizeRAF' | '_streamRenderRAF' | '_glideRAF';
 
 export class ChatWidget {
   agentId: string;
@@ -229,6 +230,8 @@ export class ChatWidget {
   _scrollAnchorEl?: HTMLElement | null;
   _pinActive?: boolean;
   _pinReleased?: boolean;
+  /** The frame of the glide that pins a question and follows its reply. */
+  _glideRAF?: number | null;
   _scrollPosition?: number;
   /** The host page's own body styles while lockBodyScroll() overrides them. */
   _savedBodyStyle?: Pick<CSSStyleDeclaration, 'overflow' | 'position' | 'top' | 'width'> | null;
@@ -240,6 +243,8 @@ export class ChatWidget {
   _streamFormArtifacts?: FormArtifact[];
   /** The sources the streaming reply was given, shown under it once it is done. */
   _streamSources?: StreamSource[];
+  /** Fades in each new piece of the streaming reply (streamFade.ts). */
+  _streamFade?: StreamFade | null;
 
   // Arrow-key recall of sent messages (state/events.ts)
   _historyIndex!: number;
@@ -1975,7 +1980,7 @@ export class ChatWidget {
     this.dictation?.cancel();
     this._confirmDialog?.remove();
     this._confirmDialog = null;
-    this._cancelTrackedRafs(['_scrollRAF', '_resizeRAF', '_streamRenderRAF']);
+    this._cancelTrackedRafs(['_scrollRAF', '_resizeRAF', '_streamRenderRAF', '_glideRAF']);
     this._streamRenderScheduled = false;
 
     this._clearTrackedTimers([

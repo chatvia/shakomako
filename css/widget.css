@@ -1282,6 +1282,22 @@
   }
 }
 
+/* Streaming reveal: each newly arrived stretch of text fades in on its own
+   (src/streamFade.ts keeps the fade going across re-renders). */
+.chatvia-widget .chatvia-widget-stream-fade {
+  animation: chatvia-widget-stream-fade-in 500ms ease-out both;
+}
+
+@keyframes chatvia-widget-stream-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 /* The sources an agent reply was given, as a short list under it. */
 .chatvia-widget .chatvia-widget-sources {
   margin: 4px 0 2px;
@@ -3650,6 +3666,7 @@
   .chatvia-widget .chatvia-widget-bubble.chatvia-widget-pulse::after,
   .chatvia-widget .chatvia-widget-bubble img,
   .chatvia-widget .chatvia-widget-avatar.chatvia-widget-streaming,
+  .chatvia-widget .chatvia-widget-stream-fade,
   .chatvia-widget .chatvia-widget-tool-calling,
   .chatvia-widget .chatvia-widget-loading-dots .chatvia-widget-dot,
   .chatvia-widget .chatvia-widget-theme-toggle.chatvia-widget-animating svg,

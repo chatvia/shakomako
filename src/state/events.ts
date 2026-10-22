@@ -5,7 +5,7 @@
 
 import { CSS_CLASSES, tabbableElements } from '../utils';
 import { matchesTrigger } from '../keyboardTrigger';
-import { updateScrollToBottomButton } from './controls';
+import { releasePin, resumePin, updateScrollToBottomButton } from './controls';
 import type { ChatWidget } from '../widget';
 
 /**
@@ -105,26 +105,65 @@ export function setupMenuKeyboard(widget: ChatWidget): void {
  */
 function setupScrollListener(widget: ChatWidget): void {
   if (!widget.messagesContainer) return;
+  const container = widget.messagesContainer;
   let raf = 0;
+  let lastScrollTop = container.scrollTop;
   const onScroll = () => {
+    // Back at the end by the visitor's own scrolling down: follow the reply
+    // again. Only a downward move counts, so a small scroll up from the
+    // bottom is never undone.
+    const movedDown = container.scrollTop > lastScrollTop;
+    lastScrollTop = container.scrollTop;
+    if (movedDown && container.scrollHeight - container.scrollTop - container.clientHeight < 4) {
+      resumePin(widget);
+    }
+
     if (raf) return; // coalesce rapid scroll events to one frame
     raf = requestAnimationFrame(() => {
       raf = 0;
       updateScrollToBottomButton(widget);
     });
   };
-  widget.messagesContainer.addEventListener('scroll', onScroll, { passive: true });
+  container.addEventListener('scroll', onScroll, { passive: true });
 
-  // Release a top-pin (ChatGPT-style) the moment the visitor scrolls by their
-  // own hand. We key off wheel/touch — genuine user gestures — rather than
-  // scrollTop deltas, because the pin itself moves scrollTop programmatically
-  // and a delta heuristic can't tell the two apart (that confusion is what made
-  // the question "drop" when a turn finalized).
-  const releaseOnUserScroll = () => {
-    if (widget._pinActive) widget._pinReleased = true;
-  };
-  widget.messagesContainer.addEventListener('wheel', releaseOnUserScroll, { passive: true });
-  widget.messagesContainer.addEventListener('touchmove', releaseOnUserScroll, { passive: true });
+  // Scrolling up releases a top-pin (ChatGPT-style) at once. We key off
+  // wheel/touch/keys — genuine user gestures — rather than scrollTop deltas,
+  // because the pin itself moves scrollTop programmatically and a delta
+  // heuristic can't tell the two apart (that confusion is what made the
+  // question "drop" when a turn finalized). Scrolling down leaves it to onScroll.
+  let touchY: number | null = null;
+  container.addEventListener(
+    'wheel',
+    event => {
+      if (event.deltaY < 0) releasePin(widget);
+    },
+    { passive: true }
+  );
+  container.addEventListener(
+    'touchstart',
+    event => {
+      touchY = event.touches[0]?.clientY ?? null;
+    },
+    { passive: true }
+  );
+  container.addEventListener(
+    'touchmove',
+    event => {
+      const y = event.touches[0]?.clientY;
+      // The finger moving down drags the content down: the view scrolls up.
+      if (y !== undefined && touchY !== null && y > touchY) releasePin(widget);
+      if (y !== undefined) touchY = y;
+    },
+    { passive: true }
+  );
+  container.addEventListener('keydown', event => {
+    if (
+      ['ArrowUp', 'PageUp', 'Home'].includes(event.key) ||
+      (event.key === ' ' && event.shiftKey)
+    ) {
+      releasePin(widget);
+    }
+  });
 
   // Initial sync — if the chat opens with content already overflowing and the
   // saved scroll position isn't at the bottom, show the button immediately.

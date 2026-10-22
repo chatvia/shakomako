@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { pinMessageToTop, maintainPin, followStream, scrollToBottom } from '../src/state/controls';
+import {
+  pinMessageToTop,
+  maintainPin,
+  followStream,
+  scrollToBottom,
+  releasePin,
+  resumePin
+} from '../src/state/controls';
 import { CSS_CLASSES } from '../src/utils';
 import type { ChatWidget } from '../src/widget';
 
@@ -84,7 +91,7 @@ describe('scroll pin (ChatGPT-style top anchor)', () => {
     document.body.innerHTML = '';
   });
 
-  it('reserves a spacer and instant-scrolls the message to the top', () => {
+  it('reserves a spacer and glides the message to the top', () => {
     // anchorContentOffset 1000 → desiredScrollTop = 1000 - 16 = 984
     // spacerHeight = max(0, 984 + 500 - 1050) = 434
     const widget = makeWidget({
@@ -101,12 +108,14 @@ describe('scroll pin (ChatGPT-style top anchor)', () => {
     expect(widget._pinReleased).toBe(false);
     expect(widget._scrollAnchorEl).toBe(widget.anchor);
     expect(widget._scrollSpacer.style.height).toBe('434px');
-    // Instant, never smooth — a smooth scroll gets cancelled by streaming mutation.
-    expect(widget.messagesContainer.scrollTo).toHaveBeenCalledWith({
-      top: 1000 - PIN_TOP_GAP,
-      behavior: 'instant'
-    });
-    expect(widget.messagesContainer.scrollTop).toBe(984);
+    // Several eased steps, each instant: a browser-smooth scroll gets cancelled
+    // by streaming mutation.
+    const calls = vi.mocked(widget.messagesContainer.scrollTo).mock.calls;
+    expect(calls.length).toBeGreaterThan(1);
+    expect(calls.every(([options]) => (options as ScrollToOptions).behavior === 'instant')).toBe(
+      true
+    );
+    expect(widget.messagesContainer.scrollTop).toBe(1000 - PIN_TOP_GAP);
   });
 
   it('shrinks the spacer as the reply grows and re-asserts the pin', () => {
@@ -126,11 +135,66 @@ describe('scroll pin (ChatGPT-style top anchor)', () => {
 
     // desiredScrollTop still 984; spacerHeight = max(0, 984 + 500 - 1300) = 184
     expect(widget._scrollSpacer.style.height).toBe('184px');
-    // Held (not released) → re-asserts the scroll so finalize can't nudge it.
-    expect(widget.messagesContainer.scrollTo).toHaveBeenCalledWith({
-      top: 984,
-      behavior: 'instant'
+    // The spacer absorbs the growth, so the question stays put.
+    expect(widget.messagesContainer.scrollTop).toBe(984);
+  });
+
+  it('follows the reply down once it outgrows the view', () => {
+    const widget = makeWidget({
+      scrollTop: 984,
+      anchorContentOffset: 1000,
+      containerTop: 0,
+      clientHeight: 500,
+      contentHeight: 1800 // reply is longer than the view below the question
     });
+    widget._pinActive = true;
+    widget._pinReleased = false;
+    widget._scrollAnchorEl = widget.anchor;
+
+    maintainPin(widget);
+
+    expect(widget._scrollSpacer.style.height).toBe('0px');
+    expect(widget.messagesContainer.scrollTop).toBe(1800 - 500);
+  });
+
+  it('stops following when the visitor scrolls up and resumes at the end', () => {
+    const widget = makeWidget({
+      scrollTop: 900,
+      anchorContentOffset: 1000,
+      containerTop: 0,
+      clientHeight: 500,
+      contentHeight: 1800
+    });
+    widget._pinActive = true;
+    widget._pinReleased = false;
+    widget._scrollAnchorEl = widget.anchor;
+
+    releasePin(widget);
+    maintainPin(widget);
+    expect(widget.messagesContainer.scrollTop).toBe(900);
+
+    resumePin(widget);
+    expect(widget._pinReleased).toBe(false);
+    expect(widget.messagesContainer.scrollTop).toBe(1300);
+  });
+
+  it('the scroll-to-bottom button resumes a released pin instead of ending it', () => {
+    const widget = makeWidget({
+      scrollTop: 900,
+      anchorContentOffset: 1000,
+      containerTop: 0,
+      clientHeight: 500,
+      contentHeight: 1800
+    });
+    widget._pinActive = true;
+    widget._pinReleased = true;
+    widget._scrollAnchorEl = widget.anchor;
+
+    scrollToBottom(widget, true);
+
+    expect(widget._pinActive).toBe(true);
+    expect(widget._pinReleased).toBe(false);
+    expect(widget.messagesContainer.scrollTop).toBe(1300);
   });
 
   it('does not re-assert the scroll once the visitor has scrolled away', () => {
@@ -191,16 +255,12 @@ describe('scroll pin (ChatGPT-style top anchor)', () => {
     expect(widget._pinActive).toBe(false);
     expect(widget.messagesContainer.scrollTop).toBe(widget.messagesContainer.scrollHeight);
 
-    // Active pin, held → re-asserts the scroll to the pin target.
+    // Active pin, held → glides back to the pin target.
     widget._pinActive = true;
     widget._pinReleased = false;
     widget._scrollAnchorEl = widget.anchor;
-    widget.messagesContainer.scrollTop = 984;
-    vi.mocked(widget.messagesContainer.scrollTo).mockClear();
+    widget.messagesContainer.scrollTop = 700;
     followStream(widget);
-    expect(widget.messagesContainer.scrollTo).toHaveBeenCalledWith({
-      top: 984,
-      behavior: 'instant'
-    });
+    expect(widget.messagesContainer.scrollTop).toBe(984);
   });
 });

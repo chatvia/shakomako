@@ -349,10 +349,17 @@ function measurePin(widget: ChatWidget): PinMeasurement | null {
 }
 
 /**
+ * Share of the distance to the target covered each frame of a glide: an
+ * ease-out that also absorbs uneven streaming chunks.
+ */
+const GLIDE_EASING = 0.2;
+
+/**
  * Pin a message to the top of the viewport (ChatGPT-style). Reserves room below
- * with the spacer, then scrolls the message up to the top so the incoming reply
- * streams in beneath it. Stays active for the turn — `maintainPin` keeps the
- * spacer right-sized as the reply grows; any `scrollToBottom` call ends it.
+ * with the spacer, then glides the message up to the top so the incoming reply
+ * streams in beneath it. Once the reply outgrows the view, the same glide
+ * follows it down. Stays active for the turn — `maintainPin` keeps the spacer
+ * right-sized as the reply grows; a programmatic `scrollToBottom` ends it.
  */
 export function pinMessageToTop(widget: ChatWidget, anchorEl: HTMLElement | null): void {
   if (!widget.messagesContainer || !anchorEl) return;
@@ -363,27 +370,16 @@ export function pinMessageToTop(widget: ChatWidget, anchorEl: HTMLElement | null
 
   widget._scrollAnchorEl = anchorEl;
   widget._pinActive = true;
-
-  // Scroll SYNCHRONOUSLY, not in a rAF. sendUserMessage calls followStream()
-  // right after this, and showLoading() fires ~150ms later — both route to
-  // maintainPin(), which cancels widget._scrollRAF. A pin scroll parked in a rAF
-  // would be cancelled before it ever ran, leaving the question stranded at the
-  // bottom. The anchor is already in the DOM, so measuring + scrolling now is
-  // safe (one reflow per send).
   widget._pinReleased = false;
   applyPin(widget);
   hideScrollToBottomButton(widget);
 }
 
 /**
- * The actual pin work, synchronous: size the spacer, then (unless the visitor
- * has taken over scrolling) re-assert the scroll so the question sits at the top.
- *
- * `instant`, NOT `smooth`: the container sets `scroll-behavior: smooth` in CSS,
- * so an animated scroll gets cancelled the moment the streaming reply mutates the
- * container — stranding the question at the bottom. Instant lands in one frame
- * and is idempotent once the question is already at the top, so re-running it per
- * frame costs nothing but corrects any drift.
+ * Size the spacer now, synchronously, then (unless the visitor has scrolled
+ * up) glide towards the bottom. While the reply fits under the question the
+ * spacer makes the bottom exactly the pinned position; once it outgrows the
+ * view, the bottom moves with the newest text and the glide follows it.
  */
 function applyPin(widget: ChatWidget): void {
   const m = measurePin(widget);
@@ -393,22 +389,48 @@ function applyPin(widget: ChatWidget): void {
     return;
   }
   m.spacer.style.height = `${m.spacerHeight}px`;
-  // Once the visitor has taken over scrolling (wheel/touch), only the spacer is
-  // maintained — never yank them back.
+  // Once the visitor has scrolled up, only the spacer is maintained — never
+  // pull them back. Scrolling back to the end resumes (setupScrollListener).
   if (widget._pinReleased) return;
-  // Flush the spacer's new height into layout so scrollTo clamps against the
-  // grown scrollHeight, not the stale one.
-  void m.container.scrollHeight;
-  m.container.scrollTo({ top: m.desiredScrollTop, behavior: 'instant' });
+  if (!widget._glideRAF) glideStep(widget);
+}
+
+/**
+ * One frame of the glide, repeated until it reaches the bottom.
+ *
+ * Each step is an `instant` scroll, NOT `smooth`: the container sets
+ * `scroll-behavior: smooth` in CSS, and a browser-animated scroll gets
+ * cancelled the moment the streaming reply mutates the container. Re-measuring
+ * every frame also keeps the target right as the reply grows.
+ */
+function glideStep(widget: ChatWidget): void {
+  widget._glideRAF = null;
+  if (!widget._pinActive || widget._pinReleased) return;
+
+  const m = measurePin(widget);
+  if (!m) {
+    clearPin(widget);
+    return;
+  }
+  m.spacer.style.height = `${m.spacerHeight}px`;
+  // Flush the spacer's height into layout so the bottom is measured against it.
+  const bottom = m.container.scrollHeight - m.container.clientHeight;
+  const gap = bottom - m.container.scrollTop;
+  if (Math.abs(gap) < 0.5) return;
+
+  const step = prefersReducedMotion()
+    ? gap
+    : Math.sign(gap) * Math.max(1, Math.ceil(Math.abs(gap) * GLIDE_EASING));
+  m.container.scrollTo({ top: m.container.scrollTop + step, behavior: 'instant' });
+  widget._glideRAF = requestAnimationFrame(() => glideStep(widget));
 }
 
 /**
  * Keep a pinned message in place while content streams in beneath it (coalesced
- * to one frame). Release is gesture-driven (a wheel/touch sets widget._pinReleased
- * — see setupScrollListener), NOT inferred from scrollTop deltas: a delta
- * heuristic can't tell a finalize layout-shift from a real scroll, so it would
- * mistake the finish nudge for the visitor scrolling and abandon the pin instead
- * of fixing it. That was the "drops at finish" bug.
+ * to one frame). Release is gesture-driven (scrolling up sets
+ * widget._pinReleased — see setupScrollListener), NOT inferred from scrollTop
+ * deltas alone: a delta heuristic can't tell a finalize layout-shift from a
+ * real scroll, so it would mistake the finish nudge for the visitor scrolling.
  */
 export function maintainPin(widget: ChatWidget): void {
   if (!widget._pinActive) return;
@@ -419,16 +441,37 @@ export function maintainPin(widget: ChatWidget): void {
 }
 
 /**
- * Re-assert the pin synchronously, right now (no rAF). Called at finalize so the
- * small shift from appending the actions row / re-focusing the composer is
- * corrected before the browser can paint it — robust even when rAF is throttled.
+ * Re-size the spacer synchronously, right now (no rAF). Called at finalize so
+ * the small shift from appending the actions row / re-focusing the composer is
+ * absorbed by the spacer before the browser can paint it — robust even when
+ * rAF is throttled.
  */
 export function holdPin(widget: ChatWidget): void {
   if (widget._pinActive) applyPin(widget);
 }
 
 /**
- * Pin-aware auto-follow used by the streaming path: hold the question at the top
+ * The visitor scrolled up: stop gliding and leave the view where they put it.
+ */
+export function releasePin(widget: ChatWidget): void {
+  if (!widget._pinActive) return;
+  widget._pinReleased = true;
+  if (widget._glideRAF) cancelAnimationFrame(widget._glideRAF);
+  widget._glideRAF = null;
+}
+
+/**
+ * The visitor came back to the end (by scrolling or the button): follow the
+ * reply again.
+ */
+export function resumePin(widget: ChatWidget): void {
+  if (!widget._pinActive || !widget._pinReleased) return;
+  widget._pinReleased = false;
+  applyPin(widget);
+}
+
+/**
+ * Pin-aware auto-follow used by the streaming path: glide with the pinned turn
  * while a pin is active, otherwise fall back to the classic follow-the-bottom.
  */
 export function followStream(widget: ChatWidget): void {
@@ -441,12 +484,14 @@ export function followStream(widget: ChatWidget): void {
 
 /**
  * Tear down pin state and collapse the reserved spacer. Called whenever the view
- * explicitly returns to bottom-follow (open, history load, scroll button, …).
+ * explicitly returns to bottom-follow (open, history load, …).
  */
 function clearPin(widget: ChatWidget): void {
   widget._pinActive = false;
   widget._pinReleased = false;
   widget._scrollAnchorEl = null;
+  if (widget._glideRAF) cancelAnimationFrame(widget._glideRAF);
+  widget._glideRAF = null;
   if (widget._scrollSpacer) {
     widget._scrollSpacer.style.height = '0px';
   }
@@ -460,6 +505,13 @@ function clearPin(widget: ChatWidget): void {
  */
 export function scrollToBottom(widget: ChatWidget, smooth = false): void {
   if (!widget.messagesContainer) return;
+  // The button during a pinned turn: the pin's bottom is the end of the reply,
+  // so resuming the glide gets there and keeps following.
+  if (smooth && widget._pinActive && widget._pinReleased) {
+    resumePin(widget);
+    hideScrollToBottomButton(widget);
+    return;
+  }
   // Returning to the bottom is incompatible with a top-pin — release it so the
   // reserved spacer collapses and we can reach the true bottom.
   clearPin(widget);

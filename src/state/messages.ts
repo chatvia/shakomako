@@ -17,6 +17,7 @@ import { pickLocalized, t } from '../i18n';
 // Canonical markdown impl lives in markdown.ts. Import for local use, and
 // re-export so existing call sites that go through messages.ts keep working.
 import { parseMarkdown, escapeHtml, htmlToText } from '../markdown';
+import { createStreamFade } from '../streamFade';
 import { getApiOrigin } from '../endpoints';
 import type { StreamRequest } from '../sse';
 import type {
@@ -768,6 +769,7 @@ export function startStreamingMessage(widget: ChatWidget): void {
   // message at finalize (the tool-activity node is transient).
   widget._streamFormArtifacts = [];
   widget._streamSources = [];
+  widget._streamFade = createStreamFade();
 
   const contentWrapper = createElement('div', { className: 'chatvia-widget-content-wrapper' });
   // Hidden until the first text delta arrives, so a tool-call shimmer shows on
@@ -823,6 +825,7 @@ function renderStreamingMessageNow(widget: ChatWidget): void {
       if (wrapper) wrapper.style.display = '';
     }
     updateMessageBubbleContent(messageBubble, widget.currentStreamedMessage);
+    widget._streamFade?.apply(messageBubble);
   }
 
   widget.followStream();
@@ -947,6 +950,8 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
         // went through updateStreamingMessage's reveal).
         if (wrapper) wrapper.style.display = '';
         await updateMessageBubbleContent(messageBubble, finalMessage);
+        // The last words keep fading in after the reply is complete.
+        widget._streamFade?.apply(messageBubble);
       }
       const sourcesList = createSourcesList(widget._streamSources ?? []);
       if (sourcesList) streamingMsgElement.appendChild(sourcesList);
@@ -989,6 +994,7 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
 
   widget._streamFormArtifacts = [];
   widget._streamSources = [];
+  widget._streamFade = null;
 
   widget.isStreaming = false;
   widget.currentStreamedMessage = '';
