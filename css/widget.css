@@ -2431,11 +2431,10 @@
 }
 
 .chatvia-widget .chatvia-widget-footer .chatvia-widget-brand-logo {
-  width: 16px;
-  height: 16px;
-  margin-inline-end: 6px;
-  vertical-align: middle;
-  object-fit: contain;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-inline-end: 4px;
 }
 
 .chatvia-widget .chatvia-widget-footer a,

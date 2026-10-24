@@ -399,7 +399,6 @@ export function applyBranding(widget: ChatWidget): void {
     widget.brandFooter.innerHTML = '';
 
     const brandName = widget.settings.branding!.name || '';
-    const brandLogoUrl = widget.settings.branding!.logo_url || '';
 
     // The credit always links to chatvia.ai: fixed here, never taken from the
     // settings payload, so no install can point it somewhere else.
@@ -409,18 +408,14 @@ export function applyBranding(widget: ChatWidget): void {
       rel: 'noopener'
     });
 
-    // Brand logo goes through the same image-URL allowlist as the agent
-    // logo/avatar — https or data:image only, never http.
-    const safeBrandLogo = safeImageUrl(brandLogoUrl);
-    if (safeBrandLogo) {
-      const logo = createElement('img', {
-        src: safeBrandLogo,
-        alt: 'Logo',
-        className: CSS_CLASSES.BRAND_LOGO,
-        referrerpolicy: 'no-referrer'
-      });
-      container.appendChild(logo);
-    }
+    // The ChatVia mark is drawn inline, as in the hosted chat, rather than
+    // from branding.logo_url: that SVG picks its colour from the OS dark-mode
+    // setting, so it vanished on a light widget under a dark OS. Decorative,
+    // since the label next to it names the product.
+    const logo = createIcon('chatvia');
+    logo.setAttribute('class', CSS_CLASSES.BRAND_LOGO);
+    logo.setAttribute('aria-hidden', 'true');
+    container.appendChild(logo);
 
     const textNode = document.createTextNode(brandName);
     container.appendChild(textNode);
