@@ -10,7 +10,7 @@ import { authHeaders } from '../auth';
 import api from '../api';
 import type { ApiHeaders } from '../api';
 import { getApiUrl, getReverbConfig } from '../endpoints';
-import { applyInputPlaceholder, applyTitle } from './config';
+import { applyDisclosure, applyInputPlaceholder, applyTitle } from './config';
 import type { HandoffEventData, HandoffWidgetEvent } from '../types';
 import type { ChatWidget } from '../widget';
 
@@ -948,13 +948,9 @@ function updateHandoffUI(widget: ChatWidget, mode: HandoffMode): void {
   const headerTitle = chatWindow.querySelector('.chatvia-widget-header-title');
   const originalTitle = widget.settings?.title || 'Chat';
 
-  // EU AI Act Art. 50 disclosure — keep the persistent header subtitle in sync
-  // with who is actually answering: AI in ai/pending, the human in human mode.
-  const headerSubtitle = chatWindow.querySelector('.chatvia-widget-header-subtitle');
-  if (headerSubtitle) {
-    headerSubtitle.textContent =
-      mode === 'human' ? t('disclosure.human_agent') : t('disclosure.ai_assistant');
-  }
+  // EU AI Act Art. 50 disclosure — keep the header subtitle in sync with who
+  // is actually answering: AI in ai/pending, the human in human mode.
+  applyDisclosure(widget, mode);
 
   console.log('[Handoff] Current classes before update:', chatWindow.className);
 

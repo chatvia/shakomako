@@ -67,6 +67,11 @@ export interface WidgetSettings {
   chat_footer_text?: string | null;
   /** Absent or unknown means `end`. */
   chat_deletion_mode?: ChatDeletionMode | string | null;
+  /**
+   * Whether the header says "AI assistant" while the agent answers (admin
+   * panel → Settings → Widget). Absent means on.
+   */
+  ai_disclosure?: boolean | null;
   privacy_policy_url?: string | null;
   text_translations?: {
     title?: LocalizedText;

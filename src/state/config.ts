@@ -84,6 +84,7 @@ export function applyConfiguration(widget: ChatWidget): void {
   applyTheme(widget);
   applyLogos(widget);
   applyTitle(widget);
+  applyDisclosure(widget);
   applyBranding(widget);
   applyInputPlaceholder(widget);
   applyFooterText(widget);
@@ -382,6 +383,25 @@ export function applyTitle(widget: ChatWidget): void {
     widget.headerTitle.textContent =
       pickLocalized(widget.settings?.text_translations?.title, widget.settings.title) ?? null;
   }
+}
+
+/**
+ * The header's EU AI Act Art. 50 disclosure under the title: "Human agent"
+ * while a person answers, else "AI assistant". The install can turn the AI
+ * label off (`ai_disclosure: false`); the line is then hidden until a person
+ * takes over.
+ */
+export function applyDisclosure(widget: ChatWidget, mode = widget.handoffMode): void {
+  const el = widget.headerSubtitle;
+  if (!el) return;
+  const label =
+    mode === 'human'
+      ? t('disclosure.human_agent')
+      : widget.settings?.ai_disclosure === false
+        ? ''
+        : t('disclosure.ai_assistant');
+  el.textContent = label;
+  el.style.display = label ? '' : 'none';
 }
 
 /**
