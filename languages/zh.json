@@ -21,6 +21,9 @@
     "chat_history": "聊天记录",
     "clear_current": "清除当前聊天",
     "clear_all": "全部清除",
+    "end_chat": "结束聊天",
+    "remove_current": "从历史记录中移除",
+    "remove_all": "全部从历史记录中移除",
     "theme_toggle": "切换主题"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "你确定要删除所有聊天记录吗?此操作无法撤销。",
     "delete_button": "删除",
     "delete_all_button": "全部删除",
+    "end_chat_title": "结束聊天",
+    "end_chat_message": "结束此聊天并开始新的聊天?你仍可以在聊天历史中找到它。",
+    "end_button": "结束聊天",
+    "remove_chat_title": "移除聊天",
+    "remove_chat_message": "要从聊天历史中移除此聊天吗?",
+    "remove_all_title": "移除所有聊天",
+    "remove_all_message": "要从聊天历史中移除所有聊天吗?",
+    "remove_button": "移除",
+    "remove_all_button": "全部移除",
     "cancel": "取消"
   },
   "messages": {

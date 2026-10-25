@@ -25,6 +25,9 @@
     "chat_history": "Historia czatów",
     "clear_current": "Wyczyść bieżący czat",
     "clear_all": "Wyczyść wszystko",
+    "end_chat": "Zakończ czat",
+    "remove_current": "Usuń z historii",
+    "remove_all": "Usuń wszystko z historii",
     "theme_toggle": "Zmień motyw",
     "switch_to_light": "Przełącz na jasny motyw",
     "switch_to_dark": "Przełącz na ciemny motyw"
@@ -54,6 +57,15 @@
     "delete_all_message": "Czy na pewno chcesz usunąć CAŁĄ historię czatów? Tej operacji nie można cofnąć.",
     "delete_button": "Usuń",
     "delete_all_button": "Usuń wszystkie",
+    "end_chat_title": "Zakończ czat",
+    "end_chat_message": "Zakończyć ten czat i rozpocząć nowy? Nadal znajdziesz go w historii czatów.",
+    "end_button": "Zakończ czat",
+    "remove_chat_title": "Usuń czat z historii",
+    "remove_chat_message": "Usunąć ten czat z historii czatów?",
+    "remove_all_title": "Usuń wszystkie czaty z historii",
+    "remove_all_message": "Usunąć wszystkie czaty z historii czatów?",
+    "remove_button": "Usuń z historii",
+    "remove_all_button": "Usuń wszystkie",
     "cancel": "Anuluj"
   },
   "messages": {

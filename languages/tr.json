@@ -21,6 +21,9 @@
     "chat_history": "Sohbet geçmişi",
     "clear_current": "Mevcut sohbeti temizle",
     "clear_all": "Tümünü temizle",
+    "end_chat": "Sohbeti bitir",
+    "remove_current": "Geçmişten kaldır",
+    "remove_all": "Tümünü geçmişten kaldır",
     "theme_toggle": "Temayı değiştir"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "TÜM sohbet geçmişinizi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "delete_button": "Sil",
     "delete_all_button": "Tümünü Sil",
+    "end_chat_title": "Sohbeti Bitir",
+    "end_chat_message": "Bu sohbeti bitirip yeni bir sohbet başlatmak istiyor musunuz? Sohbet geçmişinizde bulmaya devam edebilirsiniz.",
+    "end_button": "Sohbeti Bitir",
+    "remove_chat_title": "Sohbeti Kaldır",
+    "remove_chat_message": "Bu sohbet sohbet geçmişinizden kaldırılsın mı?",
+    "remove_all_title": "Tüm Sohbetleri Kaldır",
+    "remove_all_message": "Tüm sohbetler sohbet geçmişinizden kaldırılsın mı?",
+    "remove_button": "Kaldır",
+    "remove_all_button": "Tümünü Kaldır",
     "cancel": "İptal"
   },
   "messages": {

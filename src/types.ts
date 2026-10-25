@@ -16,6 +16,14 @@ import type { BarPlacement, WidgetMode } from './widget';
 /** Agent-authored text keyed by locale, e.g. `{ en: 'Hello', fr: 'Bonjour' }`. */
 export type LocalizedText = Record<string, string>;
 
+/**
+ * What the visitor's "remove this chat" action does (dashboard → agent
+ * settings). `end` starts a fresh chat and keeps the old one, `hide` drops it
+ * from the visitor's history but keeps it on the server, `delete` erases it.
+ * The server enforces the mode; the widget only picks the matching wording.
+ */
+export type ChatDeletionMode = 'end' | 'hide' | 'delete';
+
 /** A conversation starter: a plain string (legacy) or a localizable object. */
 export type Starter =
   | string
@@ -57,6 +65,8 @@ export interface WidgetSettings {
   composer_placeholder?: string | null;
   welcome_message?: string | null;
   chat_footer_text?: string | null;
+  /** Absent or unknown means `end`. */
+  chat_deletion_mode?: ChatDeletionMode | string | null;
   privacy_policy_url?: string | null;
   text_translations?: {
     title?: LocalizedText;

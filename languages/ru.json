@@ -21,6 +21,9 @@
     "chat_history": "История чатов",
     "clear_current": "Очистить текущий чат",
     "clear_all": "Очистить всё",
+    "end_chat": "Завершить чат",
+    "remove_current": "Убрать из истории",
+    "remove_all": "Убрать всё из истории",
     "theme_toggle": "Сменить тему"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "Вы уверены, что хотите удалить ВСЮ историю чатов? Это действие нельзя отменить.",
     "delete_button": "Удалить",
     "delete_all_button": "Удалить всё",
+    "end_chat_title": "Завершить чат",
+    "end_chat_message": "Завершить этот чат и начать новый? Он останется в вашей истории чатов.",
+    "end_button": "Завершить чат",
+    "remove_chat_title": "Убрать чат",
+    "remove_chat_message": "Убрать этот чат из вашей истории чатов?",
+    "remove_all_title": "Убрать все чаты",
+    "remove_all_message": "Убрать все чаты из вашей истории чатов?",
+    "remove_button": "Убрать",
+    "remove_all_button": "Убрать все",
     "cancel": "Отмена"
   },
   "messages": {

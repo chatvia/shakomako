@@ -25,6 +25,9 @@
     "chat_history": "Chat history",
     "clear_current": "Clear current chat",
     "clear_all": "Clear all",
+    "end_chat": "End chat",
+    "remove_current": "Remove from history",
+    "remove_all": "Remove all from history",
     "theme_toggle": "Toggle theme",
     "switch_to_light": "Switch to light theme",
     "switch_to_dark": "Switch to dark theme"
@@ -54,6 +57,15 @@
     "delete_all_message": "Are you sure you want to delete ALL your chat history? This action cannot be undone.",
     "delete_button": "Delete",
     "delete_all_button": "Delete All",
+    "end_chat_title": "End Chat",
+    "end_chat_message": "End this chat and start a new one? You can still find it in your chat history.",
+    "end_button": "End Chat",
+    "remove_chat_title": "Remove Chat",
+    "remove_chat_message": "Remove this chat from your chat history?",
+    "remove_all_title": "Remove All Chats",
+    "remove_all_message": "Remove all chats from your chat history?",
+    "remove_button": "Remove",
+    "remove_all_button": "Remove All",
     "cancel": "Cancel"
   },
   "messages": {

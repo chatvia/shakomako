@@ -3,12 +3,12 @@
  * Handles conversation CRUD operations, history, and navigation
  */
 
-import { CSS_CLASSES } from '../utils';
+import { CSS_CLASSES, isOneOf } from '../utils';
 import { createElement, createIcon } from '../ui';
 import { cleanupHandoff, subscribeToConversation } from './handoff';
 import { mapRoleToMessageType } from './messages';
 import { t } from '../i18n';
-import type { ChatMessage, Conversation } from '../types';
+import type { ChatDeletionMode, ChatMessage, Conversation } from '../types';
 import type { ChatWidget } from '../widget';
 
 /**
@@ -437,11 +437,16 @@ export function confirmDeleteConversation(widget: ChatWidget): void {
     return;
   }
   widget.closeMenuDropdown();
+  const mode = getDeletionMode(widget);
+  const copy = DELETION_COPY[mode];
   widget._showConfirmationDialog(
-    t('confirm.delete_chat_title'),
-    t('confirm.delete_chat_message'),
-    t('confirm.delete_button'),
-    () => deleteCurrentConversation(widget, conversationIdToDelete)
+    t(copy.currentTitle),
+    t(copy.currentMessage),
+    t(copy.currentButton),
+    // Ending keeps the chat (history and dashboard): just move on to a new one.
+    mode === 'end'
+      ? () => startNewConversation(widget)
+      : () => deleteCurrentConversation(widget, conversationIdToDelete)
   );
 }
 
@@ -449,13 +454,65 @@ export function confirmDeleteConversation(widget: ChatWidget): void {
  * Confirm clear all conversations dialog
  */
 export function confirmClearAllConversations(widget: ChatWidget): void {
+  const { allTitle, allMessage, allButton } = DELETION_COPY[getDeletionMode(widget)];
+  // `end` keeps every chat, so there is nothing to clear in bulk.
+  if (!allTitle || !allMessage || !allButton) return;
   widget.closeMenuDropdown();
-  widget._showConfirmationDialog(
-    t('confirm.delete_all_title'),
-    t('confirm.delete_all_message'),
-    t('confirm.delete_all_button'),
-    () => deleteAllConversations(widget)
+  widget._showConfirmationDialog(t(allTitle), t(allMessage), t(allButton), () =>
+    deleteAllConversations(widget)
   );
+}
+
+interface DeletionCopy {
+  currentLabel: string;
+  currentTitle: string;
+  currentMessage: string;
+  currentButton: string;
+  /** The bulk ("all") action; absent when the mode has none. */
+  allLabel?: string;
+  allTitle?: string;
+  allMessage?: string;
+  allButton?: string;
+}
+
+/**
+ * Translation keys per deletion mode. `hide` never says "delete" or "cannot be
+ * undone": the chat stays on the server, and the wording must not claim
+ * otherwise.
+ */
+export const DELETION_COPY: Record<ChatDeletionMode, DeletionCopy> = {
+  end: {
+    currentLabel: 'menu.end_chat',
+    currentTitle: 'confirm.end_chat_title',
+    currentMessage: 'confirm.end_chat_message',
+    currentButton: 'confirm.end_button'
+  },
+  hide: {
+    currentLabel: 'menu.remove_current',
+    currentTitle: 'confirm.remove_chat_title',
+    currentMessage: 'confirm.remove_chat_message',
+    currentButton: 'confirm.remove_button',
+    allLabel: 'menu.remove_all',
+    allTitle: 'confirm.remove_all_title',
+    allMessage: 'confirm.remove_all_message',
+    allButton: 'confirm.remove_all_button'
+  },
+  delete: {
+    currentLabel: 'menu.clear_current',
+    currentTitle: 'confirm.delete_chat_title',
+    currentMessage: 'confirm.delete_chat_message',
+    currentButton: 'confirm.delete_button',
+    allLabel: 'menu.clear_all',
+    allTitle: 'confirm.delete_all_title',
+    allMessage: 'confirm.delete_all_message',
+    allButton: 'confirm.delete_all_button'
+  }
+};
+
+/** The agent's deletion mode; absent or unknown values fall back to `end`. */
+export function getDeletionMode(widget: ChatWidget): ChatDeletionMode {
+  const mode = widget.settings.chat_deletion_mode;
+  return isOneOf(['end', 'hide', 'delete'] as const, mode) ? mode : 'end';
 }
 
 /**
@@ -623,6 +680,10 @@ export function updateConversationActionButtons(widget: ChatWidget): void {
   setState(widget.deleteConversationButton, deleteDisabled);
   setState(widget.newChatOption, newChatDisabled);
   setState(widget.historyOption, onlyEmptyConversation);
-  setState(widget.clearCurrentOption, onlyEmptyConversation);
+  // Ending a chat needs something said in it; removing one only needs history.
+  setState(
+    widget.clearCurrentOption,
+    getDeletionMode(widget) === 'end' ? newChatDisabled : onlyEmptyConversation
+  );
   setState(widget.clearAllOption, onlyEmptyConversation);
 }

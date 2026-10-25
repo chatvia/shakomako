@@ -21,6 +21,9 @@
     "chat_history": "Riwayat obrolan",
     "clear_current": "Hapus obrolan saat ini",
     "clear_all": "Hapus semua",
+    "end_chat": "Akhiri obrolan",
+    "remove_current": "Hapus dari riwayat",
+    "remove_all": "Hapus semua dari riwayat",
     "theme_toggle": "Ganti tema"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "Apakah Anda yakin ingin menghapus SEMUA riwayat obrolan Anda? Tindakan ini tidak dapat dibatalkan.",
     "delete_button": "Hapus",
     "delete_all_button": "Hapus Semua",
+    "end_chat_title": "Akhiri Obrolan",
+    "end_chat_message": "Akhiri obrolan ini dan mulai yang baru? Anda tetap dapat menemukannya di riwayat obrolan.",
+    "end_button": "Akhiri Obrolan",
+    "remove_chat_title": "Hapus dari Riwayat",
+    "remove_chat_message": "Hapus obrolan ini dari riwayat obrolan Anda?",
+    "remove_all_title": "Hapus Semua dari Riwayat",
+    "remove_all_message": "Hapus semua obrolan dari riwayat obrolan Anda?",
+    "remove_button": "Hapus",
+    "remove_all_button": "Hapus Semua",
     "cancel": "Batal"
   },
   "messages": {

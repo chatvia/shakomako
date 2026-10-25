@@ -21,6 +21,9 @@
     "chat_history": "تاریخچه گفتگو",
     "clear_current": "پاک کردن گفتگوی فعلی",
     "clear_all": "پاک کردن همه",
+    "end_chat": "پایان گفتگو",
+    "remove_current": "حذف از تاریخچه",
+    "remove_all": "حذف همه از تاریخچه",
     "theme_toggle": "تغییر تم"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "آیا مطمئن هستید می‌خواهید کل تاریخچه گفتگوها را حذف کنید؟ این عمل قابل بازگشت نیست.",
     "delete_button": "حذف",
     "delete_all_button": "حذف همه",
+    "end_chat_title": "پایان گفتگو",
+    "end_chat_message": "این گفتگو پایان یابد و گفتگوی جدیدی شروع شود؟ همچنان می‌توانید آن را در تاریخچه گفتگوهایتان پیدا کنید.",
+    "end_button": "پایان گفتگو",
+    "remove_chat_title": "حذف گفتگو از تاریخچه",
+    "remove_chat_message": "این گفتگو از تاریخچه گفتگوهای شما حذف شود؟",
+    "remove_all_title": "حذف همه گفتگوها از تاریخچه",
+    "remove_all_message": "همه گفتگوها از تاریخچه گفتگوهای شما حذف شوند؟",
+    "remove_button": "حذف از تاریخچه",
+    "remove_all_button": "حذف همه",
     "cancel": "لغو"
   },
   "messages": {

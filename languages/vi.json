@@ -21,6 +21,9 @@
     "chat_history": "Lịch sử trò chuyện",
     "clear_current": "Xoá cuộc trò chuyện hiện tại",
     "clear_all": "Xoá tất cả",
+    "end_chat": "Kết thúc trò chuyện",
+    "remove_current": "Xóa khỏi lịch sử",
+    "remove_all": "Xóa tất cả khỏi lịch sử",
     "theme_toggle": "Đổi giao diện"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "Bạn có chắc muốn xoá TOÀN BỘ lịch sử trò chuyện? Hành động này không thể hoàn tác.",
     "delete_button": "Xoá",
     "delete_all_button": "Xoá tất cả",
+    "end_chat_title": "Kết thúc trò chuyện",
+    "end_chat_message": "Kết thúc cuộc trò chuyện này và bắt đầu cuộc mới? Bạn vẫn có thể tìm thấy nó trong lịch sử trò chuyện.",
+    "end_button": "Kết thúc",
+    "remove_chat_title": "Xóa khỏi lịch sử",
+    "remove_chat_message": "Xóa cuộc trò chuyện này khỏi lịch sử trò chuyện của bạn?",
+    "remove_all_title": "Xóa tất cả khỏi lịch sử",
+    "remove_all_message": "Xóa tất cả cuộc trò chuyện khỏi lịch sử trò chuyện của bạn?",
+    "remove_button": "Xóa khỏi lịch sử",
+    "remove_all_button": "Xóa tất cả",
     "cancel": "Huỷ"
   },
   "messages": {

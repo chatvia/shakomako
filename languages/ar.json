@@ -21,6 +21,9 @@
     "chat_history": "سجل المحادثات",
     "clear_current": "امسح المحادثة الحالية",
     "clear_all": "امسح الكل",
+    "end_chat": "إنهاء المحادثة",
+    "remove_current": "إزالة من السجل",
+    "remove_all": "إزالة الكل من السجل",
     "theme_toggle": "تبديل المظهر"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "هل أنت متأكد من حذف جميع سجل المحادثات؟ لا يمكن التراجع عن هذا الإجراء.",
     "delete_button": "حذف",
     "delete_all_button": "حذف الكل",
+    "end_chat_title": "إنهاء المحادثة",
+    "end_chat_message": "هل تريد إنهاء هذه المحادثة وبدء محادثة جديدة؟ ستظل متاحة في سجل محادثاتك.",
+    "end_button": "إنهاء المحادثة",
+    "remove_chat_title": "إزالة المحادثة",
+    "remove_chat_message": "هل تريد إزالة هذه المحادثة من سجل محادثاتك؟",
+    "remove_all_title": "إزالة كل المحادثات",
+    "remove_all_message": "هل تريد إزالة كل المحادثات من سجل محادثاتك؟",
+    "remove_button": "إزالة",
+    "remove_all_button": "إزالة الكل",
     "cancel": "إلغاء"
   },
   "messages": {

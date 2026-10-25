@@ -25,6 +25,9 @@
     "chat_history": "Chathistorikk",
     "clear_current": "Tøm gjeldende chat",
     "clear_all": "Tøm alle",
+    "end_chat": "Avslutt chat",
+    "remove_current": "Fjern fra historikken",
+    "remove_all": "Fjern alle fra historikken",
     "theme_toggle": "Bytt tema",
     "switch_to_light": "Bytt til lyst tema",
     "switch_to_dark": "Bytt til mørkt tema"
@@ -54,6 +57,15 @@
     "delete_all_message": "Er du sikker på at du vil slette HELE chathistorikken din? Dette kan ikke angres.",
     "delete_button": "Slett",
     "delete_all_button": "Slett alle",
+    "end_chat_title": "Avslutt chat",
+    "end_chat_message": "Vil du avslutte denne chatten og starte en ny? Du finner den fortsatt i chathistorikken.",
+    "end_button": "Avslutt chat",
+    "remove_chat_title": "Fjern chat",
+    "remove_chat_message": "Vil du fjerne denne chatten fra chathistorikken?",
+    "remove_all_title": "Fjern alle chatter",
+    "remove_all_message": "Vil du fjerne alle chatter fra chathistorikken?",
+    "remove_button": "Fjern",
+    "remove_all_button": "Fjern alle",
     "cancel": "Avbryt"
   },
   "messages": {

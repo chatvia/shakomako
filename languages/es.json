@@ -21,6 +21,9 @@
     "chat_history": "Historial de chats",
     "clear_current": "Borrar chat actual",
     "clear_all": "Borrar todo",
+    "end_chat": "Finalizar chat",
+    "remove_current": "Quitar del historial",
+    "remove_all": "Quitar todo del historial",
     "theme_toggle": "Cambiar tema"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "¿Seguro que quieres eliminar TODO tu historial de chats? Esta acción no se puede deshacer.",
     "delete_button": "Eliminar",
     "delete_all_button": "Eliminar todo",
+    "end_chat_title": "Finalizar chat",
+    "end_chat_message": "¿Finalizar este chat y empezar uno nuevo? Podrás seguir encontrándolo en tu historial de chats.",
+    "end_button": "Finalizar chat",
+    "remove_chat_title": "Quitar chat",
+    "remove_chat_message": "¿Quitar este chat de tu historial de chats?",
+    "remove_all_title": "Quitar todos los chats",
+    "remove_all_message": "¿Quitar todos los chats de tu historial de chats?",
+    "remove_button": "Quitar",
+    "remove_all_button": "Quitar todo",
     "cancel": "Cancelar"
   },
   "messages": {

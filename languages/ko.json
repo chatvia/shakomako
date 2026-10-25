@@ -21,6 +21,9 @@
     "chat_history": "채팅 기록",
     "clear_current": "현재 채팅 지우기",
     "clear_all": "모두 지우기",
+    "end_chat": "채팅 종료",
+    "remove_current": "기록에서 제거",
+    "remove_all": "기록에서 모두 제거",
     "theme_toggle": "테마 전환"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "채팅 기록을 모두 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
     "delete_button": "삭제",
     "delete_all_button": "모두 삭제",
+    "end_chat_title": "채팅 종료",
+    "end_chat_message": "이 채팅을 종료하고 새 채팅을 시작할까요? 채팅 기록에서 계속 확인할 수 있습니다.",
+    "end_button": "종료",
+    "remove_chat_title": "채팅 제거",
+    "remove_chat_message": "이 채팅을 채팅 기록에서 제거할까요?",
+    "remove_all_title": "모든 채팅 제거",
+    "remove_all_message": "모든 채팅을 채팅 기록에서 제거할까요?",
+    "remove_button": "제거",
+    "remove_all_button": "모두 제거",
     "cancel": "취소"
   },
   "messages": {

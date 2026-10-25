@@ -21,6 +21,9 @@
     "chat_history": "चैट इतिहास",
     "clear_current": "वर्तमान चैट साफ़ करें",
     "clear_all": "सभी साफ़ करें",
+    "end_chat": "चैट समाप्त करें",
+    "remove_current": "इतिहास से हटाएँ",
+    "remove_all": "इतिहास से सभी हटाएँ",
     "theme_toggle": "थीम बदलें"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "क्या आप वाकई अपना सारा चैट इतिहास हटाना चाहते हैं? यह क्रिया वापस नहीं की जा सकती।",
     "delete_button": "हटाएँ",
     "delete_all_button": "सभी हटाएँ",
+    "end_chat_title": "चैट समाप्त करें",
+    "end_chat_message": "इस चैट को समाप्त करके नई चैट शुरू करें? यह आपके चैट इतिहास में फिर भी मिलेगी।",
+    "end_button": "चैट समाप्त करें",
+    "remove_chat_title": "इतिहास से चैट हटाएँ",
+    "remove_chat_message": "इस चैट को अपने चैट इतिहास से हटाएँ?",
+    "remove_all_title": "इतिहास से सभी चैट हटाएँ",
+    "remove_all_message": "सभी चैट को अपने चैट इतिहास से हटाएँ?",
+    "remove_button": "हटाएँ",
+    "remove_all_button": "सभी हटाएँ",
     "cancel": "रद्द करें"
   },
   "messages": {

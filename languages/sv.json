@@ -25,6 +25,9 @@
     "chat_history": "Chatthistorik",
     "clear_current": "Rensa aktuell chatt",
     "clear_all": "Rensa alla",
+    "end_chat": "Avsluta chatten",
+    "remove_current": "Ta bort från historiken",
+    "remove_all": "Ta bort alla från historiken",
     "theme_toggle": "Byt tema",
     "switch_to_light": "Byt till ljust tema",
     "switch_to_dark": "Byt till mörkt tema"
@@ -54,6 +57,15 @@
     "delete_all_message": "Vill du verkligen radera HELA din chatthistorik? Det går inte att ångra.",
     "delete_button": "Radera",
     "delete_all_button": "Radera alla",
+    "end_chat_title": "Avsluta chatten",
+    "end_chat_message": "Vill du avsluta den här chatten och starta en ny? Du hittar den fortfarande i din chatthistorik.",
+    "end_button": "Avsluta chatten",
+    "remove_chat_title": "Ta bort chatt från historiken",
+    "remove_chat_message": "Vill du ta bort den här chatten från din chatthistorik?",
+    "remove_all_title": "Ta bort alla chattar från historiken",
+    "remove_all_message": "Vill du ta bort alla chattar från din chatthistorik?",
+    "remove_button": "Ta bort från historiken",
+    "remove_all_button": "Ta bort alla",
     "cancel": "Avbryt"
   },
   "messages": {

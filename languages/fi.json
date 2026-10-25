@@ -25,6 +25,9 @@
     "chat_history": "Keskusteluhistoria",
     "clear_current": "Tyhjennä nykyinen keskustelu",
     "clear_all": "Tyhjennä kaikki",
+    "end_chat": "Lopeta keskustelu",
+    "remove_current": "Poista historiasta",
+    "remove_all": "Poista kaikki historiasta",
     "theme_toggle": "Vaihda teemaa",
     "switch_to_light": "Vaihda vaaleaan teemaan",
     "switch_to_dark": "Vaihda tummaan teemaan"
@@ -54,6 +57,15 @@
     "delete_all_message": "Haluatko varmasti poistaa KOKO keskusteluhistoriasi? Toimintoa ei voi kumota.",
     "delete_button": "Poista",
     "delete_all_button": "Poista kaikki",
+    "end_chat_title": "Lopeta keskustelu",
+    "end_chat_message": "Lopetetaanko tämä keskustelu ja aloitetaan uusi? Löydät sen edelleen keskusteluhistoriastasi.",
+    "end_button": "Lopeta keskustelu",
+    "remove_chat_title": "Poista keskustelu historiasta",
+    "remove_chat_message": "Poistetaanko tämä keskustelu keskusteluhistoriastasi?",
+    "remove_all_title": "Poista kaikki keskustelut historiasta",
+    "remove_all_message": "Poistetaanko kaikki keskustelut keskusteluhistoriastasi?",
+    "remove_button": "Poista historiasta",
+    "remove_all_button": "Poista kaikki",
     "cancel": "Peruuta"
   },
   "messages": {

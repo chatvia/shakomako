@@ -21,6 +21,9 @@
     "chat_history": "Chatverlauf",
     "clear_current": "Aktuellen Chat löschen",
     "clear_all": "Alle löschen",
+    "end_chat": "Chat beenden",
+    "remove_current": "Aus dem Verlauf entfernen",
+    "remove_all": "Alle aus dem Verlauf entfernen",
     "theme_toggle": "Design wechseln"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "Möchten Sie wirklich Ihren GESAMTEN Chatverlauf löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "delete_button": "Löschen",
     "delete_all_button": "Alle löschen",
+    "end_chat_title": "Chat beenden",
+    "end_chat_message": "Diesen Chat beenden und einen neuen starten? Sie finden ihn weiterhin in Ihrem Chatverlauf.",
+    "end_button": "Chat beenden",
+    "remove_chat_title": "Chat entfernen",
+    "remove_chat_message": "Diesen Chat aus Ihrem Chatverlauf entfernen?",
+    "remove_all_title": "Alle Chats entfernen",
+    "remove_all_message": "Alle Chats aus Ihrem Chatverlauf entfernen?",
+    "remove_button": "Entfernen",
+    "remove_all_button": "Alle entfernen",
     "cancel": "Abbrechen"
   },
   "messages": {

@@ -21,6 +21,9 @@
     "chat_history": "チャット履歴",
     "clear_current": "現在のチャットを消去",
     "clear_all": "すべて消去",
+    "end_chat": "チャットを終了",
+    "remove_current": "履歴から削除",
+    "remove_all": "すべて履歴から削除",
     "theme_toggle": "テーマを切り替え"
   },
   "conversations": {
@@ -42,6 +45,15 @@
     "delete_all_message": "チャット履歴をすべて削除してもよろしいですか?この操作は取り消せません。",
     "delete_button": "削除",
     "delete_all_button": "すべて削除",
+    "end_chat_title": "チャットを終了",
+    "end_chat_message": "このチャットを終了して新しいチャットを始めますか?チャット履歴からは引き続き確認できます。",
+    "end_button": "終了",
+    "remove_chat_title": "履歴から削除",
+    "remove_chat_message": "このチャットをチャット履歴から削除しますか?",
+    "remove_all_title": "すべて履歴から削除",
+    "remove_all_message": "すべてのチャットをチャット履歴から削除しますか?",
+    "remove_button": "削除",
+    "remove_all_button": "すべて削除",
     "cancel": "キャンセル"
   },
   "messages": {

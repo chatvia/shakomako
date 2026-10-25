@@ -166,7 +166,8 @@ export class ChatWidget {
   newChatOption!: HTMLDivElement;
   historyOption!: HTMLDivElement;
   clearCurrentOption!: HTMLDivElement;
-  clearAllOption!: HTMLDivElement;
+  /** Absent in `end` mode, which has no bulk action. */
+  clearAllOption?: HTMLDivElement;
   deleteConversationButton!: HTMLDivElement;
   themeToggleButton!: HTMLDivElement;
   expandButton!: HTMLDivElement;
@@ -1325,19 +1326,28 @@ export class ChatWidget {
       'history',
       guardedAction(() => this.loadChatHistory())
     );
+    // Settings are loaded before the widget is built, so the agent's deletion
+    // mode decides the wording (and whether there is a bulk action) up front.
+    const deletionMode = conversations.getDeletionMode(this);
+    const deletionCopy = conversations.DELETION_COPY[deletionMode];
     this.clearCurrentOption = this._createMenuOption(
-      t('menu.clear_current'),
-      'delete',
+      t(deletionCopy.currentLabel),
+      deletionMode === 'end' ? 'end-chat' : 'delete',
       guardedAction(() => this.confirmDeleteConversation())
     );
-    this.clearAllOption = this._createMenuOption(
-      t('menu.clear_all'),
-      'clear-all',
-      guardedAction(() => this.confirmClearAllConversations())
-    );
-    // Destructive actions read in red (muted when the menu is disabled).
-    this.clearCurrentOption.classList.add('chatvia-widget-menu-danger');
-    this.clearAllOption.classList.add('chatvia-widget-menu-danger');
+    this.clearAllOption = deletionCopy.allLabel
+      ? this._createMenuOption(
+          t(deletionCopy.allLabel),
+          'clear-all',
+          guardedAction(() => this.confirmClearAllConversations())
+        )
+      : undefined;
+    // Removing chats reads in red (muted when the menu is disabled); ending
+    // one keeps it, so it stays neutral.
+    if (deletionMode !== 'end') {
+      this.clearCurrentOption.classList.add('chatvia-widget-menu-danger');
+      this.clearAllOption?.classList.add('chatvia-widget-menu-danger');
+    }
 
     dropdown.appendChild(this.newChatOption);
     dropdown.appendChild(this.historyOption);
@@ -1347,7 +1357,7 @@ export class ChatWidget {
       })
     );
     dropdown.appendChild(this.clearCurrentOption);
-    dropdown.appendChild(this.clearAllOption);
+    if (this.clearAllOption) dropdown.appendChild(this.clearAllOption);
     return dropdown;
   }
 
