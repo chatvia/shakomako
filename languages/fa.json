@@ -111,5 +111,11 @@
       "microphone_failed": "دسترسی به میکروفون ممکن نشد",
       "failed": "تبدیل گفتار به متن ناموفق بود"
     }
+  },
+  "model": {
+    "title": "پاسخ با",
+    "picker": "مدل: {model}",
+    "default": "پیش‌فرض",
+    "answered_by": "پاسخ از {model}"
   }
 }

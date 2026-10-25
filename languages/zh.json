@@ -111,5 +111,11 @@
       "microphone_failed": "无法访问麦克风",
       "failed": "转写失败"
     }
+  },
+  "model": {
+    "title": "回答模型",
+    "picker": "模型：{model}",
+    "default": "默认",
+    "answered_by": "由 {model} 回答"
   }
 }

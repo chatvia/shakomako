@@ -153,5 +153,11 @@
       "microphone_failed": "Nie udało się uzyskać dostępu do mikrofonu",
       "failed": "Transkrypcja nie powiodła się"
     }
+  },
+  "model": {
+    "title": "Odpowiadaj modelem",
+    "picker": "Model: {model}",
+    "default": "Domyślny",
+    "answered_by": "Odpowiedź: {model}"
   }
 }

@@ -111,5 +111,11 @@
       "microphone_failed": "マイクにアクセスできませんでした",
       "failed": "文字起こしに失敗しました"
     }
+  },
+  "model": {
+    "title": "回答に使うモデル",
+    "picker": "モデル: {model}",
+    "default": "デフォルト",
+    "answered_by": "{model} が回答"
   }
 }

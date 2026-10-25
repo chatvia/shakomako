@@ -3878,3 +3878,165 @@
   color: var(--chat-text-muted);
   font-style: italic;
 }
+
+/* Model picker: beside the mic in the composer, and in the Command Bar.
+   Shown only when the agent offers a choice of models. */
+.chatvia-widget-model-picker {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.chatvia-widget-model-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 150px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--chat-text-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.chatvia-widget-model-btn:hover {
+  background: color-mix(in srgb, var(--chat-text) 8%, transparent);
+  color: var(--chat-text);
+}
+
+.chatvia-widget-model-btn:focus-visible,
+.chatvia-widget-model-item:focus-visible {
+  outline: 2px solid var(--chat-focus-ring-color);
+  outline-offset: 2px;
+}
+
+.chatvia-widget-model-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.chatvia-widget-model-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The logo is a mask the text colour fills (reads in light and dark). */
+.chatvia-widget-model-logo {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+.chatvia-widget-model-logo--none {
+  border-radius: 50%;
+  background-color: color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.chatvia-widget-model-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  inset-inline-end: 0;
+  z-index: 20;
+  width: 240px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--chat-border);
+  border-radius: 12px;
+  background: var(--chat-bg, #ffffff);
+  color: var(--chat-text);
+  box-shadow: var(--chat-shadow-lg);
+}
+
+.chatvia-widget-model-menu[hidden] {
+  display: none;
+}
+
+/* A bar at the top of the page opens its menu downwards. */
+.chatvia-widget-bar-top .chatvia-widget-model-menu,
+.chatvia-widget-bar-top-right .chatvia-widget-model-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+.chatvia-widget-model-menu-title {
+  padding: 6px 8px 4px;
+  color: var(--chat-text-muted);
+  font-size: 12px;
+}
+
+.chatvia-widget-model-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.chatvia-widget-model-item:hover {
+  background: var(--chat-hover-bg, color-mix(in srgb, var(--chat-text) 6%, transparent));
+}
+
+.chatvia-widget-model-item[aria-checked='true'] {
+  font-weight: 600;
+}
+
+.chatvia-widget-model-default {
+  margin-inline-start: auto;
+  color: var(--chat-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* On phones the button keeps only the logo. */
+@media (max-width: 480px) {
+  .chatvia-widget-model-btn .chatvia-widget-model-name {
+    display: none;
+  }
+}
+
+/* The logo of the model that wrote a reply, in its action row (with a
+   choice of models); its name is the tooltip. */
+.chatvia-widget-answered-by {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--chat-text-muted);
+  cursor: default;
+}
+
+.chatvia-widget-answered-by:hover {
+  color: var(--chat-text);
+}
+
+.chatvia-widget-answered-by .chatvia-widget-model-logo {
+  width: 14px;
+  height: 14px;
+}

@@ -153,5 +153,11 @@
       "microphone_failed": "Mikrofonin käyttö epäonnistui",
       "failed": "Litterointi epäonnistui"
     }
+  },
+  "model": {
+    "title": "Vastaa mallilla",
+    "picker": "Malli: {model}",
+    "default": "Oletus",
+    "answered_by": "Vastasi {model}"
   }
 }

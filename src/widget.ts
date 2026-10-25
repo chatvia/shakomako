@@ -21,6 +21,7 @@ import { createElement, createIcon } from './ui';
 import type { ElementAttributes, IconName } from './ui';
 import { initI18n, t, getDirection, pickLocalized } from './i18n';
 import { triggerLabel } from './keyboardTrigger';
+import { createModelPicker } from './modelChoice';
 import { Dictation, isDictationSupported, type DictationState } from './voice/dictation';
 import { isVoiceCallSupported } from './voice/realtimeCall';
 import { VoiceView } from './voice/voiceView';
@@ -243,6 +244,8 @@ export class ChatWidget {
   _streamFormArtifacts?: FormArtifact[];
   /** The sources the streaming reply was given, shown under it once it is done. */
   _streamSources?: StreamSource[];
+  /** The model the streaming reply was asked of, for its "answered by" logo. */
+  _streamModelId?: number | null;
   /** Fades in each new piece of the streaming reply (streamFade.ts). */
   _streamFade?: StreamFade | null;
 
@@ -968,6 +971,9 @@ export class ChatWidget {
     this.barButton.appendChild(createIcon('arrow-right'));
 
     inputWrapper.appendChild(this.barInput);
+    // The model picker shows only when the agent offers a choice.
+    const barModelPicker = createModelPicker(this, 'chatvia-widget-model-picker--bar');
+    if (barModelPicker) inputWrapper.appendChild(barModelPicker);
     inputWrapper.appendChild(shortcutHint);
     inputWrapper.appendChild(this.barHistoryButton);
     inputWrapper.appendChild(this.barButton);
@@ -1563,6 +1569,9 @@ export class ChatWidget {
     inputRow.appendChild(this.chatInput);
     if (this.fileInput) inputRow.appendChild(this.fileInput);
     // After the textarea, so the `placeholder-shown ~ send` rule still holds.
+    // The model picker shows only when the agent offers a choice.
+    const modelPicker = createModelPicker(this);
+    if (modelPicker) inputRow.appendChild(modelPicker);
     if (this.micButton) inputRow.appendChild(this.micButton);
     if (this.voiceButton) inputRow.appendChild(this.voiceButton);
     inputRow.appendChild(this.sendButton);

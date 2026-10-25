@@ -111,5 +111,11 @@
       "microphone_failed": "마이크에 접근하지 못했습니다",
       "failed": "음성 변환에 실패했습니다"
     }
+  },
+  "model": {
+    "title": "답변 모델",
+    "picker": "모델: {model}",
+    "default": "기본값",
+    "answered_by": "{model} 답변"
   }
 }

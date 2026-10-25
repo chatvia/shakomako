@@ -111,5 +111,11 @@
       "microphone_failed": "Impossible d'accéder au microphone",
       "failed": "Échec de la transcription"
     }
+  },
+  "model": {
+    "title": "Répondre avec",
+    "picker": "Modèle : {model}",
+    "default": "Par défaut",
+    "answered_by": "Répondu par {model}"
   }
 }

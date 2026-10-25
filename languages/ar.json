@@ -111,5 +111,11 @@
       "microphone_failed": "تعذّر الوصول إلى الميكروفون",
       "failed": "فشل تحويل الصوت إلى نص"
     }
+  },
+  "model": {
+    "title": "أجب باستخدام",
+    "picker": "النموذج: {model}",
+    "default": "افتراضي",
+    "answered_by": "أجاب {model}"
   }
 }

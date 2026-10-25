@@ -19,6 +19,7 @@ import { pickLocalized, t } from '../i18n';
 import { parseMarkdown, escapeHtml, htmlToText } from '../markdown';
 import { createStreamFade } from '../streamFade';
 import { getApiOrigin } from '../endpoints';
+import { createAnsweredBy, pickedModelId } from '../modelChoice';
 import type { StreamRequest } from '../sse';
 import type {
   AddMessageOptions,
@@ -113,7 +114,8 @@ export async function addMessage(
       text,
       options.messageId,
       options.feedback,
-      options.timestamp
+      options.timestamp,
+      options.llmId
     );
     message.appendChild(actionsContainer);
   } else if (options.timestamp || options.isHuman) {
@@ -287,7 +289,8 @@ export function createMessageActions(
   messageText: string,
   messageId: string | null | undefined,
   feedback: MessageFeedback | null | undefined,
-  timestamp: MessageTimestamp | null | undefined
+  timestamp: MessageTimestamp | null | undefined,
+  llmId?: number | null
 ): HTMLDivElement {
   const actionsContainer = createElement('div', {
     className: CSS_CLASSES.MESSAGE_ACTIONS
@@ -334,6 +337,10 @@ export function createMessageActions(
     actionsContainer.appendChild(thumbsUpButton);
     actionsContainer.appendChild(thumbsDownButton);
   }
+
+  // With a choice of models, the logo of the one that wrote this reply.
+  const answeredBy = createAnsweredBy(widget, llmId);
+  if (answeredBy) actionsContainer.appendChild(answeredBy);
 
   // Add timestamp after feedback buttons (with divider)
   if (timestamp) {
@@ -521,6 +528,7 @@ function addMessageToHistory(
     // Mirror the server shape so an in-session re-render (conversation switch)
     // can re-mount inline form artifacts without a round trip.
     metadata: options.metadata,
+    llm_id: options.llmId,
     options
   };
   widget.messageHistory.push(messageData);
@@ -630,8 +638,10 @@ export async function sendUserMessage(widget: ChatWidget, customText?: string): 
     content: text,
     url: window.location.href,
     referrer: document.referrer || '',
-    attachments
+    attachments,
+    model_id: pickedModelId(widget)
   };
+  widget._streamModelId = messagePayload.model_id;
 
   if (typeof widget._clearAttachments === 'function') {
     widget._clearAttachments();
@@ -715,6 +725,7 @@ export async function displayHistoryMessages(widget: ChatWidget): Promise<void> 
       await addMessage(widget, messageType!, message.content, false, {
         messageId: message.id,
         feedback: message.feedback,
+        llmId: message.llm_id,
         hideActions: isWelcomeMessage,
         isHuman: isHumanAgent,
         timestamp: message.created_at || message.timestamp,
@@ -960,7 +971,8 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
         finalMessage,
         messageId,
         undefined,
-        finalizedAt
+        finalizedAt,
+        widget._streamModelId
       );
       streamingMsgElement.appendChild(actionsContainer);
     } else {
@@ -984,6 +996,7 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
     addMessageToHistory(widget, CSS_CLASSES.MESSAGE_AGENT, finalMessage, {
       messageId,
       timestamp: finalizedAt,
+      llmId: widget._streamModelId,
       metadata: hasForms
         ? { artifacts: formArtifacts.map(data => ({ kind: 'form', data })) }
         : undefined

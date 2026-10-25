@@ -111,5 +111,11 @@
       "microphone_failed": "Kunne ikke få adgang til mikrofonen",
       "failed": "Transskription mislykkedes"
     }
+  },
+  "model": {
+    "title": "Svar med",
+    "picker": "Model: {model}",
+    "default": "Standard",
+    "answered_by": "Besvaret af {model}"
   }
 }

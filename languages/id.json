@@ -111,5 +111,11 @@
       "microphone_failed": "Gagal mengakses mikrofon",
       "failed": "Transkripsi gagal"
     }
+  },
+  "model": {
+    "title": "Jawab dengan",
+    "picker": "Model: {model}",
+    "default": "Bawaan",
+    "answered_by": "Dijawab oleh {model}"
   }
 }

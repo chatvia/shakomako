@@ -111,5 +111,11 @@
       "microphone_failed": "Không thể truy cập micrô",
       "failed": "Chuyển giọng nói thành văn bản thất bại"
     }
+  },
+  "model": {
+    "title": "Trả lời bằng",
+    "picker": "Mô hình: {model}",
+    "default": "Mặc định",
+    "answered_by": "Trả lời bởi {model}"
   }
 }

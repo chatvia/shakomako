@@ -13,6 +13,8 @@ export interface StreamRequest {
   url: string;
   referrer: string;
   attachments: Attachment[];
+  /** The model the visitor picked; null answers with the agent's own. */
+  model_id?: number | null;
 }
 
 export interface SSECloseInfo {

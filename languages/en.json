@@ -153,5 +153,11 @@
       "microphone_failed": "Failed to access microphone",
       "failed": "Transcription failed"
     }
+  },
+  "model": {
+    "title": "Answer with",
+    "picker": "Model: {model}",
+    "default": "Default",
+    "answered_by": "Answered by {model}"
   }
 }

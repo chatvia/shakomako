@@ -111,5 +111,11 @@
       "microphone_failed": "Zugriff auf das Mikrofon fehlgeschlagen",
       "failed": "Transkription fehlgeschlagen"
     }
+  },
+  "model": {
+    "title": "Antworten mit",
+    "picker": "Modell: {model}",
+    "default": "Standard",
+    "answered_by": "Beantwortet von {model}"
   }
 }

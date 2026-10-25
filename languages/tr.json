@@ -111,5 +111,11 @@
       "microphone_failed": "Mikrofona erişilemedi",
       "failed": "Metne dönüştürme başarısız oldu"
     }
+  },
+  "model": {
+    "title": "Şununla yanıtla",
+    "picker": "Model: {model}",
+    "default": "Varsayılan",
+    "answered_by": "Yanıtlayan: {model}"
   }
 }

@@ -90,6 +90,16 @@ export interface WidgetSettings {
   max_files_per_chat?: number;
 
   reverb?: ReverbSettings | null;
+  /** The models the visitor may pick from, the agent's own first; fewer than two: no picker. */
+  models?: OfferedModel[];
+}
+
+/** One model the visitor may pick; its id goes back as the stream's `model_id`. */
+export interface OfferedModel {
+  id: number;
+  name: string;
+  logo: string | null;
+  is_default: boolean;
 }
 
 // ========================================
@@ -166,6 +176,8 @@ export interface AddMessageOptions {
   formArtifacts?: FormArtifact[];
   metadata?: MessageMetadata;
   senderName?: string;
+  /** The model that wrote an assistant reply; shown when the agent offers a choice. */
+  llmId?: number | null;
 }
 
 /**
@@ -186,6 +198,8 @@ export interface ChatMessage {
   attachments?: Attachment[];
   metadata?: MessageMetadata;
   options?: AddMessageOptions;
+  /** The model that wrote an assistant reply; shown when the agent offers a choice. */
+  llm_id?: number | null;
 }
 
 export interface Conversation {

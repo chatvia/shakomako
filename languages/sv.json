@@ -153,5 +153,11 @@
       "microphone_failed": "Det gick inte att komma åt mikrofonen",
       "failed": "Transkriberingen misslyckades"
     }
+  },
+  "model": {
+    "title": "Svara med",
+    "picker": "Modell: {model}",
+    "default": "Standard",
+    "answered_by": "Besvarat av {model}"
   }
 }

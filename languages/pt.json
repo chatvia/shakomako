@@ -111,5 +111,11 @@
       "microphone_failed": "Não foi possível aceder ao microfone",
       "failed": "A transcrição falhou"
     }
+  },
+  "model": {
+    "title": "Responder com",
+    "picker": "Modelo: {model}",
+    "default": "Padrão",
+    "answered_by": "Respondido por {model}"
   }
 }
