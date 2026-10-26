@@ -30,7 +30,7 @@ import type {
   Attachment,
   ChatMessage,
   Conversation,
-  FormArtifact,
+  MessageArtifact,
   WidgetEventEmitter,
   WidgetSettings,
   StreamSource
@@ -242,7 +242,8 @@ export class ChatWidget {
   _streamHandled?: boolean;
   _streamErrorShown?: boolean;
   _activeToolCalls?: Set<string>;
-  _streamFormArtifacts?: FormArtifact[];
+  /** Forms and calendars tools produced this turn, rendered at finalize. */
+  _streamArtifacts?: MessageArtifact[];
   /** The sources the streaming reply was given, shown under it once it is done. */
   _streamSources?: StreamSource[];
   /** The model the streaming reply was asked of, for its "answered by" logo. */

@@ -134,7 +134,7 @@ describe('tool activity indicator', () => {
       artifacts: [{ kind: 'form', data: { form_instance_id: 'f1' } }]
     });
     expect(callingText()).toBeNull();
-    expect(widget._streamFormArtifacts).toEqual([{ form_instance_id: 'f1' }]);
+    expect(widget._streamArtifacts).toEqual([{ kind: 'form', data: { form_instance_id: 'f1' } }]);
   });
 
   it('still shows the indicator for a non-internal (external) tool', () => {

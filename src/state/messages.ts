@@ -12,6 +12,7 @@ import {
 } from '../utils';
 import { createElement, createIcon } from '../ui';
 import { createInlineForm } from '../forms';
+import { createInlineCalendar } from '../calendar';
 import { isInHumanMode, sendMessageInHumanMode, subscribeToConversation } from './handoff';
 import { pickLocalized, t } from '../i18n';
 // Canonical markdown impl lives in markdown.ts. Import for local use, and
@@ -25,7 +26,6 @@ import type {
   AddMessageOptions,
   Attachment,
   ChatMessage,
-  FormArtifact,
   MessageArtifact,
   MessageFeedback,
   MessageRole,
@@ -64,11 +64,10 @@ export async function addMessage(
     if (avatar) contentWrapper.appendChild(avatar);
   }
 
-  // Inline form artifacts (assistant turns). A form-only turn carries no text,
-  // so skip the empty bubble and render just the form below.
-  const formArtifacts = Array.isArray(options.formArtifacts) ? options.formArtifacts : [];
-  const skipEmptyAgentBubble =
-    type === CSS_CLASSES.MESSAGE_AGENT && !text && formArtifacts.length > 0;
+  // Inline form and calendar artifacts (assistant turns). An artifact-only turn
+  // carries no text, so skip the empty bubble and render just the block below.
+  const artifacts = renderableArtifacts(options.artifacts);
+  const skipEmptyAgentBubble = type === CSS_CLASSES.MESSAGE_AGENT && !text && artifacts.length > 0;
 
   // For attachment-only user turns, skip the empty bubble entirely so the
   // chips don't sit next to a hollow bubble.
@@ -84,9 +83,9 @@ export async function addMessage(
     contentWrapper.appendChild(bubble);
   }
 
-  // Forms render as real DOM under the bubble (DOMPurify strips form markup).
-  for (const fa of formArtifacts) {
-    contentWrapper.appendChild(createInlineForm(widget, fa, options.messageId));
+  // Artifacts render as real DOM under the bubble (DOMPurify strips form markup).
+  for (const artifact of artifacts) {
+    contentWrapper.appendChild(createArtifactBlock(widget, artifact, options.messageId));
   }
 
   // Render attachment chips BELOW the bubble for user messages — keeps the
@@ -731,12 +730,7 @@ export async function displayHistoryMessages(widget: ChatWidget): Promise<void> 
         timestamp: message.created_at || message.timestamp,
         readAt: message.read_at,
         attachments: message.attachments || message.metadata?.attachments || [],
-        formArtifacts: (message.metadata?.artifacts || [])
-          .filter(
-            (a): a is MessageArtifact & { data: FormArtifact } =>
-              !!(a && a.kind === 'form' && a.data)
-          )
-          .map(a => a.data)
+        artifacts: message.metadata?.artifacts
       });
     }
   } else if (welcome) {
@@ -776,9 +770,9 @@ export function startStreamingMessage(widget: ChatWidget): void {
   const toolActivity = createElement('div', { className: CSS_CLASSES.TOOL_ACTIVITY });
   streamingMsgElement.appendChild(toolActivity);
   widget._activeToolCalls = new Set();
-  // Form artifacts surfaced by tools this turn — rendered onto the persisted
-  // message at finalize (the tool-activity node is transient).
-  widget._streamFormArtifacts = [];
+  // Form and calendar artifacts surfaced by tools this turn — rendered onto the
+  // persisted message at finalize (the tool-activity node is transient).
+  widget._streamArtifacts = [];
   widget._streamSources = [];
   widget._streamFade = createStreamFade();
 
@@ -940,15 +934,14 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
   widget.hideLoading();
 
   const finalMessage = widget.currentStreamedMessage;
-  const formArtifacts = Array.isArray(widget._streamFormArtifacts)
-    ? widget._streamFormArtifacts
-    : [];
-  const hasForms = formArtifacts.length > 0;
+  const artifacts = renderableArtifacts(widget._streamArtifacts);
+  const hasArtifacts = artifacts.length > 0;
   const messageId = widget.currentStreamedMessageId;
 
   const streamingMsgElement = document.getElementById(CSS_CLASSES.STREAMING_MESSAGE);
-  // Persist the turn if it produced text OR a form (a form-only turn has no text).
-  if (streamingMsgElement && (finalMessage !== '' || hasForms)) {
+  // Persist the turn if it produced text OR an artifact (an artifact-only turn
+  // has no text).
+  if (streamingMsgElement && (finalMessage !== '' || hasArtifacts)) {
     const wrapper = streamingMsgElement.querySelector<HTMLElement>(
       '.chatvia-widget-content-wrapper'
     );
@@ -976,14 +969,14 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
       );
       streamingMsgElement.appendChild(actionsContainer);
     } else {
-      // Form-only turn: drop the empty bubble but keep the row for the form.
+      // Artifact-only turn: drop the empty bubble but keep the row for the block.
       if (messageBubble) messageBubble.remove();
       if (wrapper) wrapper.style.display = '';
     }
 
-    if (hasForms && wrapper) {
-      for (const fa of formArtifacts) {
-        wrapper.appendChild(createInlineForm(widget, fa, messageId));
+    if (hasArtifacts && wrapper) {
+      for (const artifact of artifacts) {
+        wrapper.appendChild(createArtifactBlock(widget, artifact, messageId));
       }
     }
 
@@ -997,15 +990,13 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
       messageId,
       timestamp: finalizedAt,
       llmId: widget._streamModelId,
-      metadata: hasForms
-        ? { artifacts: formArtifacts.map(data => ({ kind: 'form', data })) }
-        : undefined
+      metadata: hasArtifacts ? { artifacts } : undefined
     });
   } else if (streamingMsgElement) {
     streamingMsgElement.remove();
   }
 
-  widget._streamFormArtifacts = [];
+  widget._streamArtifacts = [];
   widget._streamSources = [];
   widget._streamFade = null;
 
@@ -1027,6 +1018,31 @@ export async function finalizeStreamingMessage(widget: ChatWidget): Promise<void
   // actions row (and any forms) have been appended — keeps the question pinned
   // instead of letting the new content nudge the view down at finish.
   widget.holdPin();
+}
+
+/** An artifact the widget renders: a form or a calendar, with its data. */
+type RenderableArtifact = Required<MessageArtifact>;
+
+/**
+ * The artifacts the widget can render (forms and calendars with data), in
+ * order; other kinds and malformed entries are left out.
+ */
+function renderableArtifacts(list: MessageArtifact[] | null | undefined): RenderableArtifact[] {
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (a): a is RenderableArtifact => !!a && (a.kind === 'form' || a.kind === 'calendar') && !!a.data
+  );
+}
+
+/** The DOM block for one renderable artifact, bound to its assistant message. */
+function createArtifactBlock(
+  widget: ChatWidget,
+  artifact: RenderableArtifact,
+  messageId: string | null | undefined
+): HTMLElement {
+  return artifact.kind === 'calendar'
+    ? createInlineCalendar(widget, artifact.data, messageId)
+    : createInlineForm(widget, artifact.data, messageId);
 }
 
 /**
@@ -1081,14 +1097,11 @@ export function handleToolEvent(widget: ChatWidget, tool: ToolEvent): void {
 
   if (tool.phase === 'end') {
     // The `end` phase carries any structured artifacts the tool produced.
-    // Stash form artifacts; finalize renders them onto the persisted message.
+    // Stash form and calendar artifacts; finalize renders them onto the
+    // persisted message.
     if (Array.isArray(tool.artifacts)) {
-      if (!Array.isArray(widget._streamFormArtifacts)) widget._streamFormArtifacts = [];
-      for (const artifact of tool.artifacts) {
-        if (artifact && artifact.kind === 'form' && artifact.data) {
-          widget._streamFormArtifacts.push(artifact.data);
-        }
-      }
+      if (!Array.isArray(widget._streamArtifacts)) widget._streamArtifacts = [];
+      widget._streamArtifacts.push(...renderableArtifacts(tool.artifacts));
     }
     widget._activeToolCalls.delete(tool.tool_call_id);
     if (widget._activeToolCalls.size === 0) {

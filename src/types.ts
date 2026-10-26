@@ -167,11 +167,39 @@ export interface FormArtifact {
   schema?: FormSchemaNode[];
 }
 
-/** Structured output a tool attached to a message. Only forms are rendered. */
-export interface MessageArtifact {
-  kind: 'form' | string;
-  data?: FormArtifact;
+/** One free start time of a calendar artifact. */
+export interface CalendarSlot {
+  /** ISO 8601, UTC. */
+  start_time: string;
 }
+
+/** A meeting the visitor books mid-conversation (the render-calendar tool). */
+export interface CalendarArtifact {
+  booking_instance_id: string;
+  event_type_name: string;
+  /** Minutes. */
+  duration: number;
+  location_kind: string | null;
+  /** Free times between window_start and window_end (the first 7 days). */
+  slots: CalendarSlot[];
+  /** ISO 8601, UTC. */
+  window_start: string;
+  /** ISO 8601, UTC. */
+  window_end: string;
+  /** How many days from today the visitor may browse. */
+  max_days_ahead: number;
+  status: 'pending' | 'submitted' | 'expired';
+  booked_start_time: string | null;
+  expires_at: string | null;
+}
+
+/**
+ * Structured output a tool attached to a message. Forms and calendars are
+ * rendered; other kinds may arrive and are ignored.
+ */
+export type MessageArtifact =
+  | { kind: 'form'; data?: FormArtifact }
+  | { kind: 'calendar'; data?: CalendarArtifact };
 
 export interface MessageMetadata {
   artifacts?: MessageArtifact[];
@@ -188,7 +216,8 @@ export interface AddMessageOptions {
   hideActions?: boolean;
   readAt?: string | null;
   attachments?: Attachment[];
-  formArtifacts?: FormArtifact[];
+  /** Forms and calendars to render under an assistant reply. */
+  artifacts?: MessageArtifact[];
   metadata?: MessageMetadata;
   senderName?: string;
   /** The model that wrote an assistant reply; shown when the agent offers a choice. */
